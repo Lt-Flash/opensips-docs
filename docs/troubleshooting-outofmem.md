@@ -24,9 +24,9 @@ transactions and location records, can be freed.
 
 Resume traffic by placing several calls:
 
-- If the memory errors do not return, the configured memory pool was probably
+* If the memory errors do not return, the configured memory pool was probably
   too small.
-- If the errors return even after memory should have been released, investigate
+* If the errors return even after memory should have been released, investigate
   a possible memory leak or memory corruption.
 
 If the result is inconclusive, continue with the memory-debugging procedure.
@@ -44,7 +44,11 @@ opensips -m 256 -M 8
 ```
 
 Make these options persistent in the service configuration used by your
-installation before restarting OpenSIPS.
+installation before restarting OpenSIPS by editing:
+
+* `/etc/default/opensips` on Debian-based systems
+* `/etc/sysconfig/opensips` on Red Hat-based systems
+
 
 ## Debug memory usage on OpenSIPS 3.x and later
 
@@ -58,8 +62,8 @@ Add the following command-line option to the OpenSIPS startup options:
 
 Package installations commonly store these options in:
 
-- `/etc/default/opensips` on Debian-based systems
-- `/etc/sysconfig/opensips` on Red Hat-based systems
+* `/etc/default/opensips` on Debian-based systems
+* `/etc/sysconfig/opensips` on Red Hat-based systems
 
 For example:
 
@@ -95,19 +99,19 @@ allocations easier to identify.
 
 ### 5. Dump the memory status at run time
 
+For **OpenSIPS 4.x and later**, use the `mem` class MI commands:
+
+```bash
+opensips-cli -x mi mem:pkg_dump <pid>
+opensips-cli -x mi mem:shm_dump
+```
+
 For **OpenSIPS 3.x**, dump the private memory of a specific process and the
 global shared-memory pool with:
 
 ```bash
 opensips-cli -x mi mem_pkg_dump <pid>
 opensips-cli -x mi mem_shm_dump
-```
-
-For **OpenSIPS 4.x and later**, use the namespaced MI command names:
-
-```bash
-opensips-cli -x mi mem:pkg_dump <pid>
-opensips-cli -x mi mem:shm_dump
 ```
 
 The package-memory command must be run for the process whose private memory you
