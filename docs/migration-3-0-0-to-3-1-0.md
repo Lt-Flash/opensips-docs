@@ -1,6 +1,7 @@
 ---
-title: "Migration from 3.0.x to 3.1.0"
-description: "This section is meant to provide useful help in migrating your OpenSIPS installations from the 3.0.0 version to 3.1.0."
+title: Migration from 3.0.x to 3.1.0
+description: This section is meant to provide useful help in migrating your
+  OpenSIPS installations from the 3.0.0 version to 3.1.0.
 ---
 
 This section is meant to provide useful help in migrating your OpenSIPS installations from the **3.0.0** version to **3.1.0**.
@@ -57,9 +58,9 @@ The following is the full list of backwards-incompatible syntax or functional ch
   * **rewriteuri()** for **seturi()**
 * **[cache_raw_query()](/manual/3-1/script-corefunctions)**'s last parameter is now an unquoted variable
 * **[construct_uri()](/manual/3-1/script-corefunctions)**'s *user*, *port* and *extra* are now optional parameters
-* **[isflagset()](/manual/3-1/script-corefunctions)`s,** [resetflag()](/manual/3-1/script-corefunctions)`s and **[setflag()](/manual/3-1/script-corefunctions)**'s parameter is now a quoted string
-* **[isbflagset()](/manual/3-1/script-corefunctions)`s,** [resetbflagset()](/manual/3-1/script-corefunctions)`s and **[setbflagset()](/manual/3-1/script-corefunctions)**'s *flag* parameter is now a quoted string
-* the order of **[isbflagset()](/manual/3-1/script-corefunctions)`s,** [resetbflagset()](/manual/3-1/script-corefunctions)`s and **[setbflagset()](/manual/3-1/script-corefunctions)**'s *flag* and *branch_idx* parameters has been inverted
+* **[isflagset()](/manual/3-1/script-corefunctions)**'s, **[resetflag()](/manual/3-1/script-corefunctions)**'s and **[setflag()](/manual/3-1/script-corefunctions)**'s parameter is now a quoted string
+* **[isbflagset()](/manual/3-1/script-corefunctions)**'s, **[resetbflagset()](/manual/3-1/script-corefunctions)**'s and **[setbflagset()](/manual/3-1/script-corefunctions)**'s *flag* parameter is now a quoted string
+* the order of **[isbflagset()](/manual/3-1/script-corefunctions)**'s, **[resetbflagset()](/manual/3-1/script-corefunctions)**'s and **[setbflagset()](/manual/3-1/script-corefunctions)**'s *flag* and *branch_idx* parameters has been inverted
 * **[raise_event()](/manual/3-1/script-corefunctions)**'s third parameter should now be always provided if you want the raised event to include attributes (eg. `raise_event("E_MY_EVENT", $avp(attr-val))` calls should be replaced with `raise_event("E_MY_EVENT", , $avp(attr-val))` calls)
 * the migration requirements caused by the the changes in the core functions parameter interface have been described above; nevertheless you can also check the 2-4 to 3-0 module functions migration guidelines described [here](/migration-2-4-0-to-3-0-0) as the changes are similar.
 ## Module migration
