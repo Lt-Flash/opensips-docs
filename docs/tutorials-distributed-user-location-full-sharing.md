@@ -10,7 +10,7 @@ description: "The \"full sharing\" clustering strategy for the OpenSIPS 2.4+ use
 
   
 
- ![full sharing](/uploads/full-sharing.png)
+ ![full sharing](/public/uploads/full-sharing.png)
 
   
 

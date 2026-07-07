@@ -46,7 +46,7 @@ change the dialog information.
 ##### Scenario Schema
 Here is the theoretical expected message trace:
 
-![top hiding schema](/uploads/top_hiding_schema.jpeg)
+![top hiding schema](/public/uploads/top_hiding_schema.jpeg)
 
 #### Prepaid
 This scenario can be used by a company for prepaid users to announce them at the beginning of the call what their credit is and at the end of the call what their remaining credit is. 
@@ -60,7 +60,7 @@ What must happen at session level is:
 To establish this sessions the SIP message flow has to look like this( it is assumed that the
 same media server is used):
 
-![ppaid](/uploads/ppaid.jpeg)
+![ppaid](/public/uploads/ppaid.jpeg)
 
 ##### Scenario Document
 The relevant part of an OpenSIPS config that implements this scenario is shown below:
@@ -145,7 +145,7 @@ The OpenSIPS B2BUA must connect two end points, start the call from the middle. 
 ##### Scenario Schema
 Below is the theoretical message flow that should occur for this functionality to be achieved.
 
-![marketing](/uploads/marketing.jpeg)
+![marketing](/public/uploads/marketing.jpeg)
 
 ##### Scenario Document
 The relevent part of an OpenSIPS config that implements this scenario is shown below:

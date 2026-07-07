@@ -33,13 +33,13 @@ OpenSIPS can account different events during the accounting scope, such as:
 * **success event**. Such events generate an accounting record when:
 
   * in *transaction scope* - the transaction when successfully completed (with a 2xx reply):
-    ![acc event success](/uploads/acc_event_success.png)
+    ![acc event success](/public/uploads/acc_event_success.png)
   * in *dialog scope* - the call was successfully established:
-    ![acc event success dialog](/uploads/acc_event_success_dialog.png)
+    ![acc event success dialog](/public/uploads/acc_event_success_dialog.png)
 * **missed call event**. Such events may occur only during the dialog setup phase (during the lifetime of the transaction for the initial INVITE), when a call attempt (or branch) was not established, as the UAS destination rejected or declined the call; There can be multiple such events per a single SIP call (due SIP forking). Note that a SIP call generating an accounting *success event* may also generate one or more *missed call event* because of the SIP branches (call attempts) that failed during serial or parallel forking; The *missed call events* are also known as UAS-side accounting (as they are related to the relation between OpenSIPS and callee/UAS side).
-  ![acc event missed](/uploads/acc_event_missed.png)
+  ![acc event missed](/public/uploads/acc_event_missed.png)
 * **failed transaction event**. Such event is generated only in the transaction scope, when a transaction fails (reply code >=300) on the UAC side of OpenSIPS - this is a complementary event for the *successful transaction* event.
-  ![acc event failed](/uploads/acc_event_failed.png)
+  ![acc event failed](/public/uploads/acc_event_failed.png)
 
 ### Accounting backends
 

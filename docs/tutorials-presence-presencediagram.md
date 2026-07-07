@@ -3,4 +3,4 @@ title: "Documentation"
 description: ""
 ---
 
-![presence schema](/uploads/presence-schema.jpg)
+![presence schema](/public/uploads/presence-schema.jpg)
