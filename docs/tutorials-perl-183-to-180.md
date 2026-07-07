@@ -8,7 +8,7 @@ description: "loadmodule \"perl.so\" modparam(\"perl\", \"filename\", \"/etc/ope
 We want to catch all 183 status responses, remove the SDP body and send a plain 180 reply instead. This example script has also been posted to the OpenSIPS-Users mailinglist and should show the possibilities of the OpenSIPS Perl module.
 
 ### Usage
-```c
+```opensips
 
 loadmodule "perl.so"
 modparam("perl", "filename", "/etc/opensips/perlfunctions.pl")

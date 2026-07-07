@@ -78,7 +78,7 @@ recompiled to enable this memory allocator.
 
 Add the following global parameter to the OpenSIPS configuration:
 
-```text
+```opensips
 memdump = 1
 ```
 

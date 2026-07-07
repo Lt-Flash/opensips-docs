@@ -70,7 +70,7 @@ As you probably discovered, in OpenSIPS 2.1 the tls became a module, so now, eve
 
 ### The listener
 In order to accept TLS connections, OpenSIPS must have a TLS listener. In order to do this we have to include the following line in our script:
-```c
+```opensips
 listen=tls:<your-ip-address>:<port>
 ```
 
@@ -85,27 +85,27 @@ where port is the port you gave to listen line in your script.
 
 Since TLS became a module, now we need to insert the following line in the modules section
 
-```c
+```opensips
 loadmodule "proto_tls.so"
 ```
 
 Since this is a test scenario, we only want to check that the TLS handshake works fine, so we won’t 
 set parameters to enable certificate checking or ciphers. As OpenSIPS enables these checkings by default because a real TLS configuration must check the certificates, we will need to disable them.
 
-```c
+```opensips
 modparam("proto_tls", "verify_cert", "0") 
 modparam("proto_tls", "require_cert", "0") 
 ```
 
 We will need to specify the TLS method which will specify what type of protocol we will use. In this tutorial we will use “TLSv1”, but you can always use another one, see the full list in the **[module’s documentation section](/modules/2-1/proto_tls#id294154)**. 
 
-```c
+```opensips
 modparam("proto_tls", "tls_method", "TLSv1")
 ```
 
 Also, in order for OpenSIPS to start, we need to configure some "global" certificates. We need to do this because we need a default match, if no domain is matched, we will need a default case, something to match everything, just like **0.0.0.0** route in routing tables. You can always jump over the following section [**3.4 Setting up TLS domains**](/tutorials-tls-2-1) directly to [**3.5 Full script example**](/tutorials-tls-2-1), because they represent a more specific type of scripting, but it is recommended to read about **server domains** which allow you to use different settings on different listening interfaces. 
 
-```c
+```opensips
  modparam("proto_tls", "certificate", "$CERT_DIR/rootCA/cacert.pem")           
  modparam("proto_tls", "private_key", "$CERT_DIR/rootCA/private/cakey.pem")    
  modparam("proto_tls", "ca_list", "$CERT_DIR/rootCA/cacert.pem")                
@@ -116,7 +116,7 @@ Also, in order for OpenSIPS to start, we need to configure some "global" certifi
 
 As specified in section [**3.1 Overview**](/tutorials-tls-2-1), our scenario includes two TLS connections, one from the UAC to OpenSIPS and the second one from OpenSIPS to the UAS. Whereas in the first connection OpenSIPS will be the server side of the connection, in the second one it will be the client side so we need to define two different TLS domains.
 
-```c
+```opensips
  #first the  server domain
  modparam("proto_tls", "server_domain", "sv_dom=<your-ip-address>:<port>")           
  modparam("proto_tls", "certificate", "sv_dom:$CERT_DIR/rootCA/cacert.pem")           
@@ -135,7 +135,7 @@ As specified in section [**3.1 Overview**](/tutorials-tls-2-1), our scenario inc
 ### Full script example
 Now that we specified all we need to set in order to be able to use TLS both as a server and as a client we will specify here a full script (only the TLS part) in order to make things more clear. Basically it is all we explained in the previous sections of this chapter put together.
 
-```c
+```opensips
  #define the listener
  listen = tls:<your-ip-address>:<port>
 

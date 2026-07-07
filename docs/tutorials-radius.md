@@ -116,7 +116,7 @@ The **OpenSIPS** module that supports accounting is the ACC module. Its responsi
 
 To enable the RADIUS accounting support, you have to set the script parameter called **aaa_url** for the ACC module like this:
 
-```c
+```opensips
 
 modparam("acc", "aaa_url", "radius:/etc/radiusclient-ng/radiusclient.conf")
 
@@ -130,7 +130,7 @@ For more information about that and more, check [ACC AAA flags](/modules/devel/a
 
 A special feature of the accounting module is the optional **aaa_extra** parameter. Its functionality is to account extra values via AAA (in our case, RADIUS). This functionality is a limited version of the custom RADIUS queries, which will be presented later on. You can set this parameter like this:
 
-```c
+```opensips
 
 modparam(“acc”, “aaa_extra”, “via=$hdr(Via[*]); email=$avp(s:email); Bcontact=$ct / reply”)
 
@@ -140,7 +140,7 @@ modparam(“acc”, “aaa_extra”, “via=$hdr(Via[*]); email=$avp(s:email); B
 
 This is an example of usage of the AAA function provided by the ACC module in which a comment is appended.
 
-```text
+```opensips
 
 ...
 acc_aaa_request(“Some comment”);
@@ -164,7 +164,7 @@ The proxy will simply pass along the credentials to the freeRADIUS server and ex
 
 Similar to the accounting module, to enable authentication, you have to set the **aaa_url** from the script.
 
-```c
+```opensips
 
 modparam("auth_aaa", "aaa_url", "radius:/etc/radiusclient-ng/radiusclient.conf")
 
@@ -176,7 +176,7 @@ There are other optional flags and parameters you may want to use, depending on 
 
 Here are some examples of usage for the functions exported by the AUTH_AAA module:
 
-```bash
+```opensips
 
 ...
 if (!aaa_www_authorize("opensips.org")) {
@@ -202,7 +202,7 @@ OpenSIPS has introduced a new feature that allows any type of RADIUS queries to 
 To enable this module, you simply have to set the **radius_config** parameter, containing the path for the radiusclient library configuration file.
 For example:
 
-```c
+```opensips
 
 modparam("aaa_radius", "radius_config", "/etc/radiusclient-ng/radiusclient.conf")
 
@@ -238,7 +238,7 @@ The left-hand side of the assignment must be an attribute name known by the RADI
 The right-hand side of the assignment must be a script pseudo variable or a script AVP. For more information about them see [Documentation - Scripting Variables](/manual/devel).
 For example:
 
-```c
+```opensips
 
 modparam("aaa_radius","sets","set1 = (User-Name=$var(usr), Sip-Group = $var(grp), Service-Type = $var(type)) ")
 
@@ -254,7 +254,7 @@ Only one set is needed as a parameter because no AVPs can be extracted from the 
 The set must be defined using the "sets" exported parameter.
 For example:
 
-```text
+```opensips
 ...
 radius_send_acct(“set1”);
 ...
@@ -268,7 +268,7 @@ The function takes two parameters: the name of the set that contains the list of
 The sets must be defined using the "sets" exported parameter.
 For example:
 
-```text
+```opensips
 ...
 radius_send_auth(“set1”,”set2”);
 ...

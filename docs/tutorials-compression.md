@@ -39,14 +39,14 @@ SIP logic provided for decompressing server:
 
 Must load the module
 
-```c
+```opensips
 
 loadmodule "compression.so"
 
 ```
 
 Optionally, we can set the compression level(1-9), default 6:
-```c
+```opensips
 
 modparam("compression", "compression_level", 7)
 
@@ -54,7 +54,7 @@ modparam("compression", "compression_level", 7)
 
 And then let's assume that for all "INVITES" we want to do compression and compaction:
 
-```text
+```opensips
 
 route {
       if (is_method("INVITE") {
@@ -94,7 +94,7 @@ route {
 
 Let's assume that he loaded the "compression.so" and go directly to script logic. The compressor did it for invites so the decompressor will do the same. Also keep in mind that this is one of the first things you want to do, because this function will change the sip message so all the changes to the message you have done before this will not be taken into consideration.
 
-```text
+```opensips
 
 route {
       if (is_method("REGISTER")) {

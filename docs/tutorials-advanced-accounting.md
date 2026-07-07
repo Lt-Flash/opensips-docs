@@ -94,7 +94,7 @@ In the routing section of the script the [do_accounting()](/modules/2-3/acc#do_a
 
 When processing the SIP requests in the *request route*, when handling the sequential request, the [do_accounting()](/modules/2-3/acc#do_accounting) function is used (see line 127) to trigger accounting records  on *success* and *failed transactions*(reply code >= 300) events for all the **BYE** transactions:
 
-```text
+```opensips
         if (has_totag()) {
                 # sequential requests within a dialog should
                 # take the path determined by record-routing
@@ -120,7 +120,7 @@ If the **failed** option is not used,  the [do_accounting()](/modules/2-3/acc#do
 
 Also in the *request route*, when handling the initial requests, for *INVITE* requests we do (see line 194): 
 
-```text
+```opensips
         # account only INVITEs
 	if (is_method("INVITE")) {
 		do_accounting("log");
@@ -137,7 +137,7 @@ ACC: transaction answered: timestamp=1474540997;method=INVITE;\
 
 The last [do_accounting()](/modules/2-3/acc#do_accounting) usage in the script (line 231) is for triggering the *missed call events* for the calls (INVITE requests) sent to our registered users.
 
-```text
+```opensips
         # when routing via usrloc, log the missed calls also
         do_accounting("log","missed");
 ```
@@ -163,7 +163,7 @@ This is the [config file](http://www.opensips.org/pub/tutorials/accounting/opens
 
 First of all, in order to be able to use the CDR engine, dialog module needs to be loaded (we do it here in the simplest possible way):
 
-```c
+```opensips
 loadmodule "dialog.so"
 modparam("dialog", "db_mode, 0)
 ```
@@ -172,7 +172,7 @@ Now, in terms of scripting we remove the *do_accounting()* for the BYE transacti
 
 To get directly CDR as accounting records, when doing [do_accounting()](/modules/2-3/acc#do_accounting) (line 193) for initial INVITEs (which create SIP calls/dialogs), we need to switch it from transaction scope to dialog scope, by using the **cdr** keyword to the flags:
 
-```text
+```opensips
         # account only INVITEs
 	if (is_method("INVITE")) {
 		do_accounting("log", "cdr");
@@ -183,14 +183,14 @@ Keep in mind that the CDR flag affects only the calls(dialogs).
 
 To enable serial forking (for all the registered contacts) the following lines were added after a successful lookup into location table. The code is serializing the found contact based on their priority (Q parameter) - first we send the call to the higher priority contacts and in case of failure (no call established), we serial fork the call to the next contacts with lower priority (see [serialize_branches()](/manual/2-2/script-corefunctions) description) . This re-attempting (serial forking) is done until there are no more contacts left. 
 
-```text
+```opensips
         serialize_branches(1);
         next_branches();
 ```
 
 In the failure route the following lines were added:
 
-```text
+```opensips
        do_accounting("log","missed");
 
         next_branches();
@@ -235,13 +235,13 @@ This is the [full OpenSIPS config file](http://www.opensips.org/pub/tutorials/ac
 
 Starting from the previous script, we try to add extra accounting information about the IP addresses where the call was originated from and terminated to. First of all we need to define the additional data that will be added to our accounted information in the **modparam** section using the [extra_fields](/modules/2-3/acc#id294086) parameter
 
-```c
+```opensips
    modparam("acc", "extra_fields", "log: src_ip; dst_ip")
 ```
 
 The following definition would also be valid
 
-```c
+```opensips
    modparam("acc", "extra_fields", "log: src_ip->src_ip; src_ip->dst_ip")
 ```
 
@@ -251,13 +251,13 @@ In terms of scripting, all we need to do is to set the [`$acc_extra`](/modules/2
 
 * for the originating IP of the call we consider the source IP of the INVITE (initial request), so in request route, when handling initial SIP requests, we do (see line 224):
 
-```text
+```opensips
         $acc_extra(src_ip) = $si;
 ```
 
 * for the termination IP of the call we consider the source IP of final SIP reply (>=200), so in the onreply route, when handling SIP replies, we do (see line 268):
 
-```text
+```opensips
     if ( $rs >= 200 )
         $acc_extra(dst_ip) = $si;
 ```
@@ -284,7 +284,7 @@ This is the [full OpenSIPS config file](http://www.opensips.org/pub/tutorials/ac
 
 The modparam declaration for [leg_fields](/modules/2-3/acc#id294132) is very similar to the [extra_fields](/modules/2-3/acc#id294086)
 
-```c
+```opensips
 modparam("acc", "leg_fields", "log: caller; callee")
 ```
 
@@ -292,14 +292,14 @@ The same is the case for [`$acc_leg`](/modules/2-3/acc#id294672) variable. The o
 
 In the script, everything that concerns the **lookup()** function was moved into a route, in order to use it multiple times. For the initial call, we'll get the URI of the caller from the **From** header. The URI of the callee is in the R-URI:
 
-```text
+```opensips
       $acc_leg(caller) = $fu;
       $acc_leg(callee) = $ru;
 ```
 
 In case our call leg to Bob (as described above) fails, script execution will resume from the *failure_route*, where we will do serial forking to the redirect URI (to Charlie). In failure route, the redirected URI is resolved in the same way we did with the first uri, using **lookup** function. Now the leg Bob to Charlie is about to start, so we'll create a new leg and populate the [`$acc_leg`](/modules/2-3/acc#id294672) variables accordingly for this new leg. The caller URI will be the callee URI of the previous leg, while the callee U will be the new redirect URI:
 
-```text
+```opensips
     if ( $avp(redirect_uri)!=NULL ) {
         # set the new destination
         $ru = $avp(redirect_uri);

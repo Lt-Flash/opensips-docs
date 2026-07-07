@@ -3,7 +3,7 @@ title: "PUA USRLOC config file"
 description: "debug=3 fork=yes log_stderror=no"
 ---
 
-```c
+```opensips
 
 #
 # OpenSIPS 1.11.x configuration file

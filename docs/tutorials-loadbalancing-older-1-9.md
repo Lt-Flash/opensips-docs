@@ -66,7 +66,7 @@ Using the LB functionality is very simple - you just have to pass to the LB modu
 
 The resource detection is done in the **OpenSIPS** routing script, based on whatever information is appropriated. For example, looking at the RURI (dialed number) you can see if the call must go to PSTN or if it a voicemail or conference number; also, by looking at the codecs advertised in the SDP, you can figure out if transcoding is or not also required.
 
-```text
+```opensips
 
   if (!load_balance("1","transc;pstn")) {
       sl_send_reply("500","Service full");
@@ -161,7 +161,7 @@ This translated into the following setup:
 
 ### OpenSIPS Scripting
 
-```c
+```opensips
 
 debug=1
 memlog=1

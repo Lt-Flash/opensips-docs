@@ -54,7 +54,7 @@ All functions properly handle retransmissions. More details can be found in the 
 
   
 
-```c
+```opensips
 
 ####### Global Parameters #########
 

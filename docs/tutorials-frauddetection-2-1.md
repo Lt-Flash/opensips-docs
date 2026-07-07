@@ -89,7 +89,7 @@ As stated in the Chapter 1 of the [documentation](/modules/2-1/fraud_detection),
 ## Example script
 
 Firstly, we load the dependencies and the **fraud_detection** module
-```c
+```opensips
 
 loadmodule "drouting.so"
 loadmodule "dialog.so"
@@ -98,7 +98,7 @@ loadmodule "fraud_detection.so"
 ```
 
 Then we set the mandatory parameters
-```c
+```opensips
 
 modparam("drouting", "db_partitions_url", "mysql://root:123456@localhost/opensips")
 modparam("drouting", "use_partitions", 1)
@@ -107,14 +107,14 @@ modparam("fraud_detection", "db_url", "mysql://root:123456@localhost/opensips")
 ```
 
 Optionally, we load the event_route module to bind the warning and critical events to an event route
-```c
+```opensips
 
 loadmodule "event_route.so"
 
 ```
 
 Let's assume that for each INITIAL INVITE we want to check and update the fraud parameters
-```text
+```opensips
 
 route{
 	if (has_totag()) {
@@ -135,7 +135,7 @@ Some issues can be identified on the spot, hence the check of the return code. P
 Please note the last parameter of the *check_fraud* function: it's the profile id we set earlier.
 
 Optionally, we can bind the warning and critical events
-```text
+```opensips
 
 event_route[E_FRD_WARNING] {
 

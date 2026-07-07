@@ -75,7 +75,7 @@ dmesg
 
 In order to use WebSocket and WebSocketSecure in OpenSIPS, one has to load the [proto_ws](/modules/2-2/proto_ws) and [proto_wss](/modules/2-2/proto_wss) into its configuration file and define a listener for the WebSocket and WebSocketSecure protocol.  We also must load the [tls_mgm](/modules/2-2/tls_mgm) module in order to manage our certificates.
 
-```c
+```opensips
 
 # set listeners for all protocols
 listen=ws:127.0.0.1:8080
@@ -99,7 +99,7 @@ modparam("tls_mgm", "private_key","/etc/letsencrypt/live/acme.com/privkey.pem")
 ```
 
 Next, the [rtpengine](/modules/2-2/rtpengine) module has to be loaded and configured to communicate with the `rtpengine` daemon.
-```c
+```opensips
 
 loadmodule "rtpengine.so"
 modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.1:60000")
@@ -110,7 +110,7 @@ Note that the [rtpengine_sock](/modules/2-2/rtpengine#rtpengine.p.rtpengine_sock
 
 Next, the routing logic has to be changed in order to treat different the clients that use DTLS-SRTP, from the ones that use plain RTP and enable bridging if necessary. To do that, one can check if the request message was received over the WebSocket protocol. This can be achieved using the following code:
 
-```bash
+```opensips
 
 if (proto == WS || proto == WSS)
     setflag(SRC_WS);
@@ -119,7 +119,7 @@ if (proto == WS || proto == WSS)
 
 In case the request is a REGISTER, we want to store this information in the *location* table, so that we know then the user is called. To do that, we can set a branch flag before calling the [save()](/modules/2-2/registrar#id294034) function. This way, when the [lookup()](/modules/2-2/registrar#id294366) method returns, we will be able to determine whether the client uses WebSocket or not.
 
-```text
+```opensips
 
     if (is_method("REGISTER")) {
         if (isflagset(SRC_WS))
@@ -135,7 +135,7 @@ In case the request is a REGISTER, we want to store this information in the *loc
 ```
 
 When a call is placed, based on the two flags (`STR_WS` and `DST_WS`) we can determine what our caller and callee can "speak" (either RTP or DTLS-SRTP) and instruct the `rtpengine` daemon how to handle the call. We can do that by tuning the parameters passed to the  [rtpengine_offer()](/modules/2-2/rtpengine#rtpengine.f.rtpengine_offer) function.
-```text
+```opensips
 
     if (isflagset(SRC_WS) && isbflagset(DST_WS))
         $var(rtpengine_flags) = "ICE=force-relay DTLS=passive";
@@ -152,7 +152,7 @@ When a call is placed, based on the two flags (`STR_WS` and `DST_WS`) we can det
 
 The [rtpengine_answer()](/modules/2-2/rtpengine#rtpengine.f.rtpengine_answer) function logic should look like this:
 
-```text
+```opensips
 
     if (isflagset(SRC_WS) && isbflagset(DST_WS))
         $var(rtpengine_flags) = "ICE=force-relay DTLS=passive";
@@ -169,7 +169,7 @@ The [rtpengine_answer()](/modules/2-2/rtpengine#rtpengine.f.rtpengine_answer) fu
 
 Now, all we have to do is to close the RTP/SRTP session when the call is ended. To do that, we use the [rtpengine_delete()](/modules/2-2/rtpengine#rtpengine.f.rtpengine_delete) function:
 
-```text
+```opensips
 
     if (is_method("BYE|CANCEL")) {                                                                                                                      
         rtpengine_delete();
@@ -187,7 +187,7 @@ The [following](http://www.opensips.org/pub/tutorials/websockets/opensips.cfg) c
 > [!NOTE]
 > the default port for WSS (443) is privileged, so if you are running this script, you should start OpenSIPS with super-user rights (as user root).
 
-```c
+```opensips
 
 #
 # OpenSIPS residential configuration script

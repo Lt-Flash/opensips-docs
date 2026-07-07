@@ -62,13 +62,13 @@ As a result of the enhancement of the interface for module functions (for generi
 
 For example:
 
-```text
+```opensips
  send_reply( "200", "OK"); 
 ```
 
 is now
 
-```text
+```opensips
  send_reply( 200, "OK"); 
 ```
 
@@ -76,13 +76,13 @@ as the first parameter requires a numerical value.
 
 Also :
 
-```text
+```opensips
  check_source_address( "4", "$avp(ctx)"); 
 ```
 
 is now
 
-```text
+```opensips
  check_source_address( 4, $avp(ctx)); 
 ```
 
@@ -94,7 +94,7 @@ Since all OpenSIPS strings which get passed to functions have become format stri
 
 For example:
 
-```text
+```opensips
 
 avp_subst("$avp(sdp_ip)", "/^c=IN IP[46] (.*)$/\1/"); 
 
@@ -102,7 +102,7 @@ avp_subst("$avp(sdp_ip)", "/^c=IN IP[46] (.*)$/\1/");
 
 becomes:
 
-```text
+```opensips
 
 avp_subst("$avp(sdp_ip)", "/^c=IN IP[46] (.*)$$/\1/"); 
 
@@ -171,7 +171,7 @@ To do the translation to the right type of parameter, check the documentation of
 
 ### EVENT_ROUTE module
 * **fetch_event_params()** function has been completely dropped - in order to fetch the parameters of an event, you will have to use the `$params(name)` variable in the route. As an example, the following snippets have the same meaning in the two different versions:
-```bash
+```opensips
 
 # route used in OpenSIPS 2.4
 event_route[E_PIKE_BLOCKED] {

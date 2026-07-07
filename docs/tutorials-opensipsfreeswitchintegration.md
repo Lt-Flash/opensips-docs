@@ -175,7 +175,7 @@ vi opensips_residential_01.cfg
 
 Follow this guidelines
 
-```c
+```opensips
 
 #follow CUSTOMIZE ME
 # modify db password
@@ -675,7 +675,7 @@ Then you add a route( marked "2") that checks if the called number begins with "
 
 Then you put the correct FreeSWITCH IP address where it redirects to VM (marked "freeswitch").
 
-```c
+```opensips
 
 #
 # $Id: opensips_residential.m4 9042 2012-05-17 13:57:10Z vladut-paiu $

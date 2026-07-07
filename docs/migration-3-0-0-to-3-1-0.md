@@ -103,7 +103,7 @@ The following is the full list of backwards-incompatible syntax or functional ch
 ### PROTO_TLS module
 
 * the **tls_handshake_timeout** and **tls_send_timeout** parameters have been moved from the **tls_mgm** module to the **proto_tls** module. Check out the new documentation [here](/modules/3-1/proto_tls#param_tls_handshake_timeout)]. To migrate your script, you should replace any of your lines as it follows:
-```c
+```opensips
 
     # Before 3.1 was modparam("tls_mgm", "tls_handshake_timeout", 200)
     modparam("proto_tls", "tls_handshake_timeout", 200)
@@ -115,7 +115,7 @@ The following is the full list of backwards-incompatible syntax or functional ch
 ### PROTO_WSS module
 
 * the `tls_handshake_timeout` and `tls_send_timeout` from the **tls_mgm** module have been removed, thus they can no longer be used to tune the **proto_wss** module. Instead of those parameters, we've added the [`wss_tls_handshake_timeout`](/modules/3-1/proto_wss#param_wss_tls_handshake_timeout) and [`wss_send_timeout`](/modules/3-1/proto_wss#param_wss_send_timeout), that are now part of the **proto_wss** module. To migrate your script, you should replace any of your lines as it follows:
-```c
+```opensips
 
     # Before 3.1 was modparam("tls_mgm", "tls_handshake_timeout", 200)
     modparam("proto_wss", "wss_tls_handshake_timeout", 200)

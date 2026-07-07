@@ -5,7 +5,7 @@ description: "You will need to load the exec.so module so you can run external s
 
 You will need to load the exec.so module so you can run external scripts
 
-```c
+```opensips
 
 loadmodule "exec.so"
 
@@ -14,7 +14,7 @@ loadmodule "exec.so"
 In this snippet I am restricting by IP address and by a IP range. You will notice that I used a regular expression to determine the IP range 192.168.0.0/16.
 You will also notice in this example the use of the function [exec_dest()](/modules/1-4/exec#id228172). This function calls an external script and assumes that the script returns a SIP URI. Then sets the "Contact" header to the returned SIP URI. You can also use pseudo variables in the exec_dset() function. In this example `$tU` (To Username) and `$fU` (From Username) are used.
 
-```text
+```opensips
 
 route {
     if ( src_ip == 10.x.x.x || src_ip =~ "^192\.168\..*") {

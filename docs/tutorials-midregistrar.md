@@ -50,7 +50,7 @@ First, we will configure the mid-registrar to greatly increase the outgoing Cont
 
 ##### Module configuration
 
-```c
+```opensips
 
 loadmodule "mid_registrar.so"
 modparam("mid_registrar", "mode", 1) /* 0 = mirror / 1 = ct / 2 = AoR */
@@ -69,7 +69,7 @@ We first load the *mid_registrar* module and set its parameters. Going through e
 
 ##### REGISTER handling
 
-```text
+```opensips
 
     if (is_method("REGISTER")) {
         mid_registrar_save("location");
@@ -101,7 +101,7 @@ Next, we proceed with contact lookup during calls or instant messages:
 
   
 
-```text
+```opensips
 
     # initial requests from main registrar, need to look them up!
     if (is_method("INVITE|MESSAGE") && $si == "10.0.0.3" && $sp == 5070) {
@@ -140,7 +140,7 @@ The mid-registrar can additionally take over all call forking responsibilities. 
 
 ##### Module configuration
 
-```c
+```opensips
 
 loadmodule "mid_registrar.so"
 modparam("mid_registrar", "mode", 2) /* 0 = mirror / 1 = ct / 2 = AoR */

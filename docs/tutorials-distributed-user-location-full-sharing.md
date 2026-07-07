@@ -46,7 +46,7 @@ The relevant *opensips.cfg* sections:
 
   
 
-```c
+```opensips
 
 listen = sip:10.0.0.150 # virtual IP (same on both nodes)
 listen = bin:10.0.0.177
@@ -86,7 +86,7 @@ INSERT INTO clusterer(id, cluster_id, node_id, url, state, no_ping_retries, prio
 
 Some setups require periodic SIP OPTIONS pings originated by the registrar towards some of the contacts in order to keep the NAT bindings alive. Here is an example configuration:
 
-```c
+```opensips
 
 loadmodule "nathelper.so"
 modparam("nathelper", "natping_interval", 30)
@@ -99,7 +99,7 @@ modparam("nathelper", "max_pings_lost", 5)
 
 We then enable these branch flags for some or all contacts before calling [save()](/modules/2-4/registrar#func_save):
 
-```text
+```opensips
 
     ...
     setbflag(SIPPING_ENABLE);
@@ -141,7 +141,7 @@ On the backend layer (cluster instances), here are the relevant *opensips.cfg* s
 
   
 
-```c
+```opensips
 
 listen = sip:10.0.0.177
 listen = bin:10.0.0.177
@@ -207,7 +207,7 @@ INSERT INTO clusterer(id, cluster_id, node_id, url, state, no_ping_retries, prio
 
 ### Shared NAT pinging
 
-```c
+```opensips
 
 loadmodule "nathelper.so"
 modparam("nathelper", "natping_interval", 30)
@@ -223,7 +223,7 @@ modparam("usrloc", "shared_pinging", 1)
 
 We then enable these branch flags for some or all contacts before calling [save()](/modules/2-4/registrar#func_save):
 
-```text
+```opensips
 
     ...
 

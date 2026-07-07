@@ -32,13 +32,13 @@ As **dialplan** depends now on the **pcre** library, the module is no longer com
 If you use the **get_source_group()** function, you will need to get the output in a different way - instead of using the return code as output, the function now requires a variable as parameter to return the output.
 
 The change is from:
-```text
+```opensips
 
   $var(output) = get_source_group();
 
 ```
 to
-```text
+```opensips
 
   get_source_group("$var(output)");
 
@@ -55,13 +55,13 @@ In your config, you just have to remove the **loadmodule** for the **xlog** modu
 The module parameter attrs_avp has changed to gw_attrs_avp
 
 The change is from:
-```c
+```opensips
 
   modparam("drouting", "attrs_avp", "$avp(dr_attrs)")
 
 ```
 to
-```c
+```opensips
 
   modparam("drouting", "gw_attrs_avp", "$avp(dr_attrs)")
 

@@ -69,7 +69,7 @@ dmesg
 ### OpenSIPS
 
 In order to use WebSocket in OpenSIPS, one has to load the [proto_ws](/modules/2-1/proto_ws) into its configuration file and define a listener for the WebSocket protocol.
-```c
+```opensips
 
 listen=ws:127.0.0.1:8080
 ...
@@ -78,7 +78,7 @@ loadmodule "proto_ws.so"
 ```
 
 Next, the [rtpengine](/modules/2-1/rtpengine) module has to be loaded and configured to communicate with the `rtpengine` daemon.
-```c
+```opensips
 
 loadmodule "rtpengine.so"
 modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.1:60000")
@@ -89,7 +89,7 @@ Note that the [rtpengine_sock](/modules/2-1/rtpengine#rtpengine.p.rtpengine_sock
 
 Next, the routing logic has to be changed in order to treat different the clients that use DTLS-SRTP, from the ones that use plain RTP and enable bridging if necessary. To do that, one can check if the request message was received over the WebSocket protocol. This can be achieved using the following code:
 
-```bash
+```opensips
 
 if (proto == WS)
     setflag(SRC_WS);
@@ -98,7 +98,7 @@ if (proto == WS)
 
 In case the request is a REGISTER, we want to store this information in the *location* table, so that we know then the user is called. To do that, we can set a branch flag before calling the [save()](/modules/2-1/registrar#id294034) function. This way, when the [lookup()](/modules/2-1/registrar#id294366) method returns, we will be able to determine whether the client uses WebSocket or not.
 
-```text
+```opensips
 
     if (is_method("REGISTER")) {
         if (isflagset(SRC_WS))
@@ -114,7 +114,7 @@ In case the request is a REGISTER, we want to store this information in the *loc
 ```
 
 When a call is placed, based on the two flags (`STR_WS` and `DST_WS`) we can determine what our caller and callee can "speak" (either RTP or DTLS-SRTP) and instruct the `rtpengine` daemon how to handle the call. We can do that by tuning the parameters passed to the  [rtpengine_offer()](/modules/2-1/rtpengine#rtpengine.f.rtpengine_offer) function.
-```text
+```opensips
 
     if (isflagset(SRC_WS) && isbflagset(DST_WS))
         $var(rtpengine_flags) = "ICE=force-relay DTLS=passive";
@@ -131,7 +131,7 @@ When a call is placed, based on the two flags (`STR_WS` and `DST_WS`) we can det
 
 The [rtpengine_answer()](/modules/2-1/rtpengine#rtpengine.f.rtpengine_answer) function logic should look like this:
 
-```text
+```opensips
 
     if (isflagset(SRC_WS) && isbflagset(DST_WS))
         $var(rtpengine_flags) = "ICE=force-relay DTLS=passive";
@@ -148,7 +148,7 @@ The [rtpengine_answer()](/modules/2-1/rtpengine#rtpengine.f.rtpengine_answer) fu
 
 Now, all we have to do is to close the RTP/SRTP session when the call is ended. To do that, we use the [rtpengine_delete()](/modules/2-1/rtpengine#rtpengine.f.rtpengine_delete) function:
 
-```text
+```opensips
 
     if (is_method("BYE|CANCEL")) {                                                                                                                      
         rtpengine_delete();
@@ -161,7 +161,7 @@ Having done all these settings should provide a full setup for interconnecting S
 
 The following configuration file is a minimal working example of a Residential script that can handle clients connections over both UDP and Websocket transports.  This example assumes that the SDP offer is present in the INVITE from the UAC and the SDP answer is in the 200 OK from the UAS.
 
-```c
+```opensips
 
 #
 # OpenSIPS residential configuration script

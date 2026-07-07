@@ -5,7 +5,7 @@ description: "Using the new 'dialog' module released with the 1.5x branch, it is
 
 Using the new 'dialog' module released with the **1.5x branch**, it is now possible to easily impose channel limits within existing routing configurations. The example included below is a sample route block that integrates outbound channel limits with call control prepaid account support. Note that the example requires an AVP variable 'channels' to be set as user preference and can be adapted for both outbound and inbound channel limits using the existing profile architecture of the dialog module. 
 
-```c
+```opensips
 
 ....
 # define the profile

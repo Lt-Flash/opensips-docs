@@ -12,7 +12,7 @@ Different keys can be used to group calls (like the incoming IP address, the cal
 
 In the below example we create a generic route to implement the limitation of concurrent calls from the same caller. The Route takes two parameters, the caller SIP username and the value of the limit. This Route is to be used when calls are created (when initial INVITEs are handled) after the dialog was created in script.  
 
-```c
+```opensips
 
 ....
 # define the profile

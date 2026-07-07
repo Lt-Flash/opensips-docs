@@ -252,7 +252,7 @@ For now, *app_opensips* will connect on startup to a MySQL OpenSIPS database, ha
 
 Here are the relevant *opensips.cfg* sections to perform SIP digest authentication via Diameter:
 
-```c
+```opensips
 
 log_stdout = yes # very important, to see the freeDiameter library logs
 ...
@@ -295,7 +295,7 @@ As of now, *app_opensips* will append each CDR to a hardcoded file path of "/var
 
 To enable Diameter accounting support in your *opensips.cfg* file, make sure to set:
 
-```c
+```opensips
 
 log_stdout = yes # very important, to see the freeDiameter library logs
 ...

@@ -65,7 +65,7 @@ As we have to store in the same time the passwords of more than one users, we ne
 #### Script example
 
 Current format of authentication script for REGISTER is:
-```text
+```opensips
 
 	if (!www_authorize("", "subscriber")) {
 		www_challenge("", "0");
@@ -75,7 +75,7 @@ Current format of authentication script for REGISTER is:
 ```
 
 By adding memcache support, the script looks like:
-```c
+```opensips
 
 ....
 loadmodule "modules/db_mysql/db_mysql.so"
@@ -164,7 +164,7 @@ Each machine where OpenSIPS runs should have a Redis Server instance running. Al
 
 Rejecting calls due to low credit and updating credit cost after each call end can be done in the following way :
 
-```c
+```opensips
 
 modparam("cachedb_redis","cachedb_url","redis://192.168.2.1:6379") 
 ....

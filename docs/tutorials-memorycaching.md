@@ -51,7 +51,7 @@ As we have to store in the same time the passwords of more than one users, we ne
 ### Script
 
 Current format of authentication script for REGISTER is:
-```text
+```opensips
 
 	if (!www_authorize("", "subscriber")) {
 		www_challenge("", "0");
@@ -61,7 +61,7 @@ Current format of authentication script for REGISTER is:
 ```
 
 By adding memcache support, the script looks like:
-```c
+```opensips
 
 ....
 loadmodule "modules/db_mysql/db_mysql.so"

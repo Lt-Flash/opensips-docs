@@ -73,7 +73,7 @@ As you probably discovered, in OpenSIPS 2.2 the tls became a module, so now, eve
 
 ### The listener
 In order to accept TLS connections, OpenSIPS must have a TLS listener. In order to do this we have to include the following line in our script:
-```c
+```opensips
 listen=tls:<your-ip-address>:<port>
 ```
 
@@ -88,19 +88,19 @@ where port is the port you gave to listen line in your script.
 
 Since TLS became a module, now we need to insert the following line in the modules section
 
-```c
+```opensips
 loadmodule "proto_tls.so"
 ```
 
 Also, since version 2.2 almost all tls parameters were moved to a new module, **tls_mgm**, proto_tls handling only connection related jobs.
-```c
+```opensips
 loadmodule "tls_mgm.so"
 ```
 
 Since this is a test scenario, we only want to check that the TLS handshake works fine, so we won’t 
 set parameters to enable certificate checking or ciphers. As OpenSIPS enables these checkings by default because a real TLS configuration must check the certificates, we will need to disable them.
 
-```c
+```opensips
 modparam("tls_mgm", "verify_cert", "0") 
 modparam("tls_mgm", "require_cert", "0") 
 modparam("tls_mgm", "ciphers_list", "NULL") 
@@ -108,7 +108,7 @@ modparam("tls_mgm", "ciphers_list", "NULL")
 
 We will need to specify the TLS method which will specify what type of protocol we will use. In this tutorial we will use “TLSv1”, but you can always use another one, see the full list in the **[module’s documentation section](/modules/2-2/proto_tls#id294154)**. 
 
-```c
+```opensips
 modparam("tls_mgm", "tls_method", "TLSv1")
 ```
 
@@ -116,7 +116,7 @@ modparam("tls_mgm", "tls_method", "TLSv1")
 
 As specified in section [**3.1 Overview**](/tutorials-tls-2-2), our scenario includes two TLS connections, one from the UAC to OpenSIPS and the second one from OpenSIPS to the UAS. Whereas in the first connection OpenSIPS will be the server side of the connection, in the second one it will be the client side so we need to define two different TLS domains.
 
-```c
+```opensips
  #first the  server domain
  modparam("tls_mgm", "server_domain", "sv_dom=<your-ip-address>:<port>")           
  modparam("tls_mgm", "certificate", "sv_dom:$CERT_DIR/rootCA/cacert.pem")           
@@ -135,7 +135,7 @@ As specified in section [**3.1 Overview**](/tutorials-tls-2-2), our scenario inc
 ### Full script example
 Now that we specified all we need to set in order to be able to use TLS both as a server and as a client we will specify here a full script (only the TLS part) in order to make things more clear. Basically it is all we explained in the previous sections of this chapter put together.
 
-```c
+```opensips
  #define the listener(proto_tls)
  listen = tls:<your-ip-address>:<port>
 

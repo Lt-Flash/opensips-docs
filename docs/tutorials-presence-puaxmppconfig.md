@@ -3,7 +3,7 @@ title: "SIMPLE SIP-to-XMPP gateway"
 description: "debug=3 fork=yes log_stderror=no"
 ---
 
-```c
+```opensips
 
 #
 # OpenSIPS 1.11.x configuration file

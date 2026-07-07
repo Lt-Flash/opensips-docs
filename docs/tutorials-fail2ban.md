@@ -10,18 +10,18 @@ Opensips configuration
 To make opensips work with fail2ban, you will have to send the logs to a different file than /var/log/syslog
 
 Change from:
-```text
+```opensips
 log_facility=LOG_LOCAL0
 ```
 
 To:
-```text
+```opensips
 log_facility=LOG_LOCAL7
 ```
 
 And from:
 
-```text
+```opensips
  if (!www_authorize("", "subscriber")) {
 	www_challenge("", "0");
 	exit;
@@ -30,7 +30,7 @@ And from:
 
 To:
 
-```bash
+```opensips
 
 $var(auth_code) = www_authorize("", "subscriber");
 if ( $var(auth_code) == -1 || $var(auth_code) == -2 ) {
@@ -124,12 +124,12 @@ opensips and rsyslog configuration notes for CentOS6
 LOCAL7 is in use by boot logging on CentOS 6, so use LOCAL6 instead.
 
 in /usr/local/etc/openssips.conf Change from:
-```text
+```opensips
 log_facility=LOG_LOCAL0
 ```
 
 To:
-```text
+```opensips
 log_facility=LOG_LOCAL6
 ```
 

@@ -187,7 +187,7 @@ The values that this field can take are:
   * **disposition:** disposition of the call (e.g., ESGWRI or LRO used).
 
 ***Configuration Script*** 
-```c
+```opensips
 
 loadmodule "emergency.so" # loads the module
 
@@ -209,7 +209,7 @@ The other parameters and tasks which the functions execute depends on its role w
 
 ### Call Server in the scenario I or as the Routing Server in scenario II
 
-```c
+```opensips
 
 /*
 * emergency module tables in this role:
@@ -259,7 +259,7 @@ If no succeed in transmitting the INVITE by routing defined in above steps, conf
 
 ### Call Server in the scenario II
 
-```c
+```opensips
 
 /* emergency module tables in this role:
  * no table needs to be created.
@@ -282,7 +282,7 @@ The command `failure` has no meaning in this role.
 
 ### Call Server in the scenario III
 
-```c
+```opensips
 
 /* emergency module tables in this role:
  * emergency_service_provider – not need be created.
@@ -327,7 +327,7 @@ Tasks performed by `failure` function in this role:
 
 ### Redirect Server in the scenario III
 
-```c
+```opensips
 
 /* emergency module tables in this role:
  * emergency_service_provider - need be created and inserted registers with organization information of VPC, Source and VSP nodes (attribution 0, 1 and 2 respectively).
@@ -363,7 +363,7 @@ The command `failure` has no meaning in this role.
 
 ## Configuration Example
 
-```c
+```opensips
 
 ### use of emergency_call command with OpenSIPS working as Call Server
 # in the scenarios I, II, III and Routing Server in scenario II
@@ -406,7 +406,7 @@ failure_route[emergency_call] {
 
 ```
 
-```bash
+```opensips
 
 ### use of emergency_call command with OpenSIPS working as Proxy Redirect in
 # scenario III (in this case we do not need t_relay () command because the

@@ -64,7 +64,7 @@ same media server is used):
 
 ##### Scenario Document
 The relevant part of an OpenSIPS config that implements this scenario is shown below:
-```c
+```opensips
 
 modparam("b2b_logic", "script_req_route", "b2b_logic_request")
 
@@ -150,7 +150,7 @@ Below is the theoretical message flow that should occur for this functionality t
 ##### Scenario Document
 The relevent part of an OpenSIPS config that implements this scenario is shown below:
 
-```c
+```opensips
 
 modparam("b2b_logic", "script_req_route", "b2b_logic_request")
 
@@ -201,7 +201,7 @@ opensips-cli -x mi b2b_trigger_scenario marketing customer,sip:bob@opensips.org 
 The B2BUA component can also be configured to handle blind transfers(with REFER SIP message). This is useful when in the platform there are devices that do not accept the REFER method. The scenario for this case is very simple and has one rule for when a REFER is received. This rule tells the B2BUA to end the call with the user agent that sent the refer message and to bridge the peer with the user specified in the 'Refer-To' header.
 ##### Scenario Document
 The relevant part of an OpenSIPS config that implements this scenario is shown below:
-```c
+```opensips
 
 modparam("b2b_logic", "script_req_route", "b2b_logic_request")
 

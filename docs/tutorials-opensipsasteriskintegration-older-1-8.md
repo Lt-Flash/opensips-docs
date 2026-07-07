@@ -333,7 +333,7 @@ In this example we take the OpenSIPS default config file that provides user regi
   * service number *3XXX for dialling into the conference room XXX - OpenSIPS will rewrite it to **CR_XXX** and send it to Asterisk
 
 In */etc/opensips/opensips.cfg* place (see the ASTERISK_HOOKS markers to find the script parts relevant to Asterisk integration):
-```c
+```opensips
 
 ####### Global Parameters #########
 

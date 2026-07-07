@@ -59,7 +59,7 @@ There is one predefined service that works without any scenario definition and f
 This service can only be selected from the script, because it has sense only when a dialog is initiated. It does not require any parameter. The id for this scenario is **top hiding**.
 
 **Example: Calling top hiding service**
-```text
+```opensips
 if(is_method("INVITE") && src_ip=="10.10.10.10")
    b2b_init_request("top hiding");
 ```
@@ -71,7 +71,7 @@ Other services must be defined in scenario documents and loaded at startup by pr
 The scenario documents are loaded at startup and their paths in the system must be provided through module parameters that belong to the b2b_logic module. There are two parameters, one of each type of scenario: **scenario_script** and **scenario_extern**. 
 
 **Example: Loading B2BUA scenarios**
-```c
+```opensips
 modparam("b2b_logic", "script_scenario", "/usr/local/opensips/etc/b2bua/scenario_script.xml")
 modparam("b2b_logic", "extern_scenario", "/usr/local/opensips/etc/b2bua/scenario_extern.xml")
 ```
@@ -533,7 +533,7 @@ There are some requirements for a configuration file that enables the B2BUA serv
 
 Also please note that you need to configure the tm module to pass provisional replies. For this you need to set the module parameter:
 
-```c
+```opensips
 modparam("tm", "pass_provisional_replies", 1)
 ```
 
@@ -545,7 +545,7 @@ You can find [here](/tutorials-b2buaconfigexample) a configuration file example 
 #### Special B2B route
 The requests and replies that are received by the B2BUA server, belonging to the dialogs it is handling will not go into the script as normal request do. The reason for this is that this are not normal requests where the server is a proxy, but the server is an endpoint in the dialog and therefore they should not go through the same routes. However, it is normal for this request to be seen from the script and allow the script writer to do the processing it desires based on them. For this, it is possible to define two special B2B routes - one for requests and one for replies. The routes are of type **route** and have their name defined in the modules parameters **script_req_route** and **script_reply_route**.
 
-```c
+```opensips
 modparam("b2b_entities", "script_req_route", "b2b_request")
 modparam("b2b_entities", "script_reply_route", "b2b_reply")
 

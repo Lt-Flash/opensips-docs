@@ -57,7 +57,7 @@ Take care and edit (if necessary) the **opensipsctlrc** /  **osipsconsolerc** fi
 ### Append_branch() usage
 
 There is no need to call "**append_branch()**" function in **failure_route** in order to use the RURI - you still need to use it only if you want to do parallel forking.
-```c
+```opensips
 
 Ex:
  # in 1.4.x

@@ -115,7 +115,7 @@ After making sure that **aaa_diameter** is loaded, start by building the request
 
   
 
-```c
+```opensips
 
 log_stdout = yes
 ...
@@ -160,7 +160,7 @@ $var(payload) = "[
 
   
 
-```text
+```opensips
 
 dm_send_request(42, 92001, $var(payload), $var(rpl_avps));
 
@@ -172,7 +172,7 @@ In this example, the Diameter Application ID is **42**, and the Command's Code i
 
   
 
-```bash
+```opensips
 
 $json(rpl) := $var(rpl_avps);
 xlog("Reply AVPs: $json(rpl)\n");
@@ -193,7 +193,7 @@ First, make sure the [event_route](/modules/3-5/event_route) module is loaded.  
 
   
 
-```c
+```opensips
 
 log_stdout = yes
 ...
@@ -227,7 +227,7 @@ Next, the request must be processed according to the application specifications.
 
   
 
-```text
+```opensips
 
   ...
   $var(ans_avps) = "[

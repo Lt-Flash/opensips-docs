@@ -150,7 +150,7 @@ The emergency module was developed to make OpenSIPS fulfill the functional requi
 
 The next section addresses the tasks that these functions perform and explain the parameters. Initially we are going start by the parameters that are common regardless of the OpenSIPS' role to be configured for the module emergency:
 
-```c
+```opensips
 
 loadmodule "emergency.so" # loads the module
 
@@ -170,7 +170,7 @@ modparam("emergency", "timer_interval",30)
 
 ### Call Server in the scenario I or as the Routing Server in scenario II
 
-```c
+```opensips
 
 ### mandatory parameters to configure in this roles:
 # proxy role = 0 defines the OpenSIPS as Call Server(scenario I) or 2 as Routing Server(scenario II)
@@ -240,7 +240,7 @@ If no succeed in transmitting the INVITE by routing defined in above steps, conf
 
 ### Call Server in the scenario II
 
-```c
+```opensips
 
 ### mandatory parameters to configure in this roles
 # Proxy role = 2 defines OpenSIPS as Call Server in scenario II
@@ -260,7 +260,7 @@ The command `failure` has no meaning in this role.
 
 ### Call Server in the scenario III
 
-```c
+```opensips
 
 ### mandatory parameters to configure in this roles
 # proxy role = 3 defines Opensips as Call Server in scenario III
@@ -299,7 +299,7 @@ Tasks performed by `failure` function in this role:
 
 ### Redirect Server in the scenario III
 
-```c
+```opensips
 
 ### mandatory parameters to configure in this roles:
 # proxy role = 4 defines Opensips as Redirect Server in scenario III 
@@ -355,7 +355,7 @@ The command `failure` has no meaning in this role.
 
 ## Configuration Example
 
-```c
+```opensips
 
 ### use of emergency_call command with OpenSIPS working as Call Server
 # in the scenarios I, II, III and Routing Server in scenario II
@@ -397,7 +397,7 @@ failure_route[emergency_call] {
 
 ```
 
-```bash
+```opensips
 
 ### use of emergency_call command with OpenSIPS working as Proxy Redirect in
 # scenario III (in this case we do not need t_relay () command because the

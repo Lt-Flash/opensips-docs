@@ -22,7 +22,7 @@ Notice the often long lists of capabilities attached to the Contact and Accept-C
 
 ### Iterating through all Capabilities
 
-```bash
+```opensips
 
 # first, we save our Contact header capabilities in a variable, for quick access
 $var(caps) = $(hdr(Contact){nameaddr.params});
@@ -68,7 +68,7 @@ Mar 29 19:26:46 [67988]     +g.3gpp.icsi-ref: urn%3Aurn-7%3A3gpp-service.ims.ics
 
 Advanced: in order to un-escape those hex-encoded strings before working with them, simply chain an additional `{s.unescape.param}` transformation to the right, as in:
 
-```text
+```opensips
 
     xlog("    +g.3gpp.iari-ref[$var(j)]: $(var(val){s.select,$var(j),,}{s.unescape.param})\n");
 
@@ -98,7 +98,7 @@ First, we filter out any undesired RCS File Transfer capabilities while iteratin
 
   
 
-```bash
+```opensips
 
 $var(new_caps) = "";
 
@@ -148,7 +148,7 @@ Next, if we want to add new capabilities, this is an easy task: we just append t
 
 Finally, we remove/re-add the "Accept-Contact" SIP header field with the large, re-processed string.
 
-```bash
+```opensips
 
 ...
         # we re-write the above paragraph a bit

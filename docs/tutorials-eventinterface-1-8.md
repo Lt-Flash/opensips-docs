@@ -58,7 +58,7 @@ Usually these kind of subscriptions are permanent, therefore they should be regi
 
 Here is an example of subscription for the E_PIKE_BLOCKED event at OpenSIPS startup, without any expire time, from the OpenSIPS configuration script:
 
-```c
+```opensips
 
    startup_route() {
       subscribe_event("E_PIKE_BLOCKED", "udp:127.0.0.1:8888");
@@ -68,7 +68,7 @@ Here is an example of subscription for the E_PIKE_BLOCKED event at OpenSIPS star
 
 If the script writer wants the subscription to expire after 1200 second, the third parameter of the [subscribe_event](/manual/1-8/script-corefunctions#subscribe_event) function can be specified:
 
-```c
+```opensips
 
    timer_route[event_subscribe,3600] {
       subscribe_event("E_PIKE_BLOCKED", "udp:127.0.0.1:8888", 1200);
@@ -97,7 +97,7 @@ In order to raise an event from the script, the [raise_event](/manual/1-8/script
 
 If the script writer wants to attach some extra information to the event, then the second and optionally the third parameter has to be used. The extra information has to be stored in an AVP as values, for example:
 
-```text
+```opensips
 
     $avp(values) = "value1";
     $avp(values) = "value2";
@@ -107,7 +107,7 @@ If the script writer wants to attach some extra information to the event, then t
 
 If the parameters also have some names, then a new AVP have to store them. Note that the number of values in the first AVP has to be the same as in the one for the attributes:
 
-```text
+```opensips
 
     $avp(attributes) = "param1";
     $avp(values) = "value1";
@@ -119,7 +119,7 @@ If the parameters also have some names, then a new AVP have to store them. Note 
 
 In order to raise the event from the script, the following code has to be used:
 
-```text
+```opensips
 
    raise_event("E_SCRIPT_EVENT");     # raises an event without any parameters
 
@@ -133,7 +133,7 @@ In order to raise the event from the script, the following code has to be used:
 
 A practical use case of dynamic events is raising an event from the script when the TCP load is greater than 80%:
 
-```c
+```opensips
 
    route[TCP_LOAD_CHECK] {
 

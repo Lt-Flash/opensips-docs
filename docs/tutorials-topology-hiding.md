@@ -37,7 +37,7 @@ When running on top of the DIALOG module, you will get shorter messages ( all th
 
 ## Example Script
 
-```c
+```opensips
 
 loadmodule "topology_hiding.so"
 

@@ -47,7 +47,7 @@ Below are the relevant OpenSIPS config sections:
 
   
 
-```c
+```opensips
 
 loadmodule "usrloc.so"
 modparam("usrloc", "use_domain", 1)
@@ -162,7 +162,7 @@ At OpenSIPS script level, we can easily distinguish calls coming in from fellow 
 
   
 
-```text
+```opensips
 
 route {
     ...
@@ -190,7 +190,7 @@ route {
 
 Some setups require periodic SIP OPTIONS pings originated by the registrar towards some of the contacts in order to keep the NAT bindings alive. Here is an example configuration:
 
-```c
+```opensips
 
 loadmodule "nathelper.so"
 modparam("nathelper", "natping_interval", 30)
@@ -203,7 +203,7 @@ modparam("nathelper", "max_pings_lost", 5)
 
 We then enable these branch flags for some or all contacts before calling [save()](/modules/2-4/registrar#func_save):
 
-```text
+```opensips
 
     ...
     setbflag(SIPPING_ENABLE);

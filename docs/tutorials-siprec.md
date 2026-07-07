@@ -46,7 +46,7 @@ The first thing we need to do is load the necessary modules involved:
 
 So at the beginning section of our script, we need to add the following lines:
 
-```c
+```opensips
 
 loadmodule "dialog.so"
 loadmodule "b2b_entities.so"
@@ -57,7 +57,7 @@ loadmodule "rtpproxy.so"
 
 We also need to specify the connector to the RTPProxy server:
 
-```c
+```opensips
 
 modparam("rtpproxy", "rtpproxy_sock", "udp:127.0.0.1:7899")
 
@@ -65,7 +65,7 @@ modparam("rtpproxy", "rtpproxy_sock", "udp:127.0.0.1:7899")
 
 Now we need to "identify" the calls we want to do call recording for. This can be done using whatever logic you want in your script, but for simplicity in this example, we will engage call recording for all users. To do this, we need to find in our script the code's section that handles the initial INVITEs. In the default script, this is done in the following snippet:
 
-```text
+```opensips
 
     # account only INVITEs
     if (is_method("INVITE")) {
@@ -83,7 +83,7 @@ In this code section, we need to do 3 things:
 
 After all these changes, the previous snippet will look like this:
 
-```text
+```opensips
 
     # account only INVITEs
     if (is_method("INVITE")) {
@@ -108,17 +108,17 @@ Although UDP communication is lightweight and the base protocol for SIP, in prac
 To do so, we need to make three extra changes to our previous script:
 
 * import the **proto_tcp** module, that handles the communication to a TCP endpoint
-```c
+```opensips
 loadmodule "proto_tcp.so"
 ```
 
 * add a TCP listener - an interface which OpenSIPS will use to communicate to the SRS over TCP
-```c
+```opensips
 listen = tcp:127.0.0.1:5060
 ```
 
 * change the SRS URI, adding the `;transport=tcp` parameter
-```text
+```opensips
 siprec_start_recording("sip:127.0.0.1:5090;transport=tcp");
 ```
 
@@ -127,7 +127,7 @@ After these changes you can reliably communicate with your SRS Recorder over TCP
 ### Use a specific interface to communicate with SRC
 
 In real scenarios, you might want to put the communication with SRS on a separate/dedicated IP in a local LAN. In order to do this, you need to also specify the desired interface to OpenSIPS, by forcing the communication socket before engaging siprec:
-```text
+```opensips
 
 force_send_socket(tcp:127.0.0.1:5060);
 siprec_start_recording("sip:127.0.0.1:5060;transport=tcp");
@@ -144,7 +144,7 @@ In the initial scenario we used the `rtpproxy_engage` function, which blindly ha
 
 However, if you configuration runs in a more advanced setup, where you are using RTPProxy sets, you need to make sure that you are providing the same set to SIPREC as well, otherwise recording will fail. So for example if you are using set **5** for a specific group of users, you will also have to specify it in the 5th parameter of `siprec_start_recording`. A configration example is below:
 
-```text
+```opensips
 
 rtpproxy_offer(,,"5");
 siprec_start_recording("sip:127.0.0.1:5060;transport=tcp",,,,"5");
@@ -155,7 +155,7 @@ siprec_start_recording("sip:127.0.0.1:5060;transport=tcp",,,,"5");
 
 The [SIPREC](https://tools.ietf.org/html/rfc7865) protocol consists of a set of metadata information about the participants of the call. By default, OpenSIPS takes those participants from the `From` and `To` headers. However, if the received message contains a DID, or an alias of the User, you do not want to forward that information, but the actual account. You can tune this information in the 3rd and 4th parameters of the `siprec_start_recording()` function. The format of these parameters is a `name-addr` as specified by the [SIP RFC](https://tools.ietf.org/html/rfc3261), followed by the `\r\n` header termination. Here is an example:
 
-```text
+```opensips
 
 $var(caller) = "\"John Doe\" <sip:john@opensips.org>\r\n";
 $var(callee) = "\"Jane Doe\" <sip:jane@opensips.org>\r\n";
@@ -165,7 +165,7 @@ siprec_start_recording("sip:127.0.0.1:5060;transport=tcp",, "$var(caller)", "$va
 
 One can also group the calls recorded based on a tag (group as specified in the [SIPREC RFC](https://tools.ietf.org/html/rfc7865)). This is done by the second parameter of the `siprec_start_recording()` function:
 
-```text
+```opensips
 
 siprec_start_recording("sip:127.0.0.1:5060;transport=tcp", "regular", "$var(caller)", "$var(callee)");
 
@@ -175,7 +175,7 @@ siprec_start_recording("sip:127.0.0.1:5060;transport=tcp", "regular", "$var(call
 
 There might be cases when a SRS might be down, or cannot be reachable, and you want to fail-over to a different server. This can be achieved by enlisting all the servers in the first parameter of the `siprec_start_recording()` function, separated by comma. The following example tries to connect to the SRS over TCP, and if that fails, it tries to reach it over UDP:
 
-```text
+```opensips
 
 siprec_start_recording("sip:127.0.0.1:5060;transport=tcp, sip:127.0.0.1:5060");
 
@@ -183,7 +183,7 @@ siprec_start_recording("sip:127.0.0.1:5060;transport=tcp, sip:127.0.0.1:5060");
 
 By default, fail-over is driven by a negative response from the SRS, or by an auto-generated 408 if the SRS does not respond. However, not all responses mean the service is unavailable, some of them might simply indicate that the call should not recorded. In this case, you might want to ignore some response codes from the fail-over algorithm. This is done using the [skip_failover_codes](/modules/2-4/siprec#skip_failover_codes) parameter. The following example prevents fail-over for any class 3 and 4 response codes - thus it only fails-over 5xx and 6xx classes:
 
-```c
+```opensips
 
 modparam("siprec", "skip_failover_codes", "[34][0-9][0-9]")
 

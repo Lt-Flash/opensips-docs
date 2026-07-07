@@ -5,7 +5,7 @@ description: "disable_dns_blacklist=yes"
 
 [Download](http://www.opensips.org/uploads/Resources/opensips_b2b.cfg)
 
-```c
+```opensips
 
 # $Id: opensips-b2b.cfg $
 
