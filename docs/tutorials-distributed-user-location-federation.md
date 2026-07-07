@@ -23,7 +23,7 @@ Instead of full-mesh replicating user location data to the entire cluster (i.e. 
 
   
 
-![federation basic](/images//tutorials/federation-basic.jpg)
+![federation basic](/images/tutorials/federation-basic.jpg)
 
   
 
@@ -31,7 +31,7 @@ This setup also supports a "hot backup" node for each member of the cluster, all
 
   
 
-![federation ha](/images//tutorials/federation-ha.jpg)
+![federation ha](/images/tutorials/federation-ha.jpg)
 
   
 
@@ -137,7 +137,7 @@ We need not change anything in the default script in order to achieve the above.
 
   
 
-![federation registration](/images//tutorials/federation-registration.jpg)
+![federation registration](/images/tutorials/federation-registration.jpg)
 
   
 
@@ -154,7 +154,7 @@ The "g" (global) flag indicates that the lookup() will not only perform the loca
 
   
 
-![federation forking](/images//tutorials/federation-forking.jpg)
+![federation forking](/images/tutorials/federation-forking.jpg)
 
   
 

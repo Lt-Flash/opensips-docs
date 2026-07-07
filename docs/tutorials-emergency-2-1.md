@@ -60,7 +60,7 @@ Another point is that the architecture of the IETF, considered the PSAP also att
 
 The components of this architecture shown in figure below:
 
-![emergency figure1](/images//tutorials/emergency-figure1.png)
+![emergency figure1](/images/tutorials/emergency-figure1.png)
 
 * **Emergency Services Gateway** (ESGW) - the gateway between the IP network and the PSTN network where this legacy PSAP. It uses the information (ESGWRI) received by the Call Server to select the appropriate juntor to route the call on the PSTN network,in trunk signaling includes an identifier of the call (ESQK) and , if possible, the callback number (CBN) in ANI field.
 * **Emergency Service Zone Routing Data Base** (ERDB) - determines Emergency Service Zone(ESZ) according to the received location information., it maps the geo-referenced or civic address  to the area of the nearest PSAP.
@@ -77,7 +77,7 @@ From the business viewpoint, several scenarios can be discerned in this architec
 ### Scenario I
 Call Server of caller VSP  takes over the treatment of the emergency call. The VSP is also the provider (source) that interfaces with the VPC. The scenario uses the following operating sketch:
 
-![emergency figure2](/images//tutorials/emergency-figure2.png)
+![emergency figure2](/images/tutorials/emergency-figure2.png)
 
 Below are the steps to be followed to make an emergency call:
 
@@ -96,14 +96,14 @@ Below are the steps to be followed to make an emergency call:
 
 The signal flow exchanged in the first scenario is shown in the figure below:
 
-![emergency figure3](/images//tutorials/emergency-figure3.png)
+![emergency figure3](/images/tutorials/emergency-figure3.png)
 
 ### Scenario II
 Call Server of caller VSP routes the emergency call for a Routing Proxy from a third party SIP provider, which makes treatment and henceforth takes over the call. 
 
 In this scenario the interfaces: v0, v3, v7, v8, as well as the PSTN interfaces, are identical to those of scenario I, therefore will not be described here. The following figure shows the operating sketch for this scenario:
 
-![emergency figure4](/images//tutorials/emergency-figure4.png)
+![emergency figure4](/images/tutorials/emergency-figure4.png)
 
 The differential steps for this scenario are listed below:
 
@@ -116,14 +116,14 @@ The differential steps for this scenario are listed below:
 
 The signal flow exchanged in the second scenario is shown in the figure below:
 
-![emergency figure5](/images//tutorials/emergency-figure5.png)
+![emergency figure5](/images/tutorials/emergency-figure5.png)
 
 ### Scenario III
 Call Server of caller VSP requests from a Redirect Server the other provider routing information to emergency call, but in this case the Call Server that forwards and takes over the call. This third provider may be a provider specialized in the treatment of emergency call.
 
 In this scenario the interfaces: v0, v3, v7, v8, as well as the PSTN interfaces, are identical to those of scenario I therefore will not be described here. The following figure shows the scenario:
 
-![emergency figure6](/images//tutorials/emergency-figure6.png)
+![emergency figure6](/images/tutorials/emergency-figure6.png)
 
 The differential steps for this scenario are listed below:
 
@@ -140,7 +140,7 @@ The differential steps for this scenario are listed below:
 
 The signal flow exchanged in the third scenario is shown in the following picture:
 
-![emergency figure7](/images//tutorials/emergency-figure7.png)
+![emergency figure7](/images/tutorials/emergency-figure7.png)
 
 ## OpenSIPS
 

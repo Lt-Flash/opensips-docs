@@ -18,7 +18,7 @@ The module may also handle *SIP call forking*. Both serial/parallel forking can 
 
 #### Scenario
 
-![mid registrar platform before](/images//tutorials/mid-registrar-platform-before.png)
+![mid registrar platform before](/images/tutorials/mid-registrar-platform-before.png)
 
   
 
@@ -38,7 +38,7 @@ By adding this inexpensive mid-registrar traffic conversion front-end for our se
 
   
 
-![mid registrar platform after](/images//tutorials/mid-registrar-platform-after.png)
+![mid registrar platform after](/images/tutorials/mid-registrar-platform-after.png)
 
 #### OpenSIPS script
 
@@ -128,7 +128,7 @@ The diagram below shows two devices of the same user (**A** and **B**) periodica
 
   
 
-![mid registrar contact throttling](/images//tutorials/mid-registrar-contact-throttling.png)
+![mid registrar contact throttling](/images/tutorials/mid-registrar-contact-throttling.png)
 
   
 
@@ -161,7 +161,7 @@ Although the rest of the script stays the same, the *mid_registrar_save()* and *
 
 ##### Call flow (throttling registrations by AOR)
 
-![mid registrar aor throttling](/images//tutorials/mid-registrar-aor-throttling.png)
+![mid registrar aor throttling](/images/tutorials/mid-registrar-aor-throttling.png)
 
   
 
@@ -169,7 +169,7 @@ In *AOR throttling* mode, the mid-registrar is aggregating both Alice's contacts
 
 ##### Call flow (parallel forking)
 
-![mid registrar parallel forking](/images//tutorials/mid-registrar-parallel-forking.png)
+![mid registrar parallel forking](/images/tutorials/mid-registrar-parallel-forking.png)
 
   
 

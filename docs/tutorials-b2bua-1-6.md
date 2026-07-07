@@ -14,7 +14,7 @@ B2BUA in OpenSIPS is an implementation of the behavior of a B2BUA as defined in 
 * b2b_logic    - the upper half, implementing a logic for analyzing and applying services scenarios to achieve the desired B2BUA specific services.
 The picture bellow shows the architecture of the B2BUA implementation.
 
-![B2BUA architecture](/images//tutorials/B2BUA_architecture.jpg)
+![B2BUA architecture](/images/tutorials/B2BUA_architecture.jpg)
 
 The reason for which the architecture has two parts is to allow extensions and integration with other system that might implement their own logic interpretor. Instead of the b2b_logic module, another module with a different logic interpretor or scenario source can be placed there and use the interface that the b2b_entities module offers to build quickly a new B2BUA implementation. The b2b_entities role in the processing is an independent one that is required in any B2B implementation and it is therefore encoded in a separate module. It offer an upper level library that will make the implementation of another logic interpreter and applier much easier. The separation enhances and encourages extension and integration with other systems. 
 
@@ -335,7 +335,7 @@ change the dialog information.
 #### Scenario Schema
 Here is the theoretical expected message trace:
 
-![top hiding schema](/images//tutorials/top_hiding_schema.jpeg)
+![top hiding schema](/images/tutorials/top_hiding_schema.jpeg)
 
 ### Prepaid
 This scenario can be used by a company for prepaid users to announce them at the beginning of the call what their credit is and at the end of the call what their remaining credit is. 
@@ -353,7 +353,7 @@ In B2BUA terms, this is a script scenario that can be instantiating by specifyin
 To establish this sessions the SIP message flow has to look like this( it is assumed that the
 same media server is used):
 
-![ppaid](/images//tutorials/ppaid.jpeg)
+![ppaid](/images/tutorials/ppaid.jpeg)
 
 #### Scenario Document
 The full scenario document is printed bellow:
@@ -455,7 +455,7 @@ The id which must be mentioned to start this service is 'marketing'. It requires
 #### Scenario Schema
 Below is the theoretical message flow that should occur for this functionality to be achieved.
 
-![marketing](/images//tutorials/marketing.jpeg)
+![marketing](/images/tutorials/marketing.jpeg)
 
 #### Scenario Document
 The scenario document that describes this service is:

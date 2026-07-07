@@ -25,4 +25,4 @@ III.[Resource List Server](/tutorials-rls)
 * [Configuration](/tutorials-rls#configuration)
 * [Database](/tutorials-rls#database)
 
-IV. [Slides from the presentation held at VON San Jose, 2008](http://www.opensips.org/pub//Presence-Anca_Vamanu-Von_SAN_JOSE_2008.pdf) describing with schemes and examples all presence features in OpenSIPS.
+IV. [Slides from the presentation held at VON San Jose, 2008](http://www.opensips.org/pub/Presence-Anca_Vamanu-Von_SAN_JOSE_2008.pdf) describing with schemes and examples all presence features in OpenSIPS.

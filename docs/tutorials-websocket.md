@@ -182,7 +182,7 @@ Having done all these settings should provide a full setup for interconnecting S
 
 ### Normal SDP negotiation
 
-The [following](http://www.opensips.org/pub//tutorials/websockets/opensips.cfg) configuration file is a minimal working example of a Residential script that can handle clients connections over both UDP and Websocket transports.  This example assumes that the SDP offer is present in the INVITE from the UAC and the SDP answer is in the 200 OK from the UAS.
+The [following](http://www.opensips.org/pub/tutorials/websockets/opensips.cfg) configuration file is a minimal working example of a Residential script that can handle clients connections over both UDP and Websocket transports.  This example assumes that the SDP offer is present in the INVITE from the UAC and the SDP answer is in the 200 OK from the UAS.
 
 > [!NOTE]
 > the default port for WSS (443) is privileged, so if you are running this script, you should start OpenSIPS with super-user rights (as user root).
@@ -457,4 +457,4 @@ onreply_route[handle_nat] {
 
 ### Late SDP negotiation
 
-[Here](http://www.opensips.org/pub//tutorials/websockets/opensips-late.cfg) you can find a more complex configuration file, that also includes support for late SDP negotiation (SDP is exchanged between 200 OK and ACK).
+[Here](http://www.opensips.org/pub/tutorials/websockets/opensips-late.cfg) you can find a more complex configuration file, that also includes support for late SDP negotiation (SDP is exchanged between 200 OK and ACK).

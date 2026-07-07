@@ -18,4 +18,4 @@ For the OpenSIPS-CP part, you will see how to download the OpenSIPS-CP sources a
 
 ## Webinar Recording
 
-Download the Webinar Recording : [MP4, 116M](http://opensips.org/pub//tutorials/2012-05-17%2018.02%20OpenSIPS%20Kick%20Start.mp4)
+Download the Webinar Recording : [MP4, 116M](http://opensips.org/pub/tutorials/2012-05-17%2018.02%20OpenSIPS%20Kick%20Start.mp4)

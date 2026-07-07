@@ -27,7 +27,7 @@ The purpose of this article is to show how one can record a call between two cli
 
 The following diagram shows the setup and how each component interact to each other:
 
-![siprec architecture](/images//tutorials/siprec-architecture.png)
+![siprec architecture](/images/tutorials/siprec-architecture.png)
 
 According to the diagram, **Alice** and **Bob** do not need to have any recording capabilities (although the SIPREC protocol also supports this model, but it is not part of this article). They will simply behave as a regular SIP client, sending SIP traffic to the **OpenSIPS** proxy and the RTP media to a Media Server, in our case, **RTPProxy**. However, when a new call is started, **OpenSIPS** needs to start a SIPREC session to the SRS, providing it metadata description of **Alice** and **Bob**, as well as media description in the SDP. At this point, the SRS decides whether the call is indeed intended to be recorded - if it is not, it simply rejects the call, otherwise, it sends a 200 OK, containing the SDP where to fork the media. Upon receiving this information, **OpenSIPS** instructs **RTPProxy** to start forking the clients' RTP traffic to the SRS. When the call is ended, **OpenSIPS** needs to also close the SIPREC session with the SRS.
 

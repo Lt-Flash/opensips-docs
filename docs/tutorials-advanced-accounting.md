@@ -33,13 +33,13 @@ OpenSIPS can account different events during the accounting scope, such as:
 * **success event**. Such events generate an accounting record when:
 
   * in *transaction scope* - the transaction when successfully completed (with a 2xx reply):
-    ![acc event success](/images//tutorials/acc_event_success.png)
+    ![acc event success](/images/tutorials/acc_event_success.png)
   * in *dialog scope* - the call was successfully established:
-    ![acc event success dialog](/images//tutorials/acc_event_success_dialog.png)
+    ![acc event success dialog](/images/tutorials/acc_event_success_dialog.png)
 * **missed call event**. Such events may occur only during the dialog setup phase (during the lifetime of the transaction for the initial INVITE), when a call attempt (or branch) was not established, as the UAS destination rejected or declined the call; There can be multiple such events per a single SIP call (due SIP forking). Note that a SIP call generating an accounting *success event* may also generate one or more *missed call event* because of the SIP branches (call attempts) that failed during serial or parallel forking; The *missed call events* are also known as UAS-side accounting (as they are related to the relation between OpenSIPS and callee/UAS side).
-  ![acc event missed](/images//tutorials/acc_event_missed.png)
+  ![acc event missed](/images/tutorials/acc_event_missed.png)
 * **failed transaction event**. Such event is generated only in the transaction scope, when a transaction fails (reply code >=300) on the UAC side of OpenSIPS - this is a complementary event for the *successful transaction* event.
-  ![acc event failed](/images//tutorials/acc_event_failed.png)
+  ![acc event failed](/images/tutorials/acc_event_failed.png)
 
 ### Accounting backends
 
@@ -88,7 +88,7 @@ In this script, we want to get accounting records only for call related requests
 * *success event* and *failed transaction event* for the  *BYE* transactions - we want an accounting record no matter response code we get for the BYE.
   The syslog backend shall be used for accounting - this has the keyword **log**. 
 
-Now, let's walk through the  [opensips.cfg](http://www.opensips.org/pub//tutorials/accounting/opensips-default.cfg) and explain step by step all the accounting related actions.
+Now, let's walk through the  [opensips.cfg](http://www.opensips.org/pub/tutorials/accounting/opensips-default.cfg) and explain step by step all the accounting related actions.
 
 In the routing section of the script the [do_accounting()](/modules/2-3/acc#do_accounting) function is used for setting the accounting process (as events, scope and backend). In all case the **log** backend is used, which means that all the accounting records will be pushed as logs. This script is logging to syslog service, using log facility LOG_DAEMON (see [log_facility](/modules/2-3/acc#id294205) ) with log level L_NOTICE (see [log_level](/modules/2-3/acc#id294177)).
 
@@ -142,7 +142,7 @@ The last [do_accounting()](/modules/2-3/acc#do_accounting) usage in the script (
         do_accounting("log","missed");
 ```
 
-Once again, this is the [full OpenSIPS config file](http://www.opensips.org/pub//tutorials/accounting/opensips-default.cfg) we used for this example.
+Once again, this is the [full OpenSIPS config file](http://www.opensips.org/pub/tutorials/accounting/opensips-default.cfg) we used for this example.
 
 - - -
 
@@ -159,7 +159,7 @@ To achieve this behavior we do the following changes to the accounting functions
 * as we do accounting at dialog level (we get CDRs directly), there is no need to separately account the BYE transaction, so we remove any accounting for them
 * enable *missed call event* also in failure route, so we can get such events during the sequential steps of the  serial forking. 
 
-This is the [config file](http://www.opensips.org/pub//tutorials/accounting/opensips-serial-forking-cdr.cfg) corresponding to this scenario. All below explanations are relative to this script.
+This is the [config file](http://www.opensips.org/pub/tutorials/accounting/opensips-serial-forking-cdr.cfg) corresponding to this scenario. All below explanations are relative to this script.
 
 First of all, in order to be able to use the CDR engine, dialog module needs to be loaded (we do it here in the simplest possible way):
 
@@ -223,7 +223,7 @@ ACC: call ended: created=1474639265;call_start_time=1474639281;\
 
 Here, besides the basic information that is present in every accounting record we can see the the additional fields **call_start_time**, and the **call duration** both in seconds and milliseconds.
 
-Once again, this is the [full OpenSIPS config file](http://www.opensips.org/pub//tutorials/accounting/opensips-serial-forking-cdr.cfg) we used for this example.
+Once again, this is the [full OpenSIPS config file](http://www.opensips.org/pub/tutorials/accounting/opensips-serial-forking-cdr.cfg) we used for this example.
 
 - - -
 
@@ -231,7 +231,7 @@ Once again, this is the [full OpenSIPS config file](http://www.opensips.org/pub/
 
 There are cases when you may need to extend your accounting capabilities and to add some additional custom values to the accounting records (in addition to the default fields).  This is called *extra accounting* - shortly, you define some new accounting fields and set what values is to be placed into them.
 
-This is the [full OpenSIPS config file](http://www.opensips.org/pub//tutorials/accounting/opensips-extra.cfg) used for this example.
+This is the [full OpenSIPS config file](http://www.opensips.org/pub/tutorials/accounting/opensips-extra.cfg) used for this example.
 
 Starting from the previous script, we try to add extra accounting information about the IP addresses where the call was originated from and terminated to. First of all we need to define the additional data that will be added to our accounted information in the **modparam** section using the [extra_fields](/modules/2-3/acc#id294086) parameter
 
@@ -270,7 +270,7 @@ ACC: call ended: created=1474899444;call_start_time=1474899448;\
   call_id=604787970;code=200;reason=OK;src_ip=10.0.0.101;dst_ip=10.0.0.203
 ```
 
-Here it is the [full OpenSIPS config file](http://www.opensips.org/pub//tutorials/accounting/opensips-extra.cfg) used in this example.
+Here it is the [full OpenSIPS config file](http://www.opensips.org/pub/tutorials/accounting/opensips-extra.cfg) used in this example.
 
 - - -
 
@@ -280,7 +280,7 @@ Sometimes the extra values are not enough. One such scenario is when user Alice 
 
 In our example, we want to account the caller and callee usernames for each leg (as they we differ for the two legs). Depending on the accounting backend, when using multi-leg accounting, a single accounting records may translate into multiple backend records (one for each leg). For example, if using **db** backend, you will have one row per leg in the accounting table (this is because in SQL the format of the table is fixed, and it cannot vary with the number of legs).
 
-This is the [full OpenSIPS config file](http://www.opensips.org/pub//tutorials/accounting/opensips-legs.cfg) used for this example.
+This is the [full OpenSIPS config file](http://www.opensips.org/pub/tutorials/accounting/opensips-legs.cfg) used for this example.
 
 The modparam declaration for [leg_fields](/modules/2-3/acc#id294132) is very similar to the [extra_fields](/modules/2-3/acc#id294086)
 
@@ -341,4 +341,4 @@ If using **db** backend two rows will be generated, one with the leg from Alice 
 | 1474899444 | .... |  OK  | 10.0.0.101 | 10.0.0.203 |  Bob   | Charlie |
 ```
 
-Here it is the [full OpenSIPS config file](http://www.opensips.org/pub//tutorials/accounting/opensips-legs.cfg) used in this example.
+Here it is the [full OpenSIPS config file](http://www.opensips.org/pub/tutorials/accounting/opensips-legs.cfg) used in this example.
