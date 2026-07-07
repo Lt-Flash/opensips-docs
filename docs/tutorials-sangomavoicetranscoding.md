@@ -4,7 +4,7 @@ author: "by Liviu Chircu"
 description: "This tutorial illustrates the required steps in order to perform audio transcoding with the D-series cards manufactured by Sangoma, using the sngtc_server da..."
 ---
 
-![tc setup](/images/tutorials/tc-setup.png)
+![tc setup](/uploads/tc-setup.png)
 
 ## Tutorial Overview
 
@@ -39,7 +39,7 @@ By default it logs to /var/log/sngtc_server.log
 
 Due to the limitations of the transcoding library, transcoding sessions can only be created if both codec A and codec B are known. Since this cannot be accomplished with a standard SIP call flow, the module *restricts* the receiving UA to perform *late SDP negotiation*. The diagram below explains this better:
 
-![dialog establish tc](/images/tutorials/dialog-establish-tc.png)
+![dialog establish tc](/uploads/dialog-establish-tc.png)
 
 ---
 
