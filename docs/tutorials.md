@@ -1,11 +1,6 @@
 ---
 title: "Tutorials"
-description: "How to provide ICE end-to-end NAT traversal support for RTP streams"
----
-
-## [OpenSIPS - Getting Started](/tutorials-gettingstarted)
-A crash course about how to do a quick installation of OpenSIPS ( downloading sources, compiling, installing, etc )  and OpenSIPS Control Panel ( installing, provisioning users ), and have a fully functional platform in a matter of minutes. 
-
+description: "OpenSIPS Advanced Tutorials"
 ---
 
 ## [Topology Hiding with OpenSIPS](/tutorials-topology-hiding)
@@ -45,11 +40,6 @@ Architecture design and complete usage examples.
 
 ## [WebSocket and WebSocketSecure Integration with OpenSIPS](/tutorials-websocket)
 How to add Websocket, and Websocket Secure (2.2+ only) capabilities to your existing OpenSIPS deployment.
-
----
-
-## [Dynamic Routing with Failover](http://www.unixnews.net/2010/09/dynamic-routing-with-opensips.html)
-How to configure OpenSips to route phone calls based on the dialed number.  This is a detailed tutorial on how to use the drouting module with mysql and includes failover support.  It does not include load balancing.
 
 ---
 
@@ -113,30 +103,6 @@ How to install, configure, integrate and use FreeRADIUS server and Radiusclient-
 
 ---
 
-## [OpenSIPS with Radius support](http://voiprookie.blogspot.com/2009/04/freeradius-and-mysql.html)
-OpenSIPS with MySQL and FreeRADIUS integration and installation/configuration.
-
----
-
-## [OpenSIPS and MediaProxy](http://voiprookie.blogspot.com/2009/04/blog-post.html)
-MediaProxy 2.3.x and  OpenSIPS 1.5.x Integration.
-
-How to provide [ICE end-to-end NAT traversal support for RTP streams](http://mediaproxy.ag-projects.com/projects/mediaproxy/wiki/ICE)
-
----
-
-## OpenSIPS and MSRP integration
-
-* [SylkServer integration](/msrp-chat) for multiparty conferencing and XMPP gateway
-* [MSRPRelay integration](/msrp-relay) for NAT traversal of MSRP chat and MSRP file transfers
-
----
-
-## [How to install opensips in Red Hat EL 5](/tutorials-opensipsonredhat)
-How to install opensips 1.5 in a Red Hat Enterprise Linux 5 platform with Mysql Support:
-
----
-
 ## [SIP Redirect with script](/tutorials-redirect)
 How setup OpenSIPS as a SIP redirect using a external script - also restricting base on ip address:
 Please note since I am new to OpenSIPS this may need be cleaned up a bit.
@@ -145,26 +111,6 @@ Please note since I am new to OpenSIPS this may need be cleaned up a bit.
 
 ## [OpenSIPS and fail2ban](/tutorials-fail2ban)
 This is a small tutorial so you can use fail2ban together with opensips to block via firewall the attackers that are using wrong authentication credentials.
-
----
-
-## [OpenSIPS, CentOS and MI_XMLRPC](/tutorials-installoncentos)
-Small tutorial on how to compile OpenSIPS or CentOS. It includes a vauable tip on how to compile correctly the MI_XMLRPC module. 
-
----
-
-## [OpenSIPS Tutorials from SmartVox](http://smartvox.co.uk/category/voip/)
-A compilation of various tutorials covering topics like software installation (including MediaProxy on CentOS), authentication, clustering and comparing OpenSIPS with Asterisk provided by [SmartVox](http://kb.smartvox.co.uk/), thanks to **John Quick**.
-
----
-
-## [Distributed Load-Balancing with OpenSIPS and Redis](http://www.voztovoice.org/?q=node/585) (Spanish)
-How to configure a cluster of OpenSIPS load balancers which communicates via Redis (in Spanish thanks to VozToVoice).
-
----
-
-## [OpenSIPS and OpenXCAP Tutorial](http://openxcap.org/projects/openxcap/wiki/Configuration-new)
-A standalone Presence Agent tutorial using OpenSIPS and OpenXCAP provided by [AG Projects](http://ag-projects.com/).
 
 ---
 
@@ -193,11 +139,6 @@ How to configure and deploy the aaa_diameter module and the "app_opensips" freeD
 
 ---
 
-## [Cross-compiling](/tutorials-crosscompile)
-How to cross-compile OpenSIPS.
-
----
-
 ## [RCS: Managing Capabilities](/tutorials-rcs-managing-capabilities)
 String processing techniques for dealing with large lists of RCS capabilities.
 
@@ -205,3 +146,34 @@ String processing techniques for dealing with large lists of RCS capabilities.
 
 ## [Sending and Processing Diameter Requests](/tutorials-diameter-client-server)
 How to script Diameter Client and/or Server interactions for IMS Networks.
+
+## External Tutorials
+
+### [OpenSIPS and MediaProxy](http://voiprookie.blogspot.com/2009/04/blog-post.html)
+MediaProxy 2.3.x and  OpenSIPS 1.5.x Integration.
+
+How to provide [ICE end-to-end NAT traversal support for RTP streams](http://mediaproxy.ag-projects.com/projects/mediaproxy/wiki/ICE)
+
+---
+
+### OpenSIPS and MSRP integration
+
+* [SylkServer integration](/msrp-chat) for multiparty conferencing and XMPP gateway
+* [MSRPRelay integration](/msrp-relay) for NAT traversal of MSRP chat and MSRP file transfers
+
+---
+
+### [OpenSIPS Tutorials from SmartVox](http://smartvox.co.uk/category/voip/)
+A compilation of various tutorials covering topics like software installation (including MediaProxy on CentOS), authentication, clustering and comparing OpenSIPS with Asterisk provided by [SmartVox](http://kb.smartvox.co.uk/), thanks to **John Quick**.
+
+---
+
+### [Distributed Load-Balancing with OpenSIPS and Redis](http://www.voztovoice.org/?q=node/585) (Spanish)
+How to configure a cluster of OpenSIPS load balancers which communicates via Redis (in Spanish thanks to VozToVoice).
+
+---
+
+### [OpenSIPS and OpenXCAP Tutorial](http://openxcap.org/projects/openxcap/wiki/Configuration-new)
+A standalone Presence Agent tutorial using OpenSIPS and OpenXCAP provided by [AG Projects](http://ag-projects.com/).
+
+---
