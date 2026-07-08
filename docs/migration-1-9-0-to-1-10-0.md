@@ -12,14 +12,14 @@ You can find the all the new additions in 1.10.0 release compiled [under this pa
 ## DB migration
 
 You can migrate your 1.9.x DB to the 1.10.0 format by using the **opensipsdbctl** tool :
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_1_9 opensips_1_10
-   or
-   # osipsconsole 
+   $ opensipsdbctl migrate opensips_1_9 opensips_1_10
+   # or
+   $ osipsconsole 
    > migrate opensips_1_9 opensips_1_10
    > quit
-   # 
+   $ 
 
 ```
 where :

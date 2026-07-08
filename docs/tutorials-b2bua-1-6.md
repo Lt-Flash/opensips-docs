@@ -87,7 +87,7 @@ The scenario is not rigid, but configurable through some parameters that will ha
 The **root** element has the tag 'scenario'. 
 
 **Example: Scenario root node**
-```text
+```xml
 <scenario id="prepaid" name="MS start and end" param="2" type="script">
 ```
 
@@ -118,7 +118,7 @@ For the client entities it is compulsory to define the destination where the mes
 The destination value can be provided in more ways 
 
 **Example: Scenario destination node**
-```text
+```xml
 <destination>
    <value type="_value_type_">_value_</value>
 </destination>
@@ -128,7 +128,7 @@ The destination value can be provided in more ways
 
 * **Inline URI** — "uri"
 
-  ```text
+  ```xml
   <destination>
      <value type="uri">sip:ms@opensips.org</value>
   </destination>
@@ -136,7 +136,7 @@ The destination value can be provided in more ways
 
 * **Parameter.The value node content is a number and represents the number of the parameter.** — "param"
 
-  ```text
+  ```xml
   <destination>
      <value type="param">1</value>
   </destination>
@@ -144,7 +144,7 @@ The destination value can be provided in more ways
 
 * **Initial destination.Used when the bridging is based on a received message. The destination will be that from the message.** — "initial"
 
-  ```text
+  ```xml
   <destination>
      <value type="initial"></value>
   </destination>
@@ -161,7 +161,7 @@ which the dialog is initiated by the b2bua that puts two entities in contact.
 
 * **Script scenario**
 
-  ```text
+  ```xml
   <init>
      <bridge>
         <server>
@@ -186,7 +186,7 @@ which the dialog is initiated by the b2bua that puts two entities in contact.
 
 * **Extern Scenario**
 
-  ```text
+  ```xml
   <init>
        <bridge>
             <client>
@@ -223,7 +223,7 @@ In the scenario document, the rules node has two children, requests and replies,
 
 **Example: Scenario rules node structure**
 
-```text
+```xml
 <rules>
   <request>
     <bye>
@@ -246,7 +246,7 @@ A condition will be matched if the scenario instantiation is in the same state a
 The direction of a message is specified with a **sender** node. The sender can be a certain entity specified with a type and an id, or a entity category, being sufficient to specify only the type.
 
 **Example: Scenario condition node**
-```text
+```xml
 <condition>
    <state>1</state>
    <sender>
@@ -263,7 +263,7 @@ In this first version there are four possible actions, with the possibility to e
 
 * **send_reply** — This node tells the B2BUA to send a reply to the sender of the current message. A code and reason sub node must be defined.
 
-  ```text
+  ```xml
   <send_reply>
     <code>200</code>
     <reason>OK</reason>
@@ -272,13 +272,13 @@ In this first version there are four possible actions, with the possibility to e
 
 * **delete_entity** — The delete_entity node specifies to the B2B Logic that the current entity which has received the message can be deleted.
 
-  ```text
+  ```xml
   <delete_entity/>
   ```
 
 * **bridge** — A bridge action means putting two end points in contact. The syntax is the same as the on for the bridge node in the init part. The only difference here is that the entities can be also existing ones. If a new entity is defined a destination node must be present. Note that there is also a lifetime node. It defines the maximum duration of the media session and it is used to track blocked scenario instantiations. If the lifetime expires, the B2BUA will send BYE messages to both ends and delete the record. This parameter is not compulsory and should be defined when a maximum lifetime value is known(most likely in the case of recorded messages played by media servers).
 
-  ```text
+  ```xml
   <bridge>
    <client>
      <id>client1</id>
@@ -296,14 +296,14 @@ In this first version there are four possible actions, with the possibility to e
 
 * **state** — Specifies the state the scenario instantiation will enter after the action will be executed.
 
-  ```text
+  ```xml
   <state>2</state>
   ```
 
 Bellow is an action example:
 
 **Example: Scenario action node**
-```text
+```xml
 <action>
     <send_reply>
       <code>200</code>
@@ -357,7 +357,7 @@ same media server is used):
 
 #### Scenario Document
 The full scenario document is printed bellow:
-```text
+```xml
 <?xml version="1.0"?>
 <scenario id="prepaid" name="MS start and end" param="2" type="script">
      <init>
@@ -459,7 +459,7 @@ Below is the theoretical message flow that should occur for this functionality t
 
 #### Scenario Document
 The scenario document that describes this service is:
-```text
+```xml
 <?xml version="1.0"?>
 <scenario id="marketing" name="MS start conditional" param="3" type="extern">
   <init>

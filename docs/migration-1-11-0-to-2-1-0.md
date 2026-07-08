@@ -11,9 +11,9 @@ You can find the all the new additions compiled in the [**2.1.0** release page](
 
 ## DB migration
 For MySQL users, you can easily migrate your 1.11.x OpenSIPS databases to the 2.1.0 format with the **opensipsdbctl** tool:
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_1_11 opensips_2_1
+   $ opensipsdbctl migrate opensips_1_11 opensips_2_1
 
 ```
 

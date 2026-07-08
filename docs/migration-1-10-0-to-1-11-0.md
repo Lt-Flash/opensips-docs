@@ -12,14 +12,14 @@ You can find the all the new additions in the **1.11.0** release compiled [under
 ## DB migration
 
 You can migrate your 1.10.x MySQL DB to the 1.11.0 format by using the **opensipsdbctl** tool :
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_1_10 opensips_1_11
-   or
-   # osipsconsole 
+   $ opensipsdbctl migrate opensips_1_10 opensips_1_11
+   # or
+   $ osipsconsole 
    > migrate opensips_1_10 opensips_1_11
    > quit
-   # 
+   $ 
 
 ```
 where :

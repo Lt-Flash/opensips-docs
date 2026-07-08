@@ -26,7 +26,7 @@ The necessary firmware for the D-series transcoding cards can be set up using th
 #### Setting up the *sngtc_server*
 
 Installing the *sngtc_server* is straightforward and also documented in the [Sangoma wiki](http://wiki.sangoma.com/FreeSWITCH-D100-Single-Server-Installation). After doing the configuration, it can be started using the init script:
-```text
+```bash
 
    $ /etc/init.d/sngtc_server_ctrl start
 

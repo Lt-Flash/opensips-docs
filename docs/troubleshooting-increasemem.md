@@ -15,14 +15,14 @@ To increase the size of private memory you need to compile OpenSIPS from sources
 
 - edit the file "**config.h**" and search for the next lines:
 
-```text
+```c
 /*used only if PKG_MALLOC is defined*/
 #define PKG_MEM_POOL_SIZE 1024*1024
 ```
 
 - change the value of PKG_MEM_POOL_SIZE to desired size, for example to have 4MB of private memory:
 
-```text
+```c
 #define PKG_MEM_POOL_SIZE 4*1024*1024
 ```
 

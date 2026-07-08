@@ -83,7 +83,7 @@ child process 6645 exited by a signal 11
 
 Corefiles will usually be named "core" or "core.`<pid>`", and placed in the working OpenSIPS directory ("-w" command-line parameter). gdb can interpret them:
 
-```text
+```bash
 
 gdb /usr/sbin/opensips core.6645
 
@@ -91,7 +91,7 @@ gdb /usr/sbin/opensips core.6645
 
 Once in the gdb environment, run the following command
 
-```text
+```bash
 
 bt full
 

@@ -12,14 +12,14 @@ You can find the all the new additions in 1.8.0 release compiled [under this pag
 ## DB migration
 
 You can migrate your 1.7.x DB to the 1.8.0 format by using the **opensipsdbctl** tool :
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_1_7 opensips_1_8
-   or
-   # osipsconsole 
+   $ opensipsdbctl migrate opensips_1_7 opensips_1_8
+   # or
+   $ osipsconsole 
    > migrate opensips_1_7 opensips_1_8
    > quit
-   # 
+   $ 
 
 ```
 where :

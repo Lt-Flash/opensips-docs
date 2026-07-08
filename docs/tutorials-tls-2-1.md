@@ -16,20 +16,20 @@ Before configuring OpenSIPS we need to have a CA and be able to sign certificate
 #### Creating context
 First thing we need to do is setup the context for our certificates to be created. Let’s say that you want to use `$OPENSIPS_HOME/tls_cnf` (`$OPENSIPS_HOME` represents the path to your OpenSIPS install).
 Create this folder (if it doesn’t exist) and inside create a folder named tls. Will explain later why we needed  to do this.
-```text
+```bash
 cd $OPENSIPS_HOME 
 mkdir tls_cnf; cd tls_cnf; mkdir tls
 ```
 
 #### Setting up ca.conf file
 Next we need to generate our certificating authority, but first we need a configuration file for this, because based on this configuration file, OpenSIPS will know the details of your request. In this configuration file you can set the paths where the CA will be generated,  validity, DN etc.  For users who did this before, it looks similar to “openssl.cnf” file. You can find an example in `$OPENSIPS_HOME/etc/tls/ca.conf`. In this tutorial we only want to make it work, so we will use that file by copying it to our **tls_cnf/tls** folder.
-```text
+```bash
 cp $OPENSIPS_HOME/etc/tls/ca.conf $OPENSIPS_HOME/tls_cnf/tls/ 
 ```
 
 #### Creating the CA
 Now that we set up the context, we can create the CA. Go to your `$OPENSIPS_HOME/scripts` folder.
-```text
+```bash
 cd $OPENSIPS_HOME/scripts
 ```
 
@@ -44,7 +44,7 @@ After giving the command you will be requested to introduce a passphrase. We wil
 ### Creating server and client certificates
 To create a user certificate you will need to create **request.conf** and **`<user_name>`.conf** file in order to use **opensipsctl**. In this tutorial we will simply use the files provided by OpenSIPS in `$OPENSIPS_HOME/etc/tls` called **request.conf** and **user.conf**.
 
-```text
+```bash
 cp $OPENSIPS_HOME/etc/tls/request.conf $OPENSIPS_HOME/tls_cnf/tls/  
 cp $OPENSIPS_HOME/etc/tls/user.conf $OPENSIPS_HOME/tls_cnf/tls/     
 ```
@@ -171,7 +171,7 @@ Now that we’ve set up  OpenSIPS and started it, we need to do some debugging a
 ### S_client simple testing
 A very simple and fast method to see that the handshake works fine is the **s_client** tool that openSSL provides. The command for the script in the previous chapter looks like this
 
-```text
+```bash
  openssl s_client -showcerts -debug -connect <your-ip-address>:<port> -no_ssl2 -bugs
 ```
 

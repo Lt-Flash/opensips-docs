@@ -68,17 +68,17 @@ This approach assumes two steps:
 In file **/etc/opensips/opensipsctlrc** enable the mysql backend (see **DBENGINE**) and also configure the host where the mysql server is located, the name to be used for creating the opensips table, the read-only (ro) and read-write (rw) usernames and passwords to be created for accessing the opensips DB - see all the varaibles with **DB** prefix in the file.
 
 Proceed with creation of the OpenSIPS standard database:
-```text
+```bash
 
-   $ opensipsdbctl create
+	$ opensipsdbctl create
 
 ```
 
 If you use the default values to DB host and mysql access users, you can access the DB by:
-```text
+```bash
 
-   $ mysql -h'localhost' -u'opensips' -p'opensipsrw' opensips
-     >
+	$ mysql -h'localhost' -u'opensips' -p'opensipsrw' opensips
+	>
 
 ```
 
@@ -89,7 +89,7 @@ Once the default tables are created, we need to alter the **subscriber** table i
 * add **datetime_created** as timestamp of the subscriber creation.
 
 Login to the **opensips** database (use the above login command) and run:
-```text
+```sql
 
   > alter table subscriber add column `vmail_password` varchar(8) NOT NULL default '1234';
   > alter table subscriber add column `first_name` varchar(25) NOT NULL default '';
@@ -102,7 +102,7 @@ Login to the **opensips** database (use the above login command) and run:
 #### Creating the Asterisk tables
 
 Create a separate database to be used by Asterisk - login as root into mysql server and run:
-```text
+```sql
 
   > create database asterisk;
   > GRANT ALL PRIVILEGES ON asterisk.* TO 'asterisk' IDENTIFIED  BY 'asterisk_pwd';
@@ -143,7 +143,7 @@ CREATE TABLE `voicemessages` (
 ```
 
 Create the Asterisk tables (as mysql views) that import the information from OpenSIPS tables:
-```bash
+```sql
 
 # create the asterisk users tables as a view over the OpenSIPS subscriber table
 CREATE VIEW `asterisk`.`sipusers` AS select

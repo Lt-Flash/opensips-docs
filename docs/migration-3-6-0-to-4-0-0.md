@@ -17,7 +17,7 @@ You can find the all the new additions in the **4.0** release compiled [under th
 You can migrate your 3.6.x MySQL DB to the 4.0.x format using the **opensips-cli** tool :
 ```bash
 
-   # opensips-cli -x database migrate 3.6_to_4.0 opensips_3_6 opensips_4_0
+   $ opensips-cli -x database migrate 3.6_to_4.0 opensips_3_6 opensips_4_0
 
 ```
 where :

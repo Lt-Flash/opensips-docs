@@ -42,7 +42,7 @@ You can find all the parameters available [here](https://github.com/sipwise/rtpe
 
 Here is an example that runs `rtpengine` from cli that talks with OpenSIPS over localhost and RTP using the 1.1.1.1 IP:
 
-```text
+```bash
 
 ./rtpengine -p /var/run/rtpengine.pid -i eth0/1.1.1.1 -n 127.0.0.1:60000 -c 127.0.0.0.1:60001 -m 50000 -M 55000 -E -L 7
 
@@ -65,7 +65,7 @@ lsmod | grep xt_RTPENGINE
 ```
 
 If the module is not loaded, make sure the `ip_tables` and `x_tables` kernel modules are loaded. Also, check the logs for the last errors of the system
-```text
+```bash
 
 dmesg
 

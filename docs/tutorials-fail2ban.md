@@ -112,7 +112,7 @@ ignoreregex =
 ```
 
 Restart fail2ban
-```text
+```bash
  /etc/init.d/fail2ban restart 
 ```
 
@@ -151,7 +151,7 @@ Download the latest fail2ban package from : http://sourceforge.net/projects/fail
 
 Run these commands:
 
-```text
+```bash
 tar xvfj fail2ban-0.8.4.tar.bz2
 cd fail2ban-0.8.4
 python setup.py install
@@ -162,41 +162,41 @@ Edit configuration files /etc/fail2ban/jail.confand /etc/fail2ban/filter.d/opens
 To get startup / init.d script in place on CentOS6, copy the file named redhat-initd from the files folder inside fail2ban-0.8.4 directory to /etc/init.d with the command below.
 
 ```bash
-# cp redhat-initd /etc/init.d/fail2ban   
+$ cp redhat-initd /etc/init.d/fail2ban   
 ```
 
 Ensure you check the owner and permissions of the copied file and then test the script:
 
 ```bash
-# /etc/init.d/fail2ban
+$ /etc/init.d/fail2ban
 Usage: /etc/init.d/fail2ban {start|stop|status|restart}
-# /etc/init.d/fail2ban status
+$ /etc/init.d/fail2ban status
 Fail2ban (pid 8323) is running...
 Status
 |- Number of jail:	0
 `- Jail list:		
-# /etc/init.d/fail2ban stop
+$ /etc/init.d/fail2ban stop
 Stopping fail2ban:                                         [  OK  ]
-# ps -ef | grep fail
+$ ps -ef | grep fail
 root      8399  8235  0 13:10 pts/0    00:00:00 grep fail
-# /etc/init.d/fail2ban start
+$ /etc/init.d/fail2ban start
 Starting fail2ban:                                         [  OK  ]
-# /etc/init.d/fail2ban restart
+$ /etc/init.d/fail2ban restart
 Stopping fail2ban:                                         [  OK  ]
 Starting fail2ban:                                         [  OK  ]
-# 
+$
 ```
 
 To ensure that fail2ban starts at startup:
 
 ```bash
-# chkconfig --list fail2ban
+$ chkconfig --list fail2ban
 service fail2ban supports chkconfig, but is not referenced in any runlevel (run 'chkconfig --add fail2ban')
-# chkconfig --add fail2ban
-# chkconfig --list fail2ban
+$ chkconfig --add fail2ban
+$ chkconfig --list fail2ban
 fail2ban       	0:off	1:off	2:off	3:on	4:on	5:on	6:off
-# chkconfig fail2ban on
-# chkconfig --list fail2ban
+$ chkconfig fail2ban on
+$ chkconfig --list fail2ban
 fail2ban       	0:off	1:off	2:on	3:on	4:on	5:on	6:off
-# 
+$ 
 ```

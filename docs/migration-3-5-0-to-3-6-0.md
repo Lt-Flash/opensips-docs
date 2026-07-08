@@ -17,7 +17,7 @@ You can find the all the new additions in the **3.6** release compiled [under th
 You can migrate your 3.5.x MySQL DB to the 3.6.x format using the **opensips-cli** tool :
 ```bash
 
-   # opensips-cli -x database migrate 3.5_to_3.6 opensips_3_5 opensips_3_6
+   $ opensips-cli -x database migrate 3.5_to_3.6 opensips_3_5 opensips_3_6
 
 ```
 where :

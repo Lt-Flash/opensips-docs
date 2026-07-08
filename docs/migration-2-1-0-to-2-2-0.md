@@ -15,9 +15,9 @@ You can find the all the new additions in the **2.2.0** release compiled [under 
 ## DB migration
 
 You can migrate your 1.10.x MySQL DB to the 1.11.0 format by using the **opensipsdbctl** tool :
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_2_1 opensips_2_2
+   $ opensipsdbctl migrate opensips_2_1 opensips_2_2
 
 ```
 where :
@@ -43,7 +43,7 @@ The following is the full list of backwards-incompatible syntax or functional ch
 * **mpath** parameter has been changed for debian packages from the default **/usr/lib/opensips/modules/** to **/usr/lib/x86_64-linux-gnu/opensips/modules/**; if you have your OpenSIPS installed from deb files, make sure you update it with the correct path.
 * **debug** global parameter was replaced by the [log_level](/manual/2-2/script-coreparameters#log_level) global parameter, with the same behavior and values.
 * **set_debug()** function was removed and its functionality replaced by [`$log_level`](/manual/2-2/script-corevar#log_level) as follows:
-```text
+```opensips
 
   set_debug(2); is now $log_level=2;
   set_debug() is now $log_level=NULL;

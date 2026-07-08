@@ -27,7 +27,7 @@ With the help of the dialog module, fraud_detection is able to monitor the follo
 #### Table creation
 In order to create the **fraud_detection** table, first make sure your *opensipsctlrc* file contains the desired SQL engine, DB name and access credentials:
 
-```text
+```bash
 
     vim /usr/local/etc/opensips/opensipsctlrc
 
@@ -35,7 +35,7 @@ In order to create the **fraud_detection** table, first make sure your *opensips
 
 Now you can add the extra OpenSIPS tables:
 
-```text
+```bash
 
     opensipsdbctl extra
 

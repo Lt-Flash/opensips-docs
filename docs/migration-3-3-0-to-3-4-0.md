@@ -17,7 +17,7 @@ You can find the all the new additions in the **3.4.0** release compiled [under 
 You can migrate your 3.3.x MySQL DB to the 3.4.x format using the **opensips-cli** tool :
 ```bash
 
-   # opensips-cli -x database migrate 3.3_to_3.4 opensips_3_3 opensips_3_4
+   $ opensips-cli -x database migrate 3.3_to_3.4 opensips_3_3 opensips_3_4
 
 ```
 where :

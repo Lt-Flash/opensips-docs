@@ -38,7 +38,7 @@ SIP logic provided:
 
 * **With Script Helper**
 
-  ```c
+  ```opensips
   ####### Global Parameters #########
 
   debug = 3
@@ -194,7 +194,7 @@ SIP logic provided:
 
 * **Classic Script**
 
-  ```c
+  ```opensips
   ####### Global Parameters #########
 
   debug = 3

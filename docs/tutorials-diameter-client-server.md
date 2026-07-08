@@ -9,7 +9,7 @@ description: "This tutorial has been written for a Xubuntu 22.04 LTS, which come
 
 This tutorial has been written for a Xubuntu 22.04 LTS, which comes with freeDiameter library v1.2.1 packages.  Other distros, such as Debian 10, are also known to offer standard package-based support for freeDiameter v1.2.1, so they are expected to be compatible just as well.
 
-```text
+```bash
 
 sudo apt -y install libfreediameter-dev
 
@@ -29,7 +29,7 @@ include_modules=aaa_diameter make install
 
 Otherwise, if you are installing from packages, make sure to grab the **opensips-diameter-module**:
 
-```text
+```bash
 
 sudo apt -y install opensips-diameter-module
 
@@ -129,7 +129,7 @@ modparam("aaa_diameter", "peer_identity", "server")
 
   
 
-```bash
+```opensips
 
 # Building an sending an My-Custom-Request (92001) for the
 # My Diameter Application (42)

@@ -17,7 +17,7 @@ You can find the all the new additions in the **4.1** release compiled [under th
 You can migrate your 4.0.x MySQL DB to the 4.1.x format using the **opensips-cli** tool :
 ```bash
 
-   # opensips-cli -x database migrate 4.0_to_4.1 opensips_4_0 opensips_4_1
+   $ opensips-cli -x database migrate 4.0_to_4.1 opensips_4_0 opensips_4_1
 
 ```
 where :

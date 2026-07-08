@@ -17,14 +17,14 @@ The database structure was not affected by major changes (like changing the form
 The biggest change concerning the DB structure was reworking some datatypes for MYSQL - replacing *varchar* with *char* in order to  speed up the DB access.
 
 You can migrate your 1.4.x DB to the 1.5.x format by using the **opensipdbctl**(deprecated)  or **osipsconsole** tools:
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_1_4 opensips_1_5
-   or
-   # osipsconsole 
+   $ opensipsdbctl migrate opensips_1_4 opensips_1_5
+   # or
+   $ osipsconsole 
    > migrate opensips_1_4 opensips_1_5
    > quit
-   # 
+   $ 
 
 ```
 where :
@@ -58,8 +58,6 @@ Take care and edit (if necessary) the **opensipsctlrc** /  **osipsconsolerc** fi
 
 There is no need to call "**append_branch()**" function in **failure_route** in order to use the RURI - you still need to use it only if you want to do parallel forking.
 ```opensips
-
-Ex:
  # in 1.4.x
  failure_route[2]
     if (t_check_status("408")) {

@@ -15,9 +15,9 @@ You can find the all the new additions in the **2.4.x** release compiled [under 
 ## DB migration
 
 You can migrate your 2.3.x MySQL DB to the 2.4.x format by using the **opensipsdbctl** tool :
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_2_3 opensips_2_4
+   $ opensipsdbctl migrate opensips_2_3 opensips_2_4
 
 ```
 where :

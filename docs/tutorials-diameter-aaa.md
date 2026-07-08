@@ -13,7 +13,7 @@ This tutorial has been written for a Xubuntu 20.04 LTS, which comes with freeDia
 
 First, let's go ahead and install the server:
 
-```text
+```bash
 
   apt install freediameter
 
@@ -38,7 +38,7 @@ It seems freeDiameter is strongly tied to DNS hostnames, so let's add entries to
 
 The [*aaa_diameter*](/modules/3-2/aaa_diameter) OpenSIPS connector module makes use of the *libfdcore.so* and *libfdproto.so* shared libraries.  These libraries can be installed via:
 
-```text
+```bash
 
   sudo apt install libfdcore6 libfdproto6
 
@@ -145,7 +145,7 @@ EOF
 
 If done correctly, you should be able to see the "app_opensips.fdx" freeDiameter extension module:
 
-```text
+```bash
 
   [liviu@Z370 fDbuild]$ ls extensions/app_opensips.fdx -la
   -rwxrwxr-x 1 liviu liviu 112048 iun 16 22:58 extensions/app_opensips.fdx
@@ -169,7 +169,7 @@ If your freeDiameter server is running on a separate machine, edit `/etc/hosts` 
 
 As we will be using the "dict_sip" freeDiameter extension, install the appropriate package (FWIW, you've already built it in the previous step, but it's nicer this way):
 
-```text
+```bash
 
   sudo apt install freediameter-extensions
 
@@ -179,7 +179,7 @@ As we will be using the "dict_sip" freeDiameter extension, install the appropria
 
 Edit `/etc/freeDiameter/freeDiameter.conf` and provide the following:
 
-```bash
+```text
 
 Identity = "server.diameter.test";
 Realm = "diameter.test";

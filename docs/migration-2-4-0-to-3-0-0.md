@@ -17,7 +17,7 @@ You can find the all the new additions in the **3.0.0** release compiled [under 
 You can migrate your 2.4.x MySQL DB to the 3.0.x format by using the **opensips-cli** tool :
 ```bash
 
-   # opensips-cli -x database migrate 2.4_to_3.0 opensips_2_4 opensips_3_0
+   $ opensips-cli -x database migrate 2.4_to_3.0 opensips_2_4 opensips_3_0
 
 ```
 where :

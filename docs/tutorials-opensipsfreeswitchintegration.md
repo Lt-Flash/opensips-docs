@@ -97,7 +97,7 @@ Go to 'Configure Compile Options' and then 'Configure Excluded Modules'. Select 
 
 ### Create OpenSIPS Database and Configuration File
 
-```text
+```bash
 
 cd /usr/local/opensips/etc/opensips/
 vi opensipsctlrc
@@ -133,7 +133,7 @@ DBROOTUSER="root"
 
 then create the database
 
-```text
+```bash
 
 cd ../..
 cd sbin
@@ -143,7 +143,7 @@ cd sbin
 
 you can then check database creation success with
 
-```text
+```bash
 
 mysql -D opensips -p
 
@@ -151,7 +151,7 @@ mysql -D opensips -p
 
 then create the OpenSIPS configuration file
 
-```text
+```bash
 
 ./osipsconfig
 
@@ -164,7 +164,7 @@ Hit 'q' and then go to 'Generate Residential Script', which will generate a CFG 
 
 Change its name, and edit it (you'll find in the next section the file ready to be copied and pasted).
 
-```text
+```bash
 
 cd ../etc/opensips
 mv opensips_residential_2012-12-19_8\:51\:27.cfg opensips_residential_01.cfg
@@ -235,7 +235,7 @@ OPTIONS="-P $PIDFILE -m $S_MEMORY -M $P_MEMORY -u $USER -g $GROUP -f /usr/local/
 
 then edit the accessory files
 
-```text
+```bash
 
 cp opensips.default /etc/default/opensips
 vi /etc/default/opensips
@@ -255,7 +255,7 @@ S_MEMORY=128
 
 edit the system logger configuration file so to instruct it to convey OpenSIPS info to the right file
 
-```text
+```bash
 
 vi /etc/rsyslog.conf
 
@@ -263,7 +263,7 @@ vi /etc/rsyslog.conf
 
 add at file's end:
 
-```text
+```bash
 
 local1.* -/var/log/opensips.log
 
@@ -271,7 +271,7 @@ local1.* -/var/log/opensips.log
 
 then restart the syslogger and OpenSIPS
 
-```text
+```bash
 
 /etc/init.d/rsyslog restart
 /etc/init.d/opensips start
@@ -284,7 +284,7 @@ then restart the syslogger and OpenSIPS
 
 This is a web configuration and management tool we will use to manage all our platform, both OpenSIPS and FreeSWITCH (eg we'll manage OpenSIPS, actually, but FreeSWITCH will source its user management data from the same database used by OpenSIPS and managed with OpenSIP-CP).
 
-```text
+```bash
 
 cd /var/www
 svn co https://opensips-cp.svn.sourceforge.net/svnroot/opensips-cp/trunk opensips-cp
@@ -299,7 +299,7 @@ vi config/db.inc.php
 
 edit it like this:
 
-```text
+```php
 
 //database connection user
 $config->db_user = "opensips"; //CUSTOMIZE
@@ -311,7 +311,7 @@ $config->db_pass = "mydbpassword"; //CUSTOMIZE
 
 then edit the other config files
 
-```text
+```bash
 
 vi config/boxes.global.inc.php
 
@@ -319,7 +319,7 @@ vi config/boxes.global.inc.php
 
 make it like this:
 
-```text
+```php
 
 //## use fifo
 //$boxes[$box_id]['mi']['conn']="127.0.0.1:8000";
@@ -334,7 +334,7 @@ $boxes[$box_id]['mi']['conn']="/tmp/opensips_fifo";
 
 ```
 
-```text
+```bash
 
 vi config/tools/system/dialog/local.inc.php
 
@@ -342,13 +342,13 @@ vi config/tools/system/dialog/local.inc.php
 
 make it like this:
 
-```text
+```php
 
 $box[1]['mi']['conn']="/tmp/opensips_fifo";;
 
 ```
 
-```text
+```bash
 
 vi config/tools/system/dispatcher/local.inc.php
 
@@ -356,7 +356,7 @@ vi config/tools/system/dispatcher/local.inc.php
 
 make it like this:
 
-```text
+```php
 
 $box[1]['mi']['conn']="/tmp/opensips_fifo";
 
@@ -364,7 +364,7 @@ $box[1]['mi']['conn']="/tmp/opensips_fifo";
 
 then add an alias to the apache configuration
 
-```text
+```bash
 
 vi /etc/apache2/apache2.conf
 
@@ -397,7 +397,7 @@ vi /var/www/opensips-cp/cron_job/generate-cdrs_mysql.sh
 
 edit to look like:
 
-```text
+```bash
 
 mysql -h $HOSTNAME -u $USER -p$PASS -e "call opensips_cdrs(); " $DATABASE
 
@@ -405,7 +405,7 @@ mysql -h $HOSTNAME -u $USER -p$PASS -e "call opensips_cdrs(); " $DATABASE
 
 then activate the CDR cronjob
 
-```text
+```bash
 
 vi /etc/crontab
 
@@ -422,7 +422,7 @@ add the following lines to it
 
 and restart both apache and OpenSIPS
 
-```text
+```bash
 
 /etc/init.d/apache2 restart
 /etc/init.d/opensips restart
@@ -452,7 +452,7 @@ cd freeswitch/
 
 Edit the SIP ports for FreeSWITCH
 
-```text
+```bash
 
 vi /usr/local/freeswitch/conf/vars.xml
 
@@ -460,7 +460,7 @@ vi /usr/local/freeswitch/conf/vars.xml
 
 to be
 
-```text
+```xml
 
 <X-PRE-PROCESS cmd="set" data="internal_sip_port=5090"/>
 <X-PRE-PROCESS cmd="set" data="external_sip_port=5091"/>
@@ -473,7 +473,7 @@ to be
 
 Back up the original files for your reference
 
-```text
+```bash
 
 cp /usr/local/opensips/etc/opensips/opensipsctlrc /usr/local/opensips/etc/opensips/opensipsctlrc.originale
 cp /usr/local/freeswitch/conf/dialplan/public.xml /usr/local/freeswitch/conf/dialplan/public.xml.original
@@ -526,7 +526,7 @@ Follow "CUSTOMIZE", Neo.
 
 In this file, that configures the behavior of the opensipsctrl utilities, you modify the DB-related values.
 
-```bash
+```text
 
 # $Id: opensipsctlrc 9049 2012-05-24 14:03:31Z osas $
 #
@@ -1096,7 +1096,7 @@ You must edit the OpenSIPS IP address.
 
 Follow "CUSTOMIZE".
 
-```bash
+```xml
 
 <!--
     NOTICE:
@@ -1501,7 +1501,7 @@ Here you do not have to change nothing, we configured FreeSWITCH ports before.
 
 Anyway, they're marked "CUSTOMIZE".
 
-```text
+```xml
 
 <include>
   <!-- Preprocessor Variables
@@ -1780,7 +1780,7 @@ This file controls which FreeSWITCH modules are loaded at startup time.
 
 No changes from standard original FreeSWITCH configuration, just be sure mod_lua is not commented out. We use Lua for database user management.
 
-```text
+```xml
 
 <configuration name="modules.conf" description="Modules">
   <modules>
@@ -1927,7 +1927,7 @@ Start with the standard installed file, and then add the name of the script that
 
 You don't need to customize this file, but the lines added are marked as "CUSTOMIZE".
 
-```text
+```xml
 
 <configuration name="lua.conf" description="LUA Configuration">
   <settings>
@@ -1974,7 +1974,7 @@ Starting from the original installed file, you insert one line that allows (with
 
 You need to customize that IP address, follow "CUSTOMIZE".
 
-```text
+```xml
 
 <configuration name="acl.conf" description="Network Lists">
   <network-lists>
@@ -2062,7 +2062,7 @@ PASSWORD        = mydbpassword
 
 Restart it all
 
-```text
+```bash
 
 /etc/init.d/apache2 restart
 /etc/init.d/opensips restart

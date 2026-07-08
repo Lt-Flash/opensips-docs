@@ -61,7 +61,7 @@ The second is that the list definition exists on the server( in fact on the XCAP
 Using the means conform to the mode of operation, the RLS server will look for the list definition. If none is found, the RLS server will assume that the SUBSCRIBE message is not for him, even though it contains 'eventlist' in Supported header, and should forward the message to the presence server (from the script file). The rls_handle_suscribe function will return a code( the default one is '10', but it can also be configured through the parameter 'to_presence_code') when it deduces that the SUBSCRIBE message might be for the presence server. As you will see in the configuration file example, in this case the message should be handled by the presence server( calling handle_subscribe method if the server is collocated with the RLS server, or forwarding it to the presence server).
 
 * To continue with our example, let's consider that the list has the following description:  
-```text
+```xml
 
 <?xml version="1.0" encoding="UTF-8"?>
    <rls-services xmlns="urn:ietf:params:xml:ns:rls-services"

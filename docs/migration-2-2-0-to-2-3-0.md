@@ -15,9 +15,9 @@ You can find the all the new additions in the **2.3.0** release compiled [under 
 ## DB migration
 
 You can migrate your 2.2.x MySQL DB to the 2.3.0 format by using the **opensipsdbctl** tool :
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_2_2 opensips_2_3
+   $ opensipsdbctl migrate opensips_2_2 opensips_2_3
 
 ```
 where :

@@ -15,14 +15,14 @@ One table was remove, one table had its schema changed and new tables were added
 The biggest change was done in the PERMISSIONS module, where the *trusted* and *address* tables were merged into the *address* table.
 
 You can migrate your 1.5.x DB to the 1.5.x format by using the **opensipdbctl**(deprecated)  or **osipsconsole** tools:
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_1_5 opensips_1_6
-   or
-   # osipsconsole 
+   $ opensipsdbctl migrate opensips_1_5 opensips_1_6
+   # or
+   $ osipsconsole 
    > db migrate opensips_1_5 opensips_1_6
    > quit
-   # 
+   $ 
 
 ```
 where :

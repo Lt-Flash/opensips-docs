@@ -21,7 +21,7 @@ The first step is to install FreeRADIUS server. On a Debian based system this ca
 
 ```bash
 
- # apt-get install freeradius
+$ apt-get install freeradius
 
 ```
 
@@ -36,7 +36,7 @@ On a Debian based system you can install RADIUS client using:
 
 ```bash
 
- # apt-get install libradiusclient-ng2
+$ apt-get install libradiusclient-ng2
 
 ```
 

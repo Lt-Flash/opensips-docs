@@ -14,14 +14,14 @@ You can find the all the new additions in 1.7.0 release compiled [under this pag
 The database structure was not affected by major changes, only some fields additions in some tables and some fields type changing.
 
 You can migrate your 1.6.4 DB to the 1.7.0 format by using the **opensipsdbctl** tool :
-```text
+```bash
 
-   # opensipsdbctl migrate opensips_1_6 opensips_1_7
-   or
-   # osipsconsole 
+   $ opensipsdbctl migrate opensips_1_6 opensips_1_7
+   # or
+   $ osipsconsole 
    > migrate opensips_1_6 opensips_1_7
    > quit
-   # 
+   $ 
 
 ```
 where :
