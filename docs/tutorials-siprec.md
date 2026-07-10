@@ -108,7 +108,7 @@ if (is_method("INVITE")) {
 
 The `rtp_relay_engage()` function does not immediately perform all media operations. It registers the RTP relay context for the call, then automatically handles the required offer/answer and delete operations as the dialog progresses. SIPREC uses this RTP relay context when it asks the selected backend to fork media to the SRS. When no instance name is provided, `siprec_start_recording()` starts the default SIPREC instance for the call.
 
-A full sample configuration is available in the SIPREC module examples: [opensips.cfg](https://github.com/OpenSIPS/opensips/blob/master/modules/siprec/examples/opensips.cfg).
+A full sample configuration is available in the SIPREC module examples: [opensips.cfg](https://github.com/OpenSIPS/opensips/blob/master/modules/siprec/samples/opensips.cfg).
 
 ## Recording Start Time
 
