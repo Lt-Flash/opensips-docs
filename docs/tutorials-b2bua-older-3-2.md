@@ -7,7 +7,7 @@ description: "OpenSIPS has many features but in the way it behaves when a media 
 
 ## Overview
 
-OpenSIPS has many features but in the way it behaves when a media session is established, it is not more than a proxy, meaning that it only takes the messages from one side and pass them on the other side. However, this has proven not to be enough as to provide certain services it is required for the server to be aware of the state of the sessions, monitor and control them. A Back-to-Back User Agent is exactly this, a entity in the SIP network which has the ability to control or start media sessions. The name comes from the behavior, since in fact what is required is for the B2BUA to stand in the middle and establish two dialogs with both end points that will eventually exchange media. 
+OpenSIPS has many features but in the way it behaves when a media session is established, it is not more than a proxy, meaning that it only takes the messages from one side and passes them on the other side. However, this has proven not to be enough as to provide certain services it is required for the server to be aware of the state of the sessions, monitor and control them. A Back-to-Back User Agent is exactly this, an entity in the SIP network which has the ability to control or start media sessions. The name comes from the behavior, since in fact what is required is for the B2BUA to stand in the middle and establish two dialogs with both endpoints that will eventually exchange media.
 
 B2BUA in OpenSIPS is an implementation of the behavior of a B2BUA as defined in RFC 3261 that offers the possibility to build certain services on top of it. It consists of two modules:
 * b2b_entities - the bottom half, implementing the behavior of UAC and UAS (B2BUA)
@@ -21,7 +21,7 @@ The reason for which the architecture has two parts is to allow extensions and i
 The two parts composing B2BUA in OpenSIPS are bound to each other in a control-notify relationship. The b2b_logic module controls the b2b_entities by sending commands and telling it what messages to send and the b2b_entities modules notifies the b2b_logic module when a request or a reply is received for a dialog that the B2B is handling. 
 
 ### Server Entity and Client Entity
-The name represents in fact the type if transaction entity that is created at the beginning. So there will be a 
+The name represents in fact the type of transaction entity that is created at the beginning. So there will be a
 * b2b server entity if it is created when a message is received and has to reply to it 
 * b2b client entity if the entity will have to start a dialog by sending an initial message
 
@@ -29,7 +29,7 @@ The name represents in fact the type if transaction entity that is created at th
 The services are defined in documents called scenarios. A scenario instantiation is an application of a scenario that is currently in progress. The b2b_logic module might be told to initialize a scenario in two ways: from the script, by calling a function that the module exports when an initial request is received, or by sending an external command. When receiving one of these two events, the b2b_logic module will create a record(corresponding to the red small boxes in the drawing) with the information for that scenario instantiation. Also at this moment, the b2b_logic module tells the b2b_entities module to create the entities(server and/or clients) that it requires. The record mainly stores a relation to the scenario document that it must follow, the state of the scenario application and the identifiers for the entities in b2b_entities module.
 
 ### Communication with the exterior
-As can be seen in the picture, the b2b_entities module is the bottom half part of B2BUA and it deals with the actual network message exchange. To achieve this it uses directly the functions provided by the **tm** module for sending requests and replies and for receiving replies. Also the tm module announce it when a reply for a request that it has sent is received. For requests inside dialog, the b2b_entities module registers a prescript function that catches this requests. In the current implementation, these requests don't go into the script because the prescript function returns '0'. As mentioned earlier, when receiving a reply or request that is matched to a known dialog, the b2b_entities module does no further action but notifies the b2b_logic module about this event. The b2b_logic module which is the upper half, will then decide what actions should be taken and sends back control commands to the b2b_entities module. 
+As can be seen in the picture, the b2b_entities module is the bottom half part of B2BUA and it deals with the actual network message exchange. To achieve this it uses directly the functions provided by the **tm** module for sending requests and replies and for receiving replies. Also the tm module announces it when a reply for a request that it has sent is received. For requests inside dialog, the b2b_entities module registers a prescript function that catches these requests. In the current implementation, these requests don't go into the script because the prescript function returns '0'. As mentioned earlier, when receiving a reply or request that is matched to a known dialog, the b2b_entities module does no further action but notifies the b2b_logic module about this event. The b2b_logic module which is the upper half, will then decide what actions should be taken and sends back control commands to the b2b_entities module.
 
 ## Initiating B2B services
 
@@ -111,8 +111,8 @@ The **init** section provides indications about the entities that must be create
 
 There can be two types of entities:
 
-* **server entity** – for the first transaction the entity will behave as a UAS. This can be created only if there is a INVITE message that the entity will have to deal with. Server entities can appear only in scrip scenarios.
-* **client entity** - a entity that has to start a dialog and send an initial message to a SIP endpoint.
+* **server entity** – for the first transaction the entity will behave as a UAS. This can be created only if there is a INVITE message that the entity will have to deal with. Server entities can appear only in script scenarios.
+* **client entity** - an entity that has to start a dialog and send an initial message to a SIP endpoint.
 
 Some parameters must be defined for the entities. Both server and client entities must be given an **id** that will be used to identify the entity later in the script. For the server entity no other parameters need to be defined.
 
@@ -254,7 +254,7 @@ The extra conditions that can be defined for a rule filter the scenario state an
 
 A condition will be matched if the scenario instantiation is in the same state as the state specified in the condition. 
 
-The direction of a message is specified with a **sender** node. The sender can be a certain entity specified with a type and an id, or a entity category, being sufficient to specify only the type.
+The direction of a message is specified with a **sender** node. The sender can be a certain entity specified with a type and an id, or an entity category, being sufficient to specify only the type.
 
 **Example: Scenario condition node**
 ```xml
@@ -268,7 +268,7 @@ The direction of a message is specified with a **sender** node. The sender can b
 ```
 
 #### Rules action part
-In this first version there are four possible actions, with the possibility to extend them in the future. The actions are described in the table bellow. 
+In this first version there are four possible actions, with the possibility to extend them in the future. The actions are described in the table below.
 
 **Scenario rules node structure**
 
@@ -344,9 +344,9 @@ Bellow is an action example:
 
 ## Scenario Examples
 ### Topology Hiding
-No scenario document must be defined for this usage case. This is a built in mechanism and it
+No scenario document must be defined for this usage case. This is a built-in mechanism and it
 can be requested to the B2B Logic by specifying the name "top hiding".
-The functionality is a simple pass through with the creation of a new dialog on the other side
+The functionality is a simple pass-through with the creation of a new dialog on the other side
 and transferring all the messages received on one side to the other side taking care only to
 change the dialog information.
 #### Scenario Schema
@@ -363,17 +363,17 @@ What must happen at session level is:
 * the caller is connected to the callee
 * if the callee hangs up the phone before the caller, the caller is connected to a media server (the same or other).
 
-In B2BUA terms, this is a script scenario that can be instantiating by specifying the id **prepaid**. It requires 2 parameters:
+In B2BUA terms, this is a script scenario that can be instantiated by specifying the id **prepaid**. It requires 2 parameters:
 * the location of the first media server
 * the location of the second media server
 #### Scenario Schema
-To establish this sessions the SIP message flow has to look like this( it is assumed that the
+To establish these sessions the SIP message flow has to look like this (it is assumed that the
 same media server is used):
 
 ![ppaid](/public/uploads/ppaid.jpeg)
 
 #### Scenario Document
-The full scenario document is printed bellow:
+The full scenario document is printed below:
 ```xml
 <?xml version="1.0"?>
 <scenario id="prepaid" name="MS start and end" param="2" type="script">
@@ -460,12 +460,12 @@ The full scenario document is printed bellow:
 ```
 
 ### Marketing
-The last test case is called “Marketing”, because it suits very well to the requirements of a marketing campaign through phone. The company might choose a list of potential costumers to call and announce about a new product/offer/discount. The message will be a recorded one, but the costumer will also be offered the possibility to talk to a human operator. If the costumer does not hung up the phone before the recorded message ends, it will be connected to a human operator. This is also a good means to filter the interested costumers and make the process more efficient with less resources used. 
+The last test case is called “Marketing”, because it suits very well to the requirements of a marketing campaign through phone. The company might choose a list of potential customers to call and announce about a new product/offer/discount. The message will be a recorded one, but the customer will also be offered the possibility to talk to a human operator. If the customer does not hang up the phone before the recorded message ends, it will be connected to a human operator. This is also a good means to filter the interested customers and make the process more efficient with less resources used.
 
 The OpenSIPS B2BUA must connect two end points, start the call from the middle. It is different from the other examples, since the call is initiated by the B2BUA and it is triggered by a MI command. 
 
 The id which must be mentioned to start this service is 'marketing'. It requires 3 parameters
-* the URI of the possible costumer
+* the URI of the possible customer
 * the URI of the media server
 * the URI of the human operator
 
@@ -536,7 +536,7 @@ The scenario document that describes this service is:
 
 ### REFER Scenario
 
-The B2BUA component can also be configured to handle blind transfers(with REFER SIP message). This is useful when in the platform there are devices that do not accept the REFER method. The scenario for this case is very simple and has one rule for when a REFER is received. This rule tells the B2BUA to end the call with the user agent that sent the refer message and to bridge the peer with the user specified in the 'Refer-To' header.
+The B2BUA component can also be configured to handle blind transfers (with the REFER SIP message). This is useful when in the platform there are devices that do not accept the REFER method. The scenario for this case is very simple and has one rule for when a REFER is received. This rule tells the B2BUA to end the call with the user agent that sent the REFER message and to bridge the peer with the user specified in the 'Refer-To' header.
 #### Scenario Document
 The scenario document that describes this service is:
 ```xml
@@ -619,8 +619,8 @@ There are some requirements for a configuration file that enables the B2BUA serv
     * **script_scenario** and **extern_scenario** in b2b_logic for loading service scenarios
     * parameters for the hash tables - server_hsize and client_hsize in b2b_entities module and **hash_size** in b2b_logic module
 
-* load a MI module if you need to support triggering B2BUA scenarios with extern commands. Depending on the transport you require, either mi_fifo or mi_xmlrpc or mi_datagram. 
-* built the filters and call the script scenario instantiating function 
+* load a MI module if you need to support triggering B2BUA scenarios with external commands. Depending on the transport you require, either mi_fifo or mi_xmlrpc or mi_datagram.
+* build the filters and call the script scenario instantiating function
 
 Also please note that you need to configure the tm module to pass provisional replies. For this you need to set the module parameter:
 
@@ -634,7 +634,7 @@ You can find [here](/tutorials-b2buaconfigexample) a configuration file example 
 
 ### Script routes
 #### Special B2B route
-The requests and replies that are received by the B2BUA server, belonging to the dialogs it is handling will not go into the script as normal request do. The reason for this is that this are not normal requests where the server is a proxy, but the server is an endpoint in the dialog and therefore they should not go through the same routes. However, it is normal for this request to be seen from the script and allow the script writer to do the processing it desires based on them. For this, it is possible to define two special B2B routes - one for requests and one for replies. The routes are of type **route** and have their name defined in the modules parameters **script_req_route** and **script_reply_route**.
+The requests and replies that are received by the B2BUA server, belonging to the dialogs it is handling will not go into the script as normal requests do. The reason for this is that these are not normal requests where the server is a proxy, but the server is an endpoint in the dialog and therefore they should not go through the same routes. However, it is normal for these requests to be seen from the script and allow the script writer to do the processing it desires based on them. For this, it is possible to define two special B2B routes - one for requests and one for replies. The routes are of type **route** and have their name defined in the modules parameters **script_req_route** and **script_reply_route**.
 
 ```opensips
 modparam("b2b_entities", "script_req_route", "b2b_request")
@@ -653,7 +653,7 @@ route[b2b_reply] {
 
 It is impossible to have a **t_on_failure()** mechanism  (which is transaction specific) on a B2BUA scenario (where you have multiple dialogs, with multiple transactions) - for complex scenarios, with multiple dialogs, you cannot say for which transaction to trigger the failure route for. The "topo hiding" scenario is a very simple B2BUA scenario, but you cannot have a general "on_failure" concept for all b2bua scenarios.
 
-A solution is to consider that b2bua is a separate instance (logically speaking) which selects types/classes of destinations. A proxy instance will responsible for routing inside the class of destinations.
+A solution is to consider that b2bua is a separate instance (logically speaking) which selects types/classes of destinations. A proxy instance will be responsible for routing inside the class of destinations.
 
-For ex: in a scenario we can sent in the first place the call to Media Server for some announcement and later to PSTN GW. In a first step, the b2bua scenario will sent to proxy the call with RURI pointing to "a class"
-of media servers - the proxy will select the proper media server and do the failover between the media servers, totally transparent for the b2bua. In a similar way, on the second step, the b2bua scenario will indicate to proxy that it wants to have the call to be sent to PSTN GW (as type of destination) - the proxy will do lcr, drouting,  failover between the GW.
+For ex: in a scenario we can send in the first place the call to Media Server for some announcement and later to PSTN GW. In a first step, the b2bua scenario will send to proxy the call with RURI pointing to "a class"
+of media servers - the proxy will select the proper media server and do the failover between the media servers, totally transparent for the b2bua. In a similar way, on the second step, the b2bua scenario will indicate to proxy that it wants to have the call to be sent to PSTN GW (as type of destination) - the proxy will do lcr, drouting, failover between the GW.
