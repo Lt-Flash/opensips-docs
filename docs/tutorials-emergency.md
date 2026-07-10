@@ -1,24 +1,13 @@
 ---
 title: "Emergency Calls using OpenSIPS"
 subtitle: "Emergency"
-subtitleHref: "/modules/2-2/emergency"
-description: "The emergency module provides emergency call treatment for OpenSIPS, following the architecture i2 specification of the american entity NENA(National Emergen..."
+subtitleHref: "/modules/devel/emergency"
+description: "The emergency module provides NENA i2 emergency call treatment for OpenSIPS."
 ---
-
-> [!NOTE]
-> Other versions: [OpenSIPS 2.1 version](/tutorials-emergency-2-1).
-
-**Authors**
-
-* **Evandro Villaron Franceschinelli** -  electrical engineer with large experience in the telecommunications area, worked among others in development of Digital Switches, notedly telephonic signalling protocol (TDM - SS#7, E&M, R2 DIG and NGN - MEGCO MGCP, SIP), as well as with BSS system for telephonic enterprises, deployment of a SIP routing system and implantation VoIP PBX.
-
-* **Robison Gonsalves Tesini** - computer enginner graduated in 1998 with large experience in the  telecommunications are, having worked with telecom for ten years and SIP for the last four.
 
 ## Tutorial Overview
 
 The emergency module provides emergency call treatment for OpenSIPS, following the architecture i2 specification of the american entity NENA(National Emergency Number Association). This tutorial presents the i2 architecture, as well as the steps you need to follow in order to integrate emergency calls in OpenSIPS script.
-
----
 
 ## Problem
 
@@ -67,7 +56,7 @@ The components of this architecture shown in figure below:
 
 * **Emergency Services Gateway** (ESGW) - the gateway between the IP network and the PSTN network where this legacy PSAP. It uses the information (ESGWRI) received by the Call Server to select the appropriate juntor to route the call on the PSTN network,in trunk signaling includes an identifier of the call (ESQK) and , if possible, the callback number (CBN) in ANI field.
 * **Emergency Service Zone Routing Data Base** (ERDB) - determines Emergency Service Zone(ESZ) according to the received location information., it maps the geo-referenced or civic address  to the area of the nearest PSAP.
-* **VoIP Positioning Center** (VPC) - the element that provides routing information to emergency call. It also sends the location information to the PSAP ALI module when required. VPC interfaces with the ERDB to obtain the ESZ informations..
+* **VoIP Positioning Center** (VPC) - the element that provides routing information to emergency call. It also sends the location information to the PSAP ALI module when required. VPC interfaces with the ERDB to obtain the ESZ information.
 * **Validation Database** (VDB) - contain information of valid civic addresses defined by the Emergency Services Network Provider's MSAG.The VDB has the capability to receive a request for validation of a civic address in the PIDF-LO object and return a response indicating whether the address is valid. This process ensures that the address is an real address. (ie. address exists), but not sure that is indeed the location of the caller.
 * **Location Information Server** (LIS) - the element that informs the location of the caller device. This can provide the location by Reference or Value in civic or geo-referenced format. Can be requested by the caller endpoint itself to know its location or by a third party interested in the location of a device. On both case, the LIS receives a unique ID that represents the endpoint (such as an IP address, circuit ID, a MAC address) and returns the location associated with this identification.The LIS will also provide location information for a query using a reference URI (dereferencing).
 * **Root Discovery Server** (RDS) - is the entity that distributes the ERDBs and VDBs servers (assuming that there must be several ERDB / VDB to treat all localities of the country).When interrogated with location information, it returns with a list of ERDB and VDB URI serving the location area of informed location.
@@ -77,7 +66,7 @@ The components of this architecture shown in figure below:
 
 From the business viewpoint, several scenarios can be discerned in this architecture:
 
-### Scenario I
+#### Scenario I
 Call Server of caller VSP  takes over the treatment of the emergency call. The VSP is also the provider (source) that interfaces with the VPC. The scenario uses the following operating sketch:
 
 ![emergency figure2](/public/uploads/emergency-figure2.png)
@@ -93,7 +82,7 @@ Below are the steps to be followed to make an emergency call:
 * The Call Server with the R-URI received from the VPC (ESGWRI) or with the R-URI solved with the data received from the emergency area (ERT) forwards the INVITE to the appropriate ESGW. The Call Server includes in this INVITE the ESQK and the callback number.
 * The ESGW choose an output path for the PSTN based in ESGWRI information. In PSTN, the SS#7 signaling will include ESQK in ANI field.
 * The SR using ESGWRI and ESQK forwards the call to the appropriate PSAP.
-* The PSAP attendent queries the ALI using ESQK to get the caller location
+* The PSAP attendant queries the ALI using ESQK to get the caller location
 * The ALI sends a ESPOSREQ signal for the VPC, the VPC through the key ESQK get the location and call information stored.
 * To terminate the call the Call Server receives a BYE from caller or ESGW gateway.The Call Server must inform the VPC the end of this call to release the key and information concerning this call.
 
@@ -101,7 +90,7 @@ The signal flow exchanged in the first scenario is shown in the figure below:
 
 ![emergency figure3](/public/uploads/emergency-figure3.png)
 
-### Scenario II
+#### Scenario II
 Call Server of caller VSP routes the emergency call for a Routing Proxy from a third party SIP provider, which makes treatment and henceforth takes over the call. 
 
 In this scenario the interfaces: v0, v3, v7, v8, as well as the PSTN interfaces, are identical to those of scenario I, therefore will not be described here. The following figure shows the operating sketch for this scenario:
@@ -121,7 +110,7 @@ The signal flow exchanged in the second scenario is shown in the figure below:
 
 ![emergency figure5](/public/uploads/emergency-figure5.png)
 
-### Scenario III
+#### Scenario III
 Call Server of caller VSP requests from a Redirect Server the other provider routing information to emergency call, but in this case the Call Server that forwards and takes over the call. This third provider may be a provider specialized in the treatment of emergency call.
 
 In this scenario the interfaces: v0, v3, v7, v8, as well as the PSTN interfaces, are identical to those of scenario I therefore will not be described here. The following figure shows the scenario:
@@ -153,15 +142,15 @@ The emergency module was developed to make OpenSIPS fulfill the functional requi
 
 The next section addresses the tasks that these functions perform and explain the parameters. Initially we are going start by the parameters that are common regardless of the OpenSIPS' role to be configured for the module emergency:
 
-***Emergency Module Tables*** 
+### Emergency Module Tables
 
-* **'emergency_routing**'' - this table is only necessary if VPC not translate ERT(Emergency Route Tuple) information to ESGWRI that is used to routing emergency call to the appropriate ESGW gateway. The following coluns compose this table:
+* `emergency_routing` - this table is only necessary if VPC not translate ERT(Emergency Route Tuple) information to ESGWRI that is used to routing emergency call to the appropriate ESGW gateway. The following columns compose this table:
   * **selectiveRoutingID:** The Common Language Location Indicator (CLLI) code associated with the Selective Router to which the emergency call is to be directed.
   * **routingESN:** The Emergency Services Number associated with a particular ESZ that represents a unique combination of Police, Fire and EMS emergency responders.
   * **npa:** The Numbering Plan Area associated with the outgoing route to the Selective Router that is appropriate for caller’s location.
   * **esgwri:** this field will contain the Routing Key that allows routing of the call to the Selective Router servicing the local area in which the call was made.
 
-* `emergency_service_provider` - this table has the information of the organizations involved in the routing of the emergency call, this information is necessary to send the request to the VPC, according to the NENA standard. This table isn't necessary if opensips role not send request to VPC, such as the opensips acting as call server in the scenarios II and III. This table is create with this columns:
+* `emergency_service_provider` - this table has the information of the organizations involved in the routing of the emergency call. In the devel module this table replaces the organization-related module parameters used by older 2.1 examples. The table is necessary when OpenSIPS sends requests to the VPC according to the NENA standard, and is not necessary if OpenSIPS does not send requests to the VPC, such as when OpenSIPS acts as Call Server in scenarios II and III. This table is created with these columns:
   * **organizationName:** provider company name’s. This parameter is optional field in the NENA v2 interface (call server - VPC).
   * **hostId:** provider hostname’s. This parameter is  mandatory if attribution is 0(source) or 2(VSP), otherwise it is optional.
   * **nenaId:** the NENA administered company identifier (NENA Company ID) of provider. This parameter is optional field in the NENA v2 interface (call server - VPC).
@@ -171,10 +160,10 @@ The next section addresses the tasks that these functions perform and explain th
   * **attribution:** It is a field of type int designating the function of the organization involved in the composition of architecture NENA being registered in this table. This parameter is  mandatory.
 The values that this field can take are:
 1. the organization is a Source. Source is node directly requesting emergency call routing from the VPC;
-2. the organization is a VPC. VPC is the routing information provider to emengency call;
+2. the organization is a VPC. VPC is the routing information provider to emergency calls;
 3. the organization is a VSP. VSP is the caller's voice service provider;
 
-* `emergency_report` - keep call event records(call history and contents of the Request/Response message to VPC) for trouble shooting purpose. The following coluns compose this table:
+* `emergency_report` - keep call event records(call history and contents of the Request/Response message to VPC) for trouble shooting purpose. The following columns compose this table:
   * **callid:** INVITE header that uniquely identifies the call at the Call Server.
   * **vpc_organizationName:** is VPC company name’s
   * **vpc_hostname:** is VPC hostname.
@@ -186,7 +175,7 @@ The values that this field can take are:
   * **result:** code indicating the reason for success or failure to VPC determine an routing.
   * **disposition:** disposition of the call (e.g., ESGWRI or LRO used).
 
-***Configuration Script*** 
+### Configuration Script
 ```opensips
 
 loadmodule "emergency.so" # loads the module
@@ -207,37 +196,38 @@ modparam("emergency", "timer_interval",30)
 
 The other parameters and tasks which the functions execute depends on its role within the possible scenarios.
 
-### Call Server in the scenario I or as the Routing Server in scenario II
+### Call Server in scenario I or Routing Proxy in scenario II
 
 ```opensips
 
 /*
 * emergency module tables in this role:
-* emergency_service_provider - need be created and inserted registers with organization information of VPC, Source and VSP nodes, latter only to scenario II (attribution 0, 1 and 2 respectively).
-* emergency_routing - need be created and inserted with ERT information and  its ESGWRI matching , only in case of VPC don't do it.
-* emergency_report - need be only created.
+* emergency_service_provider - create it and insert organization information for the VPC, Source and VSP nodes; the VSP node is only needed in scenario II (attribution 0, 1 and 2 respectively).
+* emergency_routing - create it and insert ERT information with the matching ESGWRI only if the VPC does not return the ESGWRI directly.
+* emergency_report - only needs to be created.
 **/
-### mandatory parameters to configure in this roles:
-#proxy role = 0 defines the OpenSIPS as Call Server in scenario I
-modparam("emergency", "proxy_role", 0)  
-#proxy role = 1 defines the OpenSIPS as Routing Server for scenario II 
-modparam("emergency", "proxy_role", 1)  
+### mandatory parameters to configure in these roles:
+# proxy_role = 0 defines OpenSIPS as Call Server in scenario I
+modparam("emergency", "proxy_role", 0)
 
-#VPC's IP address that OpenSIPS interfaces to get routing data.
-modparam("emergency", "url_vpc", "http://192.168.0.103/fcgi-bin/fcgid.fcgi") 
+# proxy_role = 1 defines OpenSIPS as Routing Proxy in scenario II
+# modparam("emergency", "proxy_role", 1)
 
-###optional parameters to configure in this roles:
-#contingency proxy URI to route the emergency call, if the routing mechanism made between OpenSIPS and VPC fails. 
-modparam("emergency", "contingency_hostname","192.168.0.105")  
+# VPC URL used by OpenSIPS to get routing data
+modparam("emergency", "url_vpc", "http://192.168.0.103/fcgi-bin/fcgid.fcgi")
 
-#name of the table that makes the replacement of emergency area identity received of VPC(ERT) in URI to routing the request.
-modparam("emergency", "db_table_routing","emergency_routing")  
+### optional parameters to configure in these roles:
+# contingency proxy URI used if the routing mechanism between OpenSIPS and VPC fails
+modparam("emergency", "contingency_hostname", "192.168.0.105")
 
-#name of the table that store metadata associated with a call
-modparam("emergency", "db_table_report","emergency_report") 
+# table used to map ERT information received from the VPC to a routable URI
+modparam("emergency", "db_table_routing", "emergency_routing")
 
-#name of the table that store organization infomation used in VPC interface
-modparam("emergency", "db_table_provider","emergency_service_provider")  
+# table that stores metadata associated with a call
+modparam("emergency", "db_table_report", "emergency_report")
+
+# table that stores organization information used in the VPC interface
+modparam("emergency", "db_table_provider", "emergency_service_provider")
 
 ```
 
@@ -247,7 +237,7 @@ Tasks performed by `emergency_call` function in this role:
 * Get the location information of caller passed by value in body of the INVITE using content type `application/pidf` [9], or by reference through Geolocation headers[7]. Send HTTP POST to the VPC reporting the location along with VPC identity, VSP identity and  SIP provider of Routing Proxy, latter only to scenario II. These information must be configured in the parameters described above in order to fulfill the requirements of this interface. 
 * The OpenSIPS waiting for a response 200 OK from VPC with necessary information to forward the INVITE, this information may come in two ways:
   * via parameter ESGWRI (Emergency Services Gateway Route Identifier) ​​which already contains an URI for the Call Server to forward the call.
-  * or via parameter ERT (Emergency Route Touple), which contains three fields identifying the emergency area: Selective Routing Identifier, ESN (Emergency Services Number) and the NPA (Numbering Plan Area). The Call Server/ Routing Proxy translates these fields to an URI that the request should be routed. this is done by populating the table defined by db_emergency_routing containing the columns of the ERT field and a column that translates the target URI.
+  * or via parameter ERT (Emergency Route Tuple), which contains three fields identifying the emergency area: Selective Routing Identifier, ESN (Emergency Services Number) and the NPA (Numbering Plan Area). The Call Server/ Routing Proxy translates these fields to an URI that the request should be routed. this is done by populating the table defined by db_emergency_routing containing the columns of the ERT field and a column that translates the target URI.
 * In forwarding the INVITE the R-URI should be changed by the ESGWRI value, location information should be kept in package, and information concerning to CBN( Callback Number) and the key associated with the call in VPC (ESQK) should be added.
 * The new URI destination should be kept within the OpenSIPS, this way all request within of dialogue with same callid and same direction can be forwarded to same destination. Route-Records must be included in package because OpenSIPS need be aware of the call termination.
 * When the call ends the OpenSIPS should receive the BYE and clear the information stored in memory relating to this call. The OpenSIPS send another HTTP POST informing the VPC about the call termination, so the VPC also release the key and the information concerning this call from its base.
@@ -264,16 +254,16 @@ If no succeed in transmitting the INVITE by routing defined in above steps, conf
 /* emergency module tables in this role:
  * no table needs to be created.
 **/
-      ###mandatory parameters to configure in this roles:
-#proxy role = 2 defines OpenSIPS as Call Server in scenario II
-modparam("emergency", "proxy_role", 2) 
+### mandatory parameters to configure in this role:
+# proxy_role = 2 defines OpenSIPS as Call Server in scenario II
+modparam("emergency", "proxy_role", 2)
  
-#defines the IP address of the Routing proxy from a third party SIP provider that will handle the emergency call.
-modparam("emergency", "emergency_call_server","192.168.0.105")
+# Routing Proxy from the third-party SIP provider that will handle the emergency call
+modparam("emergency", "emergency_call_server", "192.168.0.105")
 
 ```
 
-Tasks performed by ##emergency_call## function in this role:
+Tasks performed by `emergency_call` function in this role:
 * Verify the received request (INVITE) is concerning an emergency call. This is done by checking whether the User field in R-URI coincides with one of emergency_codes parameters defined in the configuration file, or, if it is a standardized URN for emergency call `urn: service.sos` proposed in RFC5031 [7]. If it is not emergency, the package follows the usual treatment.
 * If it is a emergency call request, it checks whether a packet is to be handled by this proxy. For this checks if the host field in R-URI is to own OpenSIPS, or check if Geolocation-Routing header has the value *yes* according to RFC6442[8]. If the OpenSIPS not have to deal with the package, the package is usually transmitted to a the destination set in R-URI.
 * Only forwards the INVITE to Routing Proxy that will take this call.
@@ -285,27 +275,27 @@ The command `failure` has no meaning in this role.
 ```opensips
 
 /* emergency module tables in this role:
- * emergency_service_provider – not need be created.
-emergency_routing - need be created and inserted with ERT information and  its ESGWRI matching , only in case of VPC don't do it.
- * emergency_report - need be only created.
+ * emergency_service_provider - does not need to be created.
+ * emergency_routing - create it and insert ERT information with the matching ESGWRI only if the VPC does not return the ESGWRI directly.
+ * emergency_report - only needs to be created.
 **/
-      ###mandatory parameters to configure in this roles:
-#proxy role = 3 defines Opensips as Call Server in scenario III
-modparam("emergency", "proxy_role", 3) 
+### mandatory parameters to configure in this role:
+# proxy_role = 3 defines OpenSIPS as Call Server in scenario III
+modparam("emergency", "proxy_role", 3)
  
-#defines the IP address of Redirect Server that will handle the emergency call.
-modparam("emergency", "emergency_call_server","192.168.0.105")
+# Redirect Server that will handle the emergency call
+modparam("emergency", "emergency_call_server", "192.168.0.105")
  
 
-      ###optional parameters to configure in this roles:
-#contingency proxy URI to route the emergency call, if the routing mechanism made between OpenSIPS and VPC fails
-modparam("emergency", "contingency_hostname","192.168.0.105")  
+### optional parameters to configure in this role:
+# contingency proxy URI used if the routing mechanism between OpenSIPS and VPC fails
+modparam("emergency", "contingency_hostname", "192.168.0.105")
  
-#name of the table that makes the replacement of emergency area identity received of VPC(ERT) in URI to routing the request.
-modparam("emergency", "db_table_routing","emergency_routing")  
+# table used to map ERT information received from the VPC to a routable URI
+modparam("emergency", "db_table_routing", "emergency_routing")
 
-#name of the table that store metadata associated with a call
-modparam("emergency", "db_table_report","emergency_report")  
+# table that stores metadata associated with a call
+modparam("emergency", "db_table_report", "emergency_report")
 
 ```
 
@@ -321,7 +311,7 @@ Tasks performed by `emergency_call` function in this role:
 Tasks performed by `failure` function in this role:
 * The failure command will treat the 300/302 response received from redirect, and will use the information in Contact header to forward INVITE to the correct destination. Contact header may come in two ways:
   * via parameter ESGWRI (Emergency Services Gateway Route Identifier) ​​which already contains an URI for the Call Server to forward the call.
-  * or via parameter ERT (Emergency Route Touple), which contains three fields identifying the emergency area: Selective Routing Identifier, ESN (Emergency Services Number) and the NPA (Numbering Plan Area). The Call Server/ Routing Proxy translates these fields to an URI that the request should be routed. this is done by populating the table defined by db_emergency_routing containing the columns of the ERT field and a column that translates the target URI.
+  * or via parameter ERT (Emergency Route Tuple), which contains three fields identifying the emergency area: Selective Routing Identifier, ESN (Emergency Services Number) and the NPA (Numbering Plan Area). The Call Server/ Routing Proxy translates these fields to an URI that the request should be routed. this is done by populating the table defined by db_emergency_routing containing the columns of the ERT field and a column that translates the target URI.
 * In the forwarding of the INVITE, the R-URI should be changed by ESGWRI value, and location information should be kept in the package and should be added information of CBN and ESQK (Emergency Services Query Keys). And the Route-Records must be included in the message for the OpenSIPS be aware of the closure of the call.
 * If no succeed in transmitting the INVITE by routing defined in above steps, this command transmits the INVITE to a gateway that forwards the call to the conventional telephone network to a contingency number defined by LRO parameter received from VPC.
 
@@ -330,20 +320,20 @@ Tasks performed by `failure` function in this role:
 ```opensips
 
 /* emergency module tables in this role:
- * emergency_service_provider - need be created and inserted registers with organization information of VPC, Source and VSP nodes (attribution 0, 1 and 2 respectively).
- * emergency_routing - not need be created .
- * emergency_report - need be only created.
+ * emergency_service_provider - create it and insert organization information for the VPC, Source and VSP nodes (attribution 0, 1 and 2 respectively).
+ * emergency_routing - does not need to be created.
+ * emergency_report - only needs to be created.
 **/
-      ###mandatory parameters to configure in this roles:
-#proxy role = 4 defines Opensips as Redirect Server in scenario III
-modparam("emergency", "proxy_role", 4) 
+### mandatory parameters to configure in this role:
+# proxy_role = 4 defines OpenSIPS as Redirect Server in scenario III
+modparam("emergency", "proxy_role", 4)
  
-#VPC's IP address that OpenSIPS interfaces to get routing data
+# VPC URL used by OpenSIPS to get routing data
 modparam("emergency", "url_vpc", "http://192.168.0.103/fcgi-bin/fcgid.fcgi")
 
-      ###optional parameters to configure in this roles:
-#name of the table that store metadata associated with a call
-modparam("emergency", "db_table_report","emergency_report")
+### optional parameters to configure in this role:
+# table that stores metadata associated with a call
+modparam("emergency", "db_table_report", "emergency_report")
 
 ```
 
@@ -353,7 +343,7 @@ Tasks performed by `emergency_call` function in this role:
 * Get the location information of caller passed by value in body of the INVITE using content type `application/pidf`[9], or by reference through Geolocation headers [7]. Send HTTP POST to the VPC reporting the location along with VPC identity, VSP identity and  SIP provider of Routing Proxy. These information must be configured in the parameters described above in order to fulfill the requirements of this interface.  
 * The OpenSIPS waiting for a response 200 OK from VPC with necessary information to forward the INVITE, this information may come in two ways:
   * via parameter ESGWRI (Emergency Services Gateway Route Identifier) ​​which already contains an URI for the Call Server to forward the call.
-or via parameter ERT (Emergency Route Touple), which contains three fields identifying the emergency area: Selective Routing Identifier, ESN (Emergency Services Number) and the NPA (Numbering Plan Area). The Call Server/ Routing Proxy translates these fields to an URI that the request should be routed. this is done by populating the table defined by db_emergency_routing containing the columns of the ERT field and a column that translates the target URI.
+or via parameter ERT (Emergency Route Tuple), which contains three fields identifying the emergency area: Selective Routing Identifier, ESN (Emergency Services Number) and the NPA (Numbering Plan Area). The Call Server/ Routing Proxy translates these fields to an URI that the request should be routed. this is done by populating the table defined by db_emergency_routing containing the columns of the ERT field and a column that translates the target URI.
 This information must be included in Contact header in a response 300/302 to be transmitted to the Call Server, for it can routing the INVITE
 * Redirect Server must also send a SUBSCRIBE with event type as "dialog" (RFC 4235) to establish a subscription in Call Server aiming monitor the emergency call, and expects to receive a NOTIFY confirming subscription
 * Expects the Call Server send another NOTIFY when end the call, so the Redirect can signal the VPC to release the key and the information associated with the call in progress.
@@ -364,72 +354,65 @@ The command `failure` has no meaning in this role.
 ## Configuration Example
 
 ```opensips
+# use emergency_call() with OpenSIPS working as Call Server in scenarios I, II or III,
+# or as Routing Proxy in scenario II.
+route {
+    if (!mf_process_maxfwd_header(10)) {
+        send_reply(483, "Too Many Hops");
+        exit;
+    }
 
-### use of emergency_call command with OpenSIPS working as Call Server
-# in the scenarios I, II, III and Routing Server in scenario II
-####### Routing Logic ########
-route{              
-            if (!mf_process_maxfwd_header("10")) {
-                        sl_send_reply("483","Too Many Hops");
-                        exit;
-            }
- 
-            # emergency call - start
-            xlog("CONF -----verify EMERGENCY -----------\n");
-            if (emergency_call()) {
-                        t_on_failure("emergency_call");
-                        t_relay();
-                        exit;
-            } else {
-                        xlog("CONF-------NOT EMERGENCY – CONTINUE WITH OTHES CALLS TREATMENTS -----------\n");             
-            }
-            # emergency call – end
-            ...
+    xlog("CONF ----- verify EMERGENCY -----------\n");
+
+    if (emergency_call()) {
+        t_on_failure("emergency_call");
+        if (!t_relay()) {
+            send_reply(500, "Internal Error");
+        }
+        exit;
+    }
+
+    xlog("CONF ------- NOT EMERGENCY - CONTINUE WITH OTHER CALL TREATMENT -----------\n");
+    ...
 }
 
-### use of failure command with OpenSIPS working as Call Server in scenarios I
-# and Routing Server for scenario II, this command does not make sense to
-# OpenSIPS working as Call Server in scenarios II and III:
-failure_route[emergency_call] { 
-            xlog(" FAILURE ... \n");
-            if(failure()){
-                        #record_route(); use this only in role_proxy = 3
-                        xlog(" RETRANSMITE  ... \n");
-                        if (!t_relay()) {
-                           send_reply("500","Internal Error");
-                           exit;
-                        };
-                        t_on_failure("emergency_call");
-                        exit;
-            }
-}
+# use failure() with OpenSIPS working as Call Server in scenario I
+# or Routing Proxy in scenario II.
+failure_route[emergency_call] {
+    xlog("FAILURE ...\n");
 
+    if (failure()) {
+        xlog("RETRANSMIT ...\n");
+
+        if (!t_relay()) {
+            send_reply(500, "Internal Error");
+            exit;
+        }
+
+        t_on_failure("emergency_call");
+        exit;
+    }
+}
 ```
 
 ```opensips
+# use emergency_call() with OpenSIPS working as Redirect Server in scenario III.
+# t_relay() is not needed because the received INVITE is answered locally.
+route {
+    if (!mf_process_maxfwd_header(10)) {
+        send_reply(483, "Too Many Hops");
+        exit;
+    }
 
-### use of emergency_call command with OpenSIPS working as Proxy Redirect in
-# scenario III (in this case we do not need t_relay () command because the
-# INVITE received will not be forwarded). The failure command also does not
-# make sense in this paper:
-####### Routing Logic ########
-route{              
-            if (!mf_process_maxfwd_header("10")) {
-                        sl_send_reply("483","Too Many Hops");
-                        exit;
-            }
-            # emergency call - start
-            xlog("CONF -----verify EMERGENCY -----------\n");
-            if (emergency_call()){
-                        t_on_failure("emergency_call");
-                        exit;
-            }else{
-                        xlog("CONF-------NOT EMERGENCY – CONTINUE WITH OTHES CALLS TREATMENTS -----------\n");                         
-            }
-            #emergency call – end
-            ...
+    xlog("CONF ----- verify EMERGENCY -----------\n");
+
+    if (emergency_call()) {
+        exit;
+    }
+
+    xlog("CONF ------- NOT EMERGENCY - CONTINUE WITH OTHER CALL TREATMENT -----------\n");
+    ...
 }
-
 ```
 
 ## References
@@ -452,3 +435,32 @@ route{             
 * R. Barnes, M. Lepinski, A. Cooper, J. Morris, H. Tschofenig, H. Schulzrinne. An Architecture for Location and Location Privacy in Internet Applications, July 2011. RFC 6280, Internet Engineering Task Force
 * H. Tschofenig, H. Schulzrinne. GEOPRIV Layer 7 Location Configuration Protocol: Problem Statement and Requirement, March 2010. RFC 5687, Internet Engineering Task Force
 * M. Thomson, J. Winterbottom. Using Device-Provided Location-Related Measurements in Location Configuration Protocol, January 2014. RFC 7105, Internet Engineering Task Force
+
+## Version Notes
+
+This tutorial targets the devel version of the OpenSIPS `emergency` module.
+
+Older OpenSIPS 2.1 configurations used module parameters for the organization data sent to the VPC. For example, a 2.1 Routing Proxy or Redirect Server configuration would have included parameters such as:
+
+```opensips
+modparam("emergency", "source_hostname", "rp34.example.com")
+modparam("emergency", "source_contact", "tel:+398348975439823")
+modparam("emergency", "vsp_hostname", "cs98.example.com")
+modparam("emergency", "vsp_contact", "tel:+15554476632")
+modparam("emergency", "source_organization_name", "Terry re-direct proxy")
+modparam("emergency", "source_nena_id", "nena1")
+modparam("emergency", "source_cert_uri", "https://rp34.example.com/certificate.crt")
+modparam("emergency", "vpc_organization_name", "Anand VPC")
+modparam("emergency", "vpc_hostname", "vpc.example.com")
+modparam("emergency", "vpc_nena_id", "nena1")
+modparam("emergency", "vpc_contact", "tel:+398348975439823")
+modparam("emergency", "vpc_cert_uri", "https://rp34.example.com/certificate.crt")
+```
+
+In the devel tutorial, keep that organization data in the `emergency_service_provider` table instead, and use `db_table_provider` only if you need to override the default table name.
+
+## Authors
+
+* **Evandro Villaron Franceschinelli** -  electrical engineer with large experience in the telecommunications area, worked among others in development of Digital Switches, notedly telephonic signalling protocol (TDM - SS#7, E&M, R2 DIG and NGN - MEGCO MGCP, SIP), as well as with BSS system for telephonic enterprises, deployment of a SIP routing system and implantation VoIP PBX.
+
+* **Robison Gonsalves Tesini** - computer engineer graduated in 1998 with large experience in the  telecommunications area, having worked with telecom for ten years and SIP for the last four.
