@@ -3,253 +3,294 @@ title: "Event Interface"
 description: "The OpenSIPS Event Interface provides an easy way to notify external applications whenever certain events occur inside OpenSIPS. Basically it provides two in..."
 ---
 
-> [!NOTE]
-> Other versions: [OpenSIPS 1.8 version](/tutorials-eventinterface-1-8).
-
-**This tutorial is for OpenSIPS trunk/devel version**
-
 ## Event Interface
 
-The OpenSIPS Event Interface provides an easy way to notify external applications whenever certain events occur inside OpenSIPS. Basically it provides two interfaces: one for the OpenSIPS internal modules and core, that is used to advertise and raise events, and an interface for the external applications, allowing them to register for specific events, and notifying them when those events are triggered by the modules, core, or by the OpenSIPS script.
+The OpenSIPS Event Interface provides a common way to notify external applications or OpenSIPS script logic when certain events occur. It has two sides: an internal interface used by OpenSIPS core, modules and script logic to advertise and raise events, and a subscriber interface used to register interest in those events and receive notifications when they are triggered.
 
 ---
 
 ## Overview
 
-OpenSIPS can notify an external application using different transport protocols:
-* [event_datagram](/modules/devel/event_datagram) - sends Datagrams over UDP or UNIX sockets
-* [event_rabbitmq](/modules/devel/event_rabbitmq) - sends an AMQP message to a RabbitMQ server
-* [event_xmlrpc](/modules/devel/event_xmlrpc) - issues a RPC command on a RPC server
-* [event_jsonrpc](/modules/devel/event_jsonrpc) - issues a JSON-RPC command to a JSON-RPC server
-* [event_route](/modules/devel/event_route) - runs an OpenSIPS event_route
+OpenSIPS can notify external applications or internal script logic using event modules and core route hooks:
 
-In order to receive an event notification, an external application has to subscribe for a specific event to the Event interface. This can be done either using an MI command, or can be done directly from the OpenSIPS script. The subscription command has to specify the event that the external application wants to register to, and a socket where the notification has to be sent. The format of the socket is different, depending on the transport module used (you can find more information about this in the module's documentation page). 
+* [event_datagram](/modules/devel/event_datagram) - sends event notifications over UDP or UNIX datagram sockets.
+* [event_flatstore](/modules/devel/event_flatstore) - writes event notifications to flat files.
+* [event_kafka](/modules/devel/event_kafka) - sends event notifications to Apache Kafka.
+* [event_rabbitmq](/modules/devel/event_rabbitmq) - sends event notifications to a RabbitMQ server.
+* [event_routing](/modules/devel/event_routing) - uses Event Interface notifications for internal event-based routing.
+* [event_sqs](/modules/devel/event_sqs) - sends event notifications to Amazon SQS.
+* [event_stream](/modules/devel/event_stream) - exchanges event notifications over TCP streams.
+* [event_virtual](/modules/devel/event_virtual) - groups multiple event backends behind a virtual subscriber.
+* [event_xmlrpc](/modules/devel/event_xmlrpc) - issues XML-RPC commands to an XML-RPC server.
+* route - runs `event_route[...]` blocks directly in the core script engine.
 
-When an event is triggered, the Event Interface will send to each application that is subscribed for that event a notification, using the desired transport type. The event details are packed differently for each transport module (consult the transport module's documentation page for more details).
+In order to receive an event notification, an external application subscribes to a specific event. This can be done either using a Management Interface (MI) command, or directly from the OpenSIPS script. The subscription specifies the event name and a destination where notifications have to be sent. The destination format depends on the event module used, so check the module documentation for the exact syntax.
+
+When an event is triggered, the Event Interface sends a notification to each subscriber registered for that event, using the selected event module or route hook. The notification body and delivery semantics are module-specific.
 
 ---
 
 ## Event Subscription
 
-As mentioned above, an external application can subscribe for an event either using MI, or directly from OpenSIPS script. In the next sections we will describe the use case of each of them.
+An external application can subscribe to an event using MI commands or directly from the OpenSIPS script. MI subscriptions are useful for dynamic subscribers, while script subscriptions are useful for subscribers that should be registered by OpenSIPS itself.
 
 ### MI Subscription
 
-An external application should subscribe for an event using MI commands when the subscription nature is very dynamic: it subscribes for a short period, receives notifications, then decides to unsubscribe and so on. The MI function used to subscribe for an event is [event_subscribe](/manual/devel/interface-coremi).
+An external application should subscribe for an event using MI commands when the subscription is dynamic: it subscribes for a short period, receives notifications, then renews or removes the subscription. The current Core MI command used to subscribe for an event is [evi:subscribe](/manual/devel/interface-coremi).
 
-For example, to subscribe for the E_PIKE_BLOCKED event for only 1200 seconds, an external application that listens on localhost, UDP port 8888, has to issue the following MI command:
+For example, to subscribe for the `E_PIKE_BLOCKED` event for 1200 seconds, an external application that listens on localhost UDP port 8888 issues the following MI command:
 
 ```bash
-
-   $ opensipsctl fifo event_subscribe E_PIKE_BLOCKED udp:127.0.0.1:8888 1200
-
+$ opensips-mi evi:subscribe E_PIKE_BLOCKED udp:127.0.0.1:8888 1200
 ```
 
-The first parameter is the name of the event (see [here](/tutorials-eventinterface#events-name)), the second parameter is the listening socket name (the format depends on the transport module used) and the last parameter is the expiration period expressed in seconds. Note that if the last parameter is missing, a default subscription period of 3600s (1h) is assumed.
+The first parameter is the event name, the second parameter is the subscriber destination and the last parameter is the expiration period expressed in seconds. If the last parameter is missing, a default subscription period of 3600 seconds is assumed.
 
-In order to unsubscribe for an event, the external application has to use the same event and socket used at subscription time, but specify an expiration time of 0. The following command unsubscribes the previously registered application.
+In order to unsubscribe from an event, the external application uses the same event and destination used at subscription time, but specifies an expiration time of `0`:
 
 ```bash
+$ opensips-mi evi:subscribe E_PIKE_BLOCKED udp:127.0.0.1:8888 0
+```
 
-   $ opensipsctl fifo event_subscribe E_PIKE_BLOCKED udp:127.0.0.1:8888 0
+The [evi:subscribers](/manual/devel/interface-coremi) MI command lists the active subscribers. It can also filter subscribers by event name and destination:
 
+```bash
+$ opensips-mi evi:subscribers
+$ opensips-mi evi:subscribers E_PIKE_BLOCKED
 ```
 
 ### Script Subscription
 
-The Event Interface allows the script writer to subscribe for an event directly from the OpenSIPS configuration script. This is usually used when a subscription is permanent, that never expires. For example a server that is continuously listening from events from OpenSIPS and process them accordingly. The command used to subscribe for an event from script is [subscribe_event](/manual/devel/script-corefunctions).
+The Event Interface also allows the script writer to subscribe to an event directly from the OpenSIPS configuration script. This is usually used when the subscription is managed by OpenSIPS, for example when a server continuously listens for OpenSIPS events and processes them externally. The script function used for this is [subscribe_event](/manual/devel/script-corefunctions).
 
-Usually these kind of subscriptions are permanent, therefore they should be registered at when OpenSIPS starts. Therefore this should be done in *startup_route*, but this is not a requirement, as the function can be used in any route.
+Permanent subscriptions are usually registered from `startup_route`, but this is not a requirement, as the function can be used from any route.
 
-Here is an example of subscription for the E_PIKE_BLOCKED event at OpenSIPS startup, without any expire time, from the OpenSIPS configuration script:
-
-```opensips
-
-   startup_route() {
-      subscribe_event("E_PIKE_BLOCKED", "udp:127.0.0.1:8888");
-   }
-
-```
-
-If the script writer wants the subscription to expire after 1200 second, the third parameter of the [subscribe_event](/manual/devel/script-corefunctions) function can be specified:
+Here is an example that subscribes to `E_PIKE_BLOCKED` at OpenSIPS startup, without an expiration time:
 
 ```opensips
-
-   timer_route[event_subscribe,3600] {
-      subscribe_event("E_PIKE_BLOCKED", "udp:127.0.0.1:8888", 1200);
-   }
-
+startup_route() {
+   subscribe_event("E_PIKE_BLOCKED", "udp:127.0.0.1:8888");
+}
 ```
 
-### Subscribers
+If the subscription should expire after 1200 seconds, specify the third parameter of [subscribe_event](/manual/devel/script-corefunctions):
 
-The [subscribers_list](/manual/devel/interface-coremi) MI function, exported by the OpenSIPS Core, can be used to list all the external applications subscribed. It also allows you to filter the subscribers based on the event they are registered to. For more information consult the functions [documentation](/manual/devel/interface-coremi) page.
+```opensips
+timer_route[refresh_pike_subscription, 3600] {
+   subscribe_event("E_PIKE_BLOCKED", "udp:127.0.0.1:8888", 1200);
+}
+```
 
 ---
 
 ## Events
 
-There are two types of events: static/predefined events, exported by OpenSIPS code and modules, and documented by each module, and dynamic events that can be raised by the script writer directly from the script. A few examples of predefined events:
+There are two types of events: static or predefined events exported by OpenSIPS core and modules, and dynamic events raised directly from the OpenSIPS script. A few examples of predefined events are:
 
-* [E_PIKE_BLOCKED](/modules/devel/pike#id250185) - raised when **pike** module decides an IP should be blocked.
+* [E_PIKE_BLOCKED](/modules/devel/pike#id250185) - raised when the **pike** module decides an IP should be blocked.
 * [E_RTPPROXY_STATUS](/modules/devel/rtpproxy#id293509) - raised when a RTPProxy connects or disconnects.
-* [E_DISPATCHER_STATUS](/modules/devel/dispatcher#id293894) - raised by the **dispatcher** module when a destination address becomes active/inactive.
-* [E_CORE_THRESHOLD](/manual/devel/interface-coreevents) - raised when using debugging bottleneck detection and the limit is exceeded.
-* [E_CORE_PKG_THRESHOLD](/manual/devel/interface-coreevents) - raised when the private memory usage exceeds a certain limit.
-* [E_CORE_SHM_THRESHOLD](/manual/devel/interface-coreevents) - raised when the shared memory usage exceeds a certain limit.
+* [E_DISPATCHER_STATUS](/modules/devel/dispatcher#id293894) - raised by the **dispatcher** module when a destination address becomes active or inactive.
+* [E_CORE_THRESHOLD](/manual/devel/interface-coreevents) - raised when debugging bottleneck detection is enabled and the configured limit is exceeded.
+* [E_CORE_PKG_THRESHOLD](/manual/devel/interface-coreevents) - raised when private memory usage exceeds a configured limit.
+* [E_CORE_SHM_THRESHOLD](/manual/devel/interface-coreevents) - raised when shared memory usage exceeds a configured limit.
 
-### Events Name
+### Event Names
 
-Although there is not a strict events naming imposed by the Event Interface, it is a good practice for an event's name to follow the format `E_MODULE_NAME`, where *MODULE* is the name of the module that exports the event, **CORE** if the event is exported by OpenSIPS core, and **SCRIPT** if it is a dynamic event raised from the script, and *NAME* is the name of the event.
+Although there is no strict event naming enforced by the Event Interface, it is good practice for an event name to follow the `E_MODULE_NAME` format, where `MODULE` is the name of the module that exports the event, `CORE` if the event is exported by OpenSIPS core, or `SCRIPT` if it is a dynamic event raised from the script.
 
 ### Raising an Event
 
-In order to raise an event from the script, the [raise_event](/manual/devel/script-corefunctions) function has to be used. The function receives one, two or three parameters, depending on the script writer needs. If the event has no parameters, then only the first parameter is needed - the event's name.
+In order to raise an event from the script, use the [raise_event](/manual/devel/script-corefunctions) function. The function receives one, two or three parameters, depending on the script writer's needs. If the event has no parameters, only the event name is needed.
 
-If the script writer wants to attach some extra information to the event, then the second and optionally the third parameter has to be used. The extra information has to be stored in an AVP as values, for example:
-
-```opensips
-
-    $avp(values) = "value1";
-    $avp(values) = "value2";
-    ...
-
-```
-
-If the parameters also have some names, then a new AVP have to store them. Note that the number of values in the first AVP has to be the same as in the one for the attributes:
+If the script writer wants to attach extra information to the event, the second and optionally the third parameter have to be used. The values are stored in an AVP, for example:
 
 ```opensips
-
-    $avp(attributes) = "param1";
-    $avp(values) = "value1";
-    $avp(attributes) = "param2";
-    $avp(values) = "value2";
-    ...
-
+$avp(values) = "value1";
+$avp(values) = "value2";
+...
 ```
 
-In order to raise the event from the script, the following code has to be used:
+If the parameters also have names, another AVP has to store the attribute names. The number of values in the values AVP has to be the same as the number of attributes:
 
 ```opensips
-
-   raise_event("E_SCRIPT_EVENT");     # raises an event without any parameters
-
-   raise_event("E_SCRIPT_EVENT", $avp(values));     # raises an event that has only values parameters
-
-   raise_event("E_SCRIPT_EVENT", $avp(attributes), $avp(values));     # raises an event with multiple attribute-value pairs
-
+$avp(attributes) = "param1";
+$avp(values) = "value1";
+$avp(attributes) = "param2";
+$avp(values) = "value2";
+...
 ```
 
-### Events list
+The following examples show how to raise the event from the script:
 
-The [events_list](/manual/devel/interface-coremi) function can be used to list all the available events.
+```opensips
+raise_event("E_SCRIPT_EVENT");
+
+raise_event("E_SCRIPT_EVENT", $avp(values));
+
+raise_event("E_SCRIPT_EVENT", $avp(attributes), $avp(values));
+```
+
+The [evi:raise](/manual/devel/interface-coremi) MI command can also raise an event through the Event Interface:
+
+```bash
+$ opensips-mi evi:raise -j '{"event":"E_SCRIPT_EVENT","params":{"source":"mi"}}'
+```
+
+### Events List
+
+The [evi:list](/manual/devel/interface-coremi) MI command lists all available events:
+
+```bash
+$ opensips-mi evi:list
+```
 
 ### Examples
 
 A practical use case of dynamic events is raising an event from the script when the TCP load is greater than 80%:
 
 ```opensips
+route[TCP_LOAD_CHECK] {
+   if ($stat(tcp-load) > 80) {
+      # raise the event, specifying the limit and the real load
+      $avp(attrs) = "limit";
+      $avp(vals) = 80;
+      $avp(attrs) = "load";
+      $avp(vals) = $stat(tcp-load);
 
-   route[TCP_LOAD_CHECK] {
-
-      if ($stat(tcp-load) > 80) {
-         # raise the event, specifying the limit and the real load
-         $avp(attrs) = "limit";
-         $avp(vals) = 80;
-         $avp(attrs) = "load";
-         $avp(vals) = $stat(tcp-load);
-
-         raise_event("E_SCRIPT_TCP_LOAD", $avp(attrs), $avp(vals));
-      }
+      raise_event("E_SCRIPT_TCP_LOAD", $avp(attrs), $avp(vals));
    }
-
+}
 ```
 
-Dynamic events can also be used for accounting purposes. For example, you could use three types of dynamic events to notify an external application regarding a call status.
+Dynamic events can also be used for accounting purposes. For example, you could use three types of dynamic events to notify an external application about a call status:
 
 ```opensips
-
-   # this route initializes the accounting variables
-   route[ACC_VARS] {
-      # first cleanup whatever it was there before this
-      $avp(attrs) := NULL;
-      $avp(vals) := NULL;
-      $avp(attrs) = "from";
-      $avp(vals) = $fU;
-      if (has_totag()) {
-         $avp(attrs) = "to";
-         $avp(vals) = $rU;
-      }
-      ...
-      $avp(attrs) = "callid";
-      $avp(vals) = $ci;
-      # populate attrs and vals with whatever extra info you need
+# this route initializes the accounting variables
+route[ACC_VARS] {
+   # first cleanup whatever it was there before this
+   $avp(attrs) := NULL;
+   $avp(vals) := NULL;
+   $avp(attrs) = "from";
+   $avp(vals) = $fU;
+   if (has_totag()) {
+      $avp(attrs) = "to";
+      $avp(vals) = $rU;
    }
+   ...
+   $avp(attrs) = "callid";
+   $avp(vals) = $ci;
+   # populate attrs and vals with whatever extra info you need
+}
 
-   route {
-      ...
-      if (!has_totag() && is_method("INVITE"))) {
-         route(ACC_VARS);
-         raise_event("E_SCRIPT_CALL_START", $avp(attrs), $avp(vals));
-         t_on_reply("acc");
-      } else if is_method("CANCEL|BYE") {
-         route(ACC_VARS);
-         raise_event("E_SCRIPT_CALL_STOP", $avp(attrs), $avp(vals));
-      }
-      ...
+route {
+   ...
+   if (!has_totag() && is_method("INVITE")) {
+      route(ACC_VARS);
+      raise_event("E_SCRIPT_CALL_START", $avp(attrs), $avp(vals));
+      t_on_reply("acc");
+   } else if (is_method("CANCEL|BYE")) {
+      route(ACC_VARS);
+      raise_event("E_SCRIPT_CALL_STOP", $avp(attrs), $avp(vals));
    }
+   ...
+}
 
-   onreply_route[acc] {
-      ...
-      if (t_check_status("200")) {
-          route(ACC_VARS);
-          raise_event("E_SCRIPT_CALL_ESTABLISHED", $avp(attrs), $avp(vals));
-      }
-      ...
+onreply_route[acc] {
+   ...
+   if (t_check_status("200")) {
+      route(ACC_VARS);
+      raise_event("E_SCRIPT_CALL_ESTABLISHED", $avp(attrs), $avp(vals));
    }
-
+   ...
+}
 ```
 
 ---
 
-## Transport Modules
+## Event Modules and Core Routes
 
-There are several transport modules that can be used to notify an external application. At the time this tutorial was written, the following transport methods were supported:
+There are several event modules that can be used to notify an external application or to wire Event Interface notifications into other OpenSIPS subsystems.
 
 ### Datagram Messages
 
-External applications can be notified when OpenSIPS internal events are triggered using either UDP or UNIX datagrams. This allows programmers to write a simple UDP server that receives the notification and process it in the preferred programming language.
+External applications can be notified when OpenSIPS internal events are triggered using either UDP or UNIX datagrams. This allows programmers to write a simple UDP or UNIX datagram server that receives the notification and processes it in the preferred programming language.
 
-In order to support this type of communication, the [event_datagram](/modules/devel/event_datagram) module has to be loaded. Consult the module's documentation page for more information about subscription socket and encapsulation format.
+In order to support this type of communication, load the [event_datagram](/modules/devel/event_datagram) module. Consult the module documentation page for more information about the subscription socket and encapsulation format.
+
+### Flatstore Logs
+
+The [event_flatstore](/modules/devel/event_flatstore) module writes event notifications and their parameters to text files. It is useful when events have to be consumed later by log processors or other local tooling.
+
+### Kafka Messages
+
+The [event_kafka](/modules/devel/event_kafka) module sends event notifications to Apache Kafka. It can be used when OpenSIPS events have to be integrated with a Kafka-based processing pipeline.
 
 ### RabbitMQ Messages
 
-OpenSIPS can also communicate with a [RabbitMQ](http://www.rabbitmq.com/) server using the AMQP (Advanced Message Queuing Protocol) messages. This type of communication leverages all the features the queuing server has.
+OpenSIPS can communicate with a [RabbitMQ](http://www.rabbitmq.com/) server using AMQP messages. This type of communication leverages the queuing features provided by the server.
 
-The [event_rabbitmq](/modules/devel/event_rabbitmq) module provides this functionality. Note that in this case, the "external application" is the RabbitMQ server, so you do not have the possibility to subscribe for events from it. Therefore the programmer should either use a different application to subscribe for the event, or subscribes for it directly from the OpenSIPS script (as discussed [here](/tutorials-eventinterface#script-subscription)). For more information please visit the module's documentation page.
+The [event_rabbitmq](/modules/devel/event_rabbitmq) module provides this functionality. In this case, the RabbitMQ server is the event backend, so subscriptions are usually managed from the OpenSIPS script or by a separate control application. For more information, consult the module documentation page.
 
-### XMLRPC Commands
+### Event Routing
 
-OpenSIPS can also execute a remote XMLRPC command when an event is triggered. The module that handles the communication between the Event Interface and the XMLRPC server is [event_xmlrpc](/modules/devel/event_xmlrpc).
+The [event_routing](/modules/devel/event_routing) module provides event-based routing capabilities. It is useful when SIP processing needs to wait for, react to or trigger logic based on Event Interface notifications.
 
-### JSONRPC Commands
+Do not confuse this module with core `event_route[...]` handlers. The old route capabilities are now part of OpenSIPS core and are described below.
 
-OpenSIPS can also execute a remote JSON-RPC command when an event is triggered. [event_jsonrpc](/modules/devel/event_jsonrpc) can be used to trigger a JSON-RPC call on a server using the [JSON-RPC 2.0 specifications](http://www.jsonrpc.org/specification).
-### Routes
+### SQS Messages
 
-A special implementation of a transport module is the [event_route](/modules/devel/event_route) module, which is used to handle events directly from the OpenSIPS script. This allows the script writer to modify OpenSIPS internal variables when an event is triggered, by writing a special route, called [event_route](/manual/devel/script-routes). The name of the route specifies the event that is handled by that route.
+The [event_sqs](/modules/devel/event_sqs) module sends event notifications to Amazon SQS. It can be used when OpenSIPS events have to be consumed by AWS-hosted workers or queues.
 
-In order to retrieve the parameters of the event, the [fetch_event_params](/modules/devel/event_route#id250042) function has to be used. It receives a list of parameters names, and the pseudo-variables that they have to be assigned to. For more information consult the [event_route](/modules/devel/event_route) documentation page.
+### Stream Messages
 
-For example in order to specify a route that handles the **E_PIKE_BLOCKED** event, and prints the blocked IP, the OpenSIPS script has to contain the following code:
+The [event_stream](/modules/devel/event_stream) module exchanges event notifications over TCP streams. It is useful for applications that keep a persistent TCP connection to OpenSIPS.
+
+### Virtual Subscribers
+
+The [event_virtual](/modules/devel/event_virtual) module groups multiple event backends behind a virtual subscriber. It can be used to fan out, load-balance or provide failover between real event subscribers.
+
+### XML-RPC Commands
+
+OpenSIPS can also execute a remote XML-RPC command when an event is triggered. The module that handles the communication between the Event Interface and the XML-RPC server is [event_xmlrpc](/modules/devel/event_xmlrpc).
+
+### Core Event Routes
+
+OpenSIPS can handle events directly from the script using [event_route](/manual/devel/script-routes) blocks. This allows the script writer to react to Event Interface notifications without using an external transport module. The route name specifies the event handled by that route.
+
+Older examples may use the `fetch_event_params()` function to retrieve event parameters. That function was deprecated and later removed. In current OpenSIPS versions, read event parameters from the `$params` variable inside the event route.
+
+For example, in order to handle the `E_PIKE_BLOCKED` event and print the blocked IP, the OpenSIPS script can contain the following code:
 
 ```opensips
-
-   event_route[E_PIKE_BLOCKED] {
-      fetch_event_params("ip=$avp(pike-ip)");
-      xlog("IP $avp(pike-ip) has been blocked\n");
-   }
-
+event_route[E_PIKE_BLOCKED] {
+   xlog("IP $params(ip) has been blocked\n");
+}
 ```
 
-Note that specifying the **event_route** will automatically subscribe the route for the event. Therefore there is no need for explicit subscribing (from either external application or script). The subscription never expires, unless otherwise specified using the [subscribe_event](/manual/devel/script-corefunctions) MI command.
+Defining the `event_route` automatically subscribes the route to the event, so no explicit external or script subscription is needed for that route.
+
+---
+
+## Older Version Notes
+
+### MI Command Names
+
+> [!IMPORTANT]
+> The `evi:*` MI namespace was introduced in OpenSIPS 4.0. Older versions use the previous flat MI command names.
+
+| 4.0+ MI command | Older MI command |
+| --- | --- |
+| `evi:subscribe` | `event_subscribe` |
+| `evi:list` | `events_list` |
+| `evi:subscribers` | `subscribers_list` |
+| `evi:raise` | `raise_event` |
+
+### Event Route Parameters
+
+The `fetch_event_params()` function was removed in OpenSIPS 3.0. Older `event_route[...]` examples may use it to copy event parameters into script variables. Current versions should read event parameters directly from `$params(name)`.
+
+### OpenSIPS 1.8
+
+OpenSIPS 1.8 uses the same Event Interface concept, but with the event modules and MI command names available in that branch. For a 1.8 deployment, load the supported event transport module, subscribe to the event either through MI or with `subscribe_event()` from script, and raise script events with `raise_event()`.
+
+For 1.8 MI subscriptions, use `event_subscribe <event> <destination> [expires]`; setting `expires` to `0` removes the subscription. Do not confuse the older MI `raise_event` command with the script function `raise_event()`, which is still the script-side API shown above.
