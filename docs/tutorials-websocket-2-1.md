@@ -11,8 +11,6 @@ description: "This document describes how to use OpenSIPS as the core component 
 
 This document describes how to use **OpenSIPS** as the core component of a SIP platform that connects both SIP clients (over UDP, TCP or TLS) as well as browser based clients (using SIP over WebSockets). While OpenSIPS handles the SIP signalling part, media is handled by [RTPengine](https://github.com/sipwise/rtpengine), a high performance media proxy that is able to handle both RTP and SRTP media streams, as well as bridging between them.
 
-This tutorial is inspired from 
-
 ## Setup
 
 ### RTPengine
@@ -105,7 +103,7 @@ In case the request is a REGISTER, we want to store this information in the *loc
             setbflag(DST_WS);
 
         fix_nated_register();
-        if (!save("location"))                                                                                                                                 
+        if (!save("location"))
             sl_reply_error();
 
         exit;
@@ -150,8 +148,9 @@ Now, all we have to do is to close the RTP/SRTP session when the call is ended. 
 
 ```opensips
 
-    if (is_method("BYE|CANCEL")) {                                                                                                                      
+    if (is_method("BYE|CANCEL")) {
         rtpengine_delete();
+    }
 
 ```
 
@@ -159,7 +158,7 @@ Having done all these settings should provide a full setup for interconnecting S
 
 ## Configuration file
 
-The following configuration file is a minimal working example of a Residential script that can handle clients connections over both UDP and Websocket transports.  This example assumes that the SDP offer is present in the INVITE from the UAC and the SDP answer is in the 200 OK from the UAS.
+The following configuration file is a minimal working example of a Residential script that can handle client connections over both UDP and WebSocket transports. This example assumes that the SDP offer is present in the INVITE from the UAC and the SDP answer is in the 200 OK from the UAS.
 
 ```opensips
 
@@ -182,8 +181,8 @@ fork=yes
 children=4
 auto_aliases=no
 
-listen=udp:127.0.0.0:5060 # TODO: update with your local IP and port
-listen=ws:127.0.0.0:8080 # TODO: update with your local IP and port
+listen=udp:127.0.0.1:5060 # TODO: update with your local IP and port
+listen=ws:127.0.0.1:8080 # TODO: update with your local IP and port
 
 ####### Modules Section ########
 
@@ -232,7 +231,7 @@ loadmodule "registrar.so"
 
 #### RTPengine protocol
 loadmodule "rtpengine.so"
-modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.0:60000")
+modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.1:60000")
 
 #### Nathelper protocol
 loadmodule "nathelper.so"
@@ -259,7 +258,7 @@ route{
 		if (loose_route()) {
 			if (is_method("INVITE")) {
 				# even if in most of the cases is useless, do RR for
-				# re-INVITEs alos, as some buggy clients do change route set
+				# re-INVITEs also, as some buggy clients do change route set
 				# during the dialog.
 				record_route();
 			}
@@ -298,7 +297,7 @@ route{
 		if (from_uri!=myself) {
 			# if caller is not local, then called number must be local
 			if (!uri==myself) {
-				send_reply("403","Rely forbidden");
+				send_reply("403","Relay Forbidden");
 				exit;
 			}
 		}

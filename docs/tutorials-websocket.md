@@ -1,7 +1,7 @@
 ---
 title: "WebSocket Transport using OpenSIPS"
 subtitle: "WebSocket Transport"
-subtitleHref: "/modules/2-2/proto_ws"
+subtitleHref: "/modules/devel/proto_ws"
 description: "This document describes how to use OpenSIPS as the core component of a SIP platform that connects both SIP clients (over UDP, TCP or TLS) as well as browser..."
 ---
 
@@ -10,9 +10,9 @@ description: "This document describes how to use OpenSIPS as the core component 
 
 ## Tutorial Overview
 
-[WebSocket](http://tools.ietf.org/html/rfc6455) is a protocol that provides full-duplex communication between web clients and servers over TCP connections. Using the WebSocket protocol, browsers can connect to web servers and exchange data, regardless the type or nature of the application protocol. [RFC 7118](https://tools.ietf.org/html/rfc7118) leveraged this protocol in order to allow browsers to make VoIP calls using the SIP protocol. [WebSocketSecure](/modules/2-2/proto_wss) (WSS) overlays TLS onto the Websocket protocol making the connection secure, a requirement for many browsers if you want to do WebRTC.
+[WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) is a protocol that provides full-duplex communication between web clients and servers over TCP connections. Using the WebSocket protocol, browsers can connect to web servers and exchange data, regardless the type or nature of the application protocol. [RFC 7118](https://datatracker.ietf.org/doc/html/rfc7118) leveraged this protocol in order to allow browsers to make VoIP calls using the SIP protocol. [WebSocketSecure](/modules/devel/proto_wss) (WSS) overlays TLS onto the WebSocket protocol, making the connection secure, a requirement for many browsers if you want to do WebRTC.
 
-This document describes how to use **OpenSIPS** as the core component of a SIP platform that connects both SIP clients (over UDP, TCP or TLS) as well as browser based clients using SIP over WebSockets and WebSocketsSecure. While OpenSIPS handles the SIP signalling part, media is handled by [RTPengine](https://github.com/sipwise/rtpengine), a high performance media proxy that is able to handle both RTP and SRTP media streams, as well as bridging between them.
+This document describes how to use **OpenSIPS** as the core component of a SIP platform that connects both SIP clients (over UDP, TCP or TLS) as well as browser based clients using SIP over WebSockets and WebSocketsSecure. While OpenSIPS handles the SIP signalling part, media is relayed through [RTPengine](https://github.com/sipwise/rtpengine), with OpenSIPS using the [rtp_relay](/modules/devel/rtp_relay) module to keep the media handling tied to the call context.
 
 ## Setup
 
@@ -22,30 +22,35 @@ This document describes how to use **OpenSIPS** as the core component of a SIP p
 
 The RTPengine consists of two main components: a kernel module used to efficiently route the RTP packets directly in kernel, and a daemon used to communicate with OpenSIPS. You can find more details [here](https://github.com/sipwise/rtpengine#overview). Both components can be installed from debs (on Debian based systems) or directly from sources. Simply follow the [official documentation](https://github.com/sipwise/rtpengine#compiling-and-installing) to install RTPengine.
 
-You must generate certificates to use with TLS and WSS.  For this example we are generating certificates using [LetsEncrypt](https://letsencrypt.org/) 
+You must generate certificates to use with TLS and WSS. For this example we are generating certificates using [Let's Encrypt](https://letsencrypt.org/).
 
-Also important to note that as of 2.2, certificate management has been split out into a new module, [TLS_MGM](/modules/2-2/tls_mgm).  Setting appropriate modparams for the tls_mgm module is how we will manage our certificates for both WSS and TLS.
+Certificate management is handled by the [TLS_MGM](/modules/devel/tls_mgm) module. Setting the appropriate `tls_mgm` module parameters is how we will manage our certificates for both WSS and TLS.
 
 #### Usage
 
-After installing the kernel module and the additional libraries, the rtpengine daemon has to be configured. This can be done from `/etc/default/ngcp-rtpengine-daemon` if installed from debs, or from the command line if the daemon is started manually. On systemd based OSes, Eric Tamme created some [startup scripts](https://github.com/etamme/federated-sip/tree/master/scripts).
+After installing the kernel module and the additional libraries, the RTPengine daemon has to be configured. Modern RTPengine deployments should keep the daemon options in an INI-style configuration file, normally `/etc/rtpengine/rtpengine.conf`. The RTPengine daemon documentation describes the [`--config-file`](https://rtpengine.readthedocs.io/en/latest/rtpengine.html#options) option, the default config file path and the available options.
 
-The interesting parameters we are using are as follows:
+The interesting settings we are using are as follows:
 
-* `-i`: the listening interface for RTP/SRTP
-* `-n`: the listening IP and port that is used by OpenSIPS to communicate with the RTPengine (**NOTE:** the rtpengine module only works with the rtpengine NG protocol, so you must use `-n`/`--listen-ng`; Using `-u`/`--listen-udp` or `-l`/`--listen-tcp` will not work!)
-* `-c`: the IP and port of the CLI - this is used to gather statistics for the RTP/SRTP sessions
-* `-m, -M`: both take an integer as argument and together define the local port range from which rtpengine will allocate UDP ports for media traffic relay. Default to 30000 and 40000 respectively.
-* `-L`: indicates the debugging level
+* `interface`: the RTP/SRTP listening interface and, optionally, the advertised address
+* `listen-ng`: the IP and port used by OpenSIPS to communicate with RTPengine using the NG control protocol
+* `listen-cli`: the IP and port of the CLI interface, used to gather statistics for RTP/SRTP sessions
+* `port-min` and `port-max`: the local UDP port range RTPengine allocates from for media relaying
+* `log-level`: the syslog verbosity level
 
-You can find all the parameters available [here](https://github.com/sipwise/rtpengine#userspace-daemon).
+You can find all the parameters in the [RTPengine daemon manual](https://rtpengine.readthedocs.io/en/latest/rtpengine.html).
 
-Here is an example that runs `rtpengine` from cli that talks with OpenSIPS over localhost and RTP using the 1.1.1.1 IP:
+Here is a minimal `/etc/rtpengine/rtpengine.conf` example that talks with OpenSIPS over localhost and relays RTP using the `1.1.1.1` IP:
 
-```bash
-
-./rtpengine -p /var/run/rtpengine.pid -i eth0/1.1.1.1 -n 127.0.0.1:60000 -c 127.0.0.0.1:60001 -m 50000 -M 55000 -E -L 7
-
+```ini
+[rtpengine]
+table = 0
+interface = external/1.1.1.1
+listen-ng = 127.0.0.1:60000
+listen-cli = 127.0.0.1:60001
+port-min = 50000
+port-max = 55000
+log-level = 6
 ```
 
 #### Troubleshoot
@@ -73,108 +78,94 @@ dmesg
 
 ### OpenSIPS
 
-In order to use WebSocket and WebSocketSecure in OpenSIPS, one has to load the [proto_ws](/modules/2-2/proto_ws) and [proto_wss](/modules/2-2/proto_wss) into its configuration file and define a listener for the WebSocket and WebSocketSecure protocol.  We also must load the [tls_mgm](/modules/2-2/tls_mgm) module in order to manage our certificates.
+In order to use WebSocket and WebSocketSecure in OpenSIPS, one has to load the [proto_ws](/modules/devel/proto_ws) and [proto_wss](/modules/devel/proto_wss) modules into its configuration file and define a listener for the WebSocket and WebSocketSecure protocol. We also must load one TLS backend module, such as `tls_wolfssl` or `tls_openssl`, together with the [tls_mgm](/modules/devel/tls_mgm) module in order to manage our certificates.
 
 ```opensips
 
 # set listeners for all protocols
-listen=ws:127.0.0.1:8080
-listen=wss:127.0.0.1:443
-listen=tls:127.0.0.1:5061
-listen=udp:127.0.0.1:5060
+socket=ws:127.0.0.1:8080
+socket=wss:127.0.0.1:443
+socket=tls:127.0.0.1:5061
+socket=udp:127.0.0.1:5060
 
-# load our certificate management module
-loadmodule "tls_mgm.so"
-
-#load all protocol modules
+# load all protocol modules
 loadmodule "proto_udp.so"
-loadmodule "proto_tls.so"
-loadmodule "proto_wss.so"
 loadmodule "proto_ws.so"
 
+# load TLS support
+loadmodule "tls_wolfssl.so"
+loadmodule "tls_mgm.so"
+loadmodule "proto_tls.so"
+loadmodule "proto_wss.so"
+
 # modparam our certificate information
-modparam("tls_mgm", "certificate","/etc/letsencrypt/live/acme.com/cert.pem")
-modparam("tls_mgm", "private_key","/etc/letsencrypt/live/acme.com/privkey.pem")
+modparam("tls_mgm", "server_domain", "default")
+modparam("tls_mgm", "match_ip_address", "[default]*")
+modparam("tls_mgm", "certificate", "[default]/etc/letsencrypt/live/acme.com/fullchain.pem")
+modparam("tls_mgm", "private_key", "[default]/etc/letsencrypt/live/acme.com/privkey.pem")
+modparam("tls_mgm", "verify_cert", "[default]0")
+modparam("tls_mgm", "require_cert", "[default]0")
 
 ```
 
-Next, the [rtpengine](/modules/2-2/rtpengine) module has to be loaded and configured to communicate with the `rtpengine` daemon.
+Next, load the [rtp_relay](/modules/devel/rtp_relay) module and the [rtpengine](/modules/devel/rtpengine) backend. The `rtp_relay` module keeps the media context for the call and automatically drives the offer, answer and delete operations through the selected backend.
+
 ```opensips
 
+loadmodule "rtp_relay.so"
 loadmodule "rtpengine.so"
 modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.1:60000")
 
 ```
 
-Note that the [rtpengine_sock](/modules/2-2/rtpengine#rtpengine.p.rtpengine_sock) parameter should be the same as the `-n` parameter sent to the `rtpengine` daemon, and OpenSIPS should have IP connectivity to that socket.
+Note that the [rtpengine_sock](/modules/devel/rtpengine#param_rtpengine_sock) parameter should match the `listen-ng` setting from the `rtpengine` daemon configuration, and OpenSIPS should have IP connectivity to that socket.
 
-Next, the routing logic has to be changed in order to treat different the clients that use DTLS-SRTP, from the ones that use plain RTP and enable bridging if necessary. To do that, one can check if the request message was received over the WebSocket protocol. This can be achieved using the following code:
+Next, the routing logic has to be changed in order to treat clients that use DTLS-SRTP differently from clients that use plain RTP and enable bridging if necessary. To do that, one can check if the request message was received over the WebSocket protocol. This can be achieved using the following code:
 
 ```opensips
 
-if (proto == WS || proto == WSS)
-    setflag(SRC_WS);
+if ($socket_in(proto) == "WS" || $socket_in(proto) == "WSS")
+    setflag("SRC_WS");
 
 ```
 
-In case the request is a REGISTER, we want to store this information in the *location* table, so that we know then the user is called. To do that, we can set a branch flag before calling the [save()](/modules/2-2/registrar#id294034) function. This way, when the [lookup()](/modules/2-2/registrar#id294366) method returns, we will be able to determine whether the client uses WebSocket or not.
+In case the request is a REGISTER, we want to store this information in the *location* table, so that we know the transport type when the user is called. To do that, we can set a branch flag before calling the [save()](/modules/devel/registrar#func_save) function. This way, when the [lookup()](/modules/devel/registrar#func_lookup) method returns, we will be able to determine whether the client uses WebSocket or not.
 
 ```opensips
 
     if (is_method("REGISTER")) {
-        if (isflagset(SRC_WS))
-            setbflag(DST_WS);
+        if (isflagset("SRC_WS"))
+            setbflag("DST_WS");
 
         fix_nated_register();
-        if (!save("location"))                                                                                                                                 
-            sl_reply_error();
+        if (!save("location"))
+            send_reply(500, "Registration failed");
 
         exit;
     }
 
 ```
 
-When a call is placed, based on the two flags (`STR_WS` and `DST_WS`) we can determine what our caller and callee can "speak" (either RTP or DTLS-SRTP) and instruct the `rtpengine` daemon how to handle the call. We can do that by tuning the parameters passed to the  [rtpengine_offer()](/modules/2-2/rtpengine#rtpengine.f.rtpengine_offer) function.
-```opensips
-
-    if (isflagset(SRC_WS) && isbflagset(DST_WS))
-        $var(rtpengine_flags) = "ICE=force-relay DTLS=passive";
-    else if (isflagset(SRC_WS) && !isbflagset(DST_WS))
-        $var(rtpengine_flags) = "RTP/AVP replace-session-connection replace-origin ICE=remove";
-    else if (!isflagset(SRC_WS) && isbflagset(DST_WS))
-        $var(rtpengine_flags) = "UDP/TLS/RTP/SAVPF ICE=force";
-    else if (!isflagset(SRC_WS) && !isbflagset(DST_WS))
-        $var(rtpengine_flags) = "RTP/AVP replace-session-connection replace-origin ICE=remove";
-
-    rtpengine_offer("$var(rtpengine_flags)");
-
-```
-
-The [rtpengine_answer()](/modules/2-2/rtpengine#rtpengine.f.rtpengine_answer) function logic should look like this:
+When a call is placed, based on the two flags (`SRC_WS` and `DST_WS`) we can determine what our caller and callee can "speak" (either RTP or DTLS-SRTP). The current script provisions the media type for each side through the [`$rtp_relay`](/modules/devel/rtp_relay#pv_rtp_relay) and [`$rtp_relay_peer`](/modules/devel/rtp_relay#pv_rtp_relay_peer) variables, then engages RTPengine through [rtp_relay_engage()](/modules/devel/rtp_relay#func_rtp_relay_engage).
 
 ```opensips
 
-    if (isflagset(SRC_WS) && isbflagset(DST_WS))
-        $var(rtpengine_flags) = "ICE=force-relay DTLS=passive";
-    else if (isflagset(SRC_WS) && !isbflagset(DST_WS))
-        $var(rtpengine_flags) = "UDP/TLS/RTP/SAVPF ICE=force";
-    else if (!isflagset(SRC_WS) && isbflagset(DST_WS))
-        $var(rtpengine_flags) = "RTP/AVP replace-session-connection replace-origin ICE=remove";
-    else if (!isflagset(SRC_WS) && !isbflagset(DST_WS))
-        $var(rtpengine_flags) = "RTP/AVP replace-session-connection replace-origin ICE=remove";
+    if (isbflagset("DST_WS"))
+        $rtp_relay(type) = "UDP/TLS/RTP/SAVPF ICE=force";
+    else
+        $rtp_relay(type) = "RTP/AVP ICE=remove";
 
-    rtpengine_answer("$var(rtpengine_flags)");
+    if (isflagset("SRC_WS"))
+        $rtp_relay_peer(type) = "UDP/TLS/RTP/SAVPF ICE=force";
+    else
+        $rtp_relay_peer(type) = "RTP/AVP ICE=remove";
 
-```
-
-Now, all we have to do is to close the RTP/SRTP session when the call is ended. To do that, we use the [rtpengine_delete()](/modules/2-2/rtpengine#rtpengine.f.rtpengine_delete) function:
-
-```opensips
-
-    if (is_method("BYE|CANCEL")) {                                                                                                                      
-        rtpengine_delete();
+    if (!has_totag())
+        rtp_relay_engage("rtpengine");
 
 ```
+
+Once `rtp_relay_engage()` is called for the initial INVITE, `rtp_relay` registers the hooks needed to handle the rest of the RTPengine interaction for the call, including in-dialog offer/answer updates and media teardown.
 
 Having done all these settings should provide a full setup for interconnecting SIP clients over both UDP, TCP, etc. protocols, as well as browser based SIP clients over WebSocket.
 
@@ -182,279 +173,27 @@ Having done all these settings should provide a full setup for interconnecting S
 
 ### Normal SDP negotiation
 
-The [following](http://www.opensips.org/pub/tutorials/websockets/opensips.cfg) configuration file is a minimal working example of a Residential script that can handle clients connections over both UDP and Websocket transports.  This example assumes that the SDP offer is present in the INVITE from the UAC and the SDP answer is in the 200 OK from the UAS.
+A full sample configuration is available in the PROTO_WSS module examples: [opensips.cfg](https://github.com/OpenSIPS/opensips/blob/master/modules/proto_wss/samples/opensips.cfg), which is a minimal working example of a residential script that can handle client connections over both UDP and WebSocket transports. This example assumes that the SDP offer is present in the INVITE from the UAC and the SDP answer is in the 200 OK from the UAS.
 
 > [!NOTE]
-> the default port for WSS (443) is privileged, so if you are running this script, you should start OpenSIPS with super-user rights (as user root).
-
-```opensips
-
-#
-# OpenSIPS residential configuration script
-#     by OpenSIPS Solutions <team@opensips-solutions.com>
-#
-# Please refer to the Core CookBook at:
-#      http://www.opensips.org/Resources/Cookbooks
-# for a explanation of possible statements, functions and parameters.
-#
-
-####### Global Parameters #########
-
-debug=3
-log_stderror=no
-log_facility=LOG_LOCAL0
-
-fork=yes
-children=4
-auto_aliases=no
-
-# Set up listeners
-listen=ws:127.0.0.1:8080
-listen=wss:127.0.0.1:443
-listen=tls:127.0.0.1:5061
-listen=udp:127.0.0.1:5060
-
-####### Modules Section ########
-
-# set module path
-mpath="/usr/local/lib/opensips/modules/"
-
-#### SIGNALING module
-loadmodule "signaling.so"
-
-#### StateLess module
-loadmodule "sl.so"
-
-#### Transaction Module
-loadmodule "tm.so"
-modparam("tm", "fr_timeout", 5)
-modparam("tm", "fr_inv_timeout", 30)
-modparam("tm", "restart_fr_on_each_reply", 0)
-modparam("tm", "onreply_avp_mode", 1)
-
-#### Record Route Module
-loadmodule "rr.so"
-modparam("rr", "append_fromtag", 0)
-
-#### MAX ForWarD module
-loadmodule "maxfwd.so"
-
-#### SIP MSG OPerationS module
-loadmodule "sipmsgops.so"
-
-#### FIFO Management Interface
-loadmodule "mi_fifo.so"
-modparam("mi_fifo", "fifo_name", "/tmp/opensips_fifo")
-modparam("mi_fifo", "fifo_mode", 0666)
-
-#### URI module
-loadmodule "uri.so"
-modparam("uri", "use_uri_table", 0)
-
-#### USeR LOCation module
-loadmodule "usrloc.so"
-modparam("usrloc", "nat_bflag", "NAT")
-modparam("usrloc", "db_mode",   0)
-
-#### REGISTRAR module
-loadmodule "registrar.so"
-
-#### RTPengine protocol
-loadmodule "rtpengine.so"
-modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.0:60000")
-
-#### Nathelper protocol
-loadmodule "nathelper.so"
-modparam("registrar|nathelper", "received_avp", "$avp(rcv)")
-
-#### UDP protocol
-loadmodule "proto_udp.so"
-
-#### TLS protocol
-loadmodule "proto_tls.so"
-
-#### WebSocket and WebSocketSecure protocol
-loadmodule "proto_wss.so"
-loadmodule "proto_ws.so"
-
-# Certificate management
-loadmodule "tls_mgm.so"
-modparam("tls_mgm", "certificate","/etc/letsencrypt/live/acme.com/cert.pem")
-modparam("tls_mgm", "private_key","/etc/letsencrypt/live/acme.com/privkey.pem")
-
-####### Routing Logic ########
-
-# main request routing logic
-route{
-	if (!mf_process_maxfwd_header("10")) {
-		sl_send_reply("483","Too Many Hops");
-		exit;
-	}
-
-	if (has_totag()) {
-		# sequential requests within a dialog should
-		# take the path determined by record-routing
-		if (loose_route()) {
-			if (is_method("INVITE")) {
-				# even if in most of the cases is useless, do RR for
-				# re-INVITEs alos, as some buggy clients do change route set
-				# during the dialog.
-				record_route();
-			}
-
-			# route it out to whatever destination was set by loose_route()
-			# in $du (destination URI).
-			route(relay);
-		} else {
-			if ( is_method("ACK") ) {
-				if ( t_check_trans() ) {
-					# non loose-route, but stateful ACK; must be an ACK after
-					# a 487 or e.g. 404 from upstream server
-					t_relay();
-					exit;
-				} else {
-					# ACK without matching transaction ->
-					# ignore and discard
-					exit;
-				}
-			}
-			sl_send_reply("404","Not here");
-		}
-		exit;
-	}
-
-	# CANCEL processing
-	if (is_method("CANCEL")) {
-		if (t_check_trans())
-			t_relay();
-		exit;
-	}
-
-	t_check_trans();
-
-	if (!is_method("REGISTER")) {
-		if (from_uri!=myself) {
-			# if caller is not local, then called number must be local
-			if (!uri==myself) {
-				send_reply("403","Rely forbidden");
-				exit;
-			}
-		}
-	}
-
-	# preloaded route checking
-	if (loose_route()) {
-		xlog("L_ERR",
-		"Attempt to route with preloaded Route's [$fu/$tu/$ru/$ci]");
-		if (!is_method("ACK"))
-			sl_send_reply("403","Preload Route denied");
-		exit;
-	}
-
-	# record routing
-	if (!is_method("REGISTER|MESSAGE"))
-		record_route();
-
-	if (!uri==myself) {
-		append_hf("P-hint: outbound\r\n");
-		route(relay);
-	}
-
-	# requests for my domain
-	if (is_method("PUBLISH|SUBSCRIBE")) {
-		sl_send_reply("503", "Service Unavailable");
-		exit;
-	}
-
-	# check if the clients are using WebSockets or WebSocketSecure
-	if (proto == WS || proto == WSS)
-		setflag(SRC_WS);
-
-	# consider the client is behind NAT - always fix the contact
-	fix_nated_contact();
-
-	if (is_method("REGISTER")) {
-
-		# indicate that the client supports DTLS
-		# so we know when he is called
-		if (isflagset(SRC_WS))
-			setbflag(DST_WS);
-
-		fix_nated_register();
-		if (!save("location"))
-			sl_reply_error();
-
-		exit;
-	}
-
-	if ($rU==NULL) {
-		# request with no Username in RURI
-		sl_send_reply("484","Address Incomplete");
-		exit;
-	}
-
-	# do lookup with method filtering
-	if (!lookup("location","m")) {
-		t_newtran();
-		t_reply("404", "Not Found");
-		exit;
-	}
-
-	route(relay);
-}
-
-route[relay] {
-	# for INVITEs enable some additional helper routes
-	if (is_method("INVITE")) {
-		t_on_branch("handle_nat");
-		t_on_reply("handle_nat");
-	} else if (is_method("BYE|CANCEL")) {
-		rtpengine_delete();
-	}
-
-	if (!t_relay()) {
-		send_reply("500","Internal Error");
-	};
-	exit;
-}
-
-branch_route[handle_nat] {
-
-	if (!is_method("INVITE") || !has_body("application/sdp"))
-		return;
-
-	if (isflagset(SRC_WS) && isbflagset(DST_WS))
-		$var(rtpengine_flags) = "ICE=force-relay DTLS=passive";
-	else if (isflagset(SRC_WS) && !isbflagset(DST_WS))
-		$var(rtpengine_flags) = "RTP/AVP replace-session-connection replace-origin ICE=remove";
-	else if (!isflagset(SRC_WS) && isbflagset(DST_WS))
-		$var(rtpengine_flags) = "UDP/TLS/RTP/SAVPF ICE=force";
-	else if (!isflagset(SRC_WS) && !isbflagset(DST_WS))
-		$var(rtpengine_flags) = "RTP/AVP replace-session-connection replace-origin ICE=remove";
-
-	rtpengine_offer("$var(rtpengine_flags)");
-}
-
-onreply_route[handle_nat] {
-
-	fix_nated_contact();
-	if (!has_body("application/sdp"))
-		return;
-
-	if (isflagset(SRC_WS) && isbflagset(DST_WS))
-		$var(rtpengine_flags) = "ICE=force-relay DTLS=passive";
-	else if (isflagset(SRC_WS) && !isbflagset(DST_WS))
-		$var(rtpengine_flags) = "UDP/TLS/RTP/SAVPF ICE=force";
-	else if (!isflagset(SRC_WS) && isbflagset(DST_WS))
-		$var(rtpengine_flags) = "RTP/AVP replace-session-connection replace-origin ICE=remove";
-	else if (!isflagset(SRC_WS) && !isbflagset(DST_WS))
-		$var(rtpengine_flags) = "RTP/AVP replace-session-connection replace-origin ICE=remove";
-
-	rtpengine_answer("$var(rtpengine_flags)");
-}
-
-```
+> The default port for WSS (443) is privileged, so if you are running this script, you should start OpenSIPS with super-user rights (as user root).
 
 ### Late SDP negotiation
 
-[Here](http://www.opensips.org/pub/tutorials/websockets/opensips-late.cfg) you can find a more complex configuration file, that also includes support for late SDP negotiation (SDP is exchanged between 200 OK and ACK).
+For late SDP negotiation, where SDP is exchanged between the 200 OK and ACK, use the same transport flagging and RTP relay provisioning. Since `rtp_relay` owns the call media context after `rtp_relay_engage()`, the script only has to make sure SDP-bearing in-dialog messages continue through the normal relay path.
+
+## Older Version Notes
+
+The devel configuration above is the reference version. Older tutorials can be merged into this document as short version notes, because the deployment model changed only in a few important ways.
+
+### OpenSIPS 2.2
+
+The 2.2 tutorial already used native WebSocket and Secure WebSocket support in OpenSIPS. When updating it, start from the current sample configuration, refresh the general script syntax and replace the direct RTPengine handling with the `rtp_relay` call context.
+
+### OpenSIPS 2.1
+
+The 2.1 tutorial covered native plain WebSocket support. Secure WebSocket support should follow the current OpenSIPS flow, using the WSS transport and TLS modules, while media handling should move to `rtp_relay` when updating to devel.
+
+### Older Than OpenSIPS 2.1
+
+Older deployments used OverSIP as a WebSocket-to-SIP gateway, so OpenSIPS itself did not terminate WebSocket traffic. When updating to the current version, remove that gateway role from the tutorial flow and let OpenSIPS handle WebSocket and Secure WebSocket traffic directly.
