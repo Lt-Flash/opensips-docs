@@ -1,202 +1,186 @@
 ---
 title: "Fail2Ban"
-description: "Fail2ban is a daemon that you can install to control the intrusion attempts to your systems, we can adapt it to ban attackers after they have tried to login..."
+description: "Use Fail2Ban to ban IP addresses that repeatedly fail OpenSIPS SIP authentication."
 ---
 
-Fail2ban is a daemon that you can install to control the intrusion attempts to your systems, we can adapt it to ban attackers after they have tried to login with wrong authentication credentials.
+Fail2Ban can watch OpenSIPS authentication logs and temporarily ban source IP
+addresses that repeatedly fail SIP authentication.  The configuration below
+keeps the OpenSIPS logging facility as-is and makes the Fail2Ban side adapt to
+the logging and firewall backend used by the operating system.
 
-Opensips configuration
+## OpenSIPS Script
 
-To make opensips work with fail2ban, you will have to send the logs to a different file than /var/log/syslog
-
-Change from:
-```opensips
-log_facility=LOG_LOCAL0
-```
-
-To:
-```opensips
-log_facility=LOG_LOCAL7
-```
-
-And from:
+Keep your current `syslog_facility` value, such as the default `LOG_LOCAL0`.
+The important part is to log a stable marker when authentication fails because
+of an invalid user or invalid password.  Those are the `www_authorize()`
+negative return codes `-1` and `-2`.
 
 ```opensips
- if (!www_authorize("", "subscriber")) {
-	www_challenge("", "0");
-	exit;
+if (is_method("REGISTER")) {
+    $var(auth_code) = www_authorize("", "subscriber");
+
+    if ($var(auth_code) == -1 || $var(auth_code) == -2) {
+        xlog("L_NOTICE", "FAIL2BAN_AUTH failed auth for $fU@$fd from $si code=$var(auth_code)\n");
+    }
+
+    if ($var(auth_code) < 0) {
+        www_challenge("", "auth");
+        exit;
+    }
 }
 ```
 
-To:
+The Fail2Ban rule below uses `$si`, so the banned address is the network source
+IP seen by OpenSIPS, not a SIP header value.
 
-```opensips
+## Install Fail2Ban
 
-$var(auth_code) = www_authorize("", "subscriber");
-if ( $var(auth_code) == -1 || $var(auth_code) == -2 ) {
-		xlog("L_NOTICE","Auth error for $fU@$fd from $si cause $var(auth_code)");
-}
-if ( $var(auth_code) < 0 ) {
-		www_challenge("", "0");
-		exit;
-}
-
-```
-
-rsyslog configuration
-
-Add to /etc/rsyslog.conf
-
-```text
- local7.* /var/log/opensips.log 
-```
-
-Fail2ban configuration
-
-Install fail2ban
+Install Fail2Ban from the OS package repository.  The package name is usually
+`fail2ban`, but the package manager is OS dependent:
 
 ```bash
- apt-get install fail2ban 
+# Debian / Ubuntu
+apt install fail2ban
+
+# Fedora / RHEL-compatible distributions
+dnf install fail2ban
+
+# openSUSE / SLES
+zypper install fail2ban
+
+# Arch Linux
+pacman -S fail2ban
 ```
 
-Add to the end of /etc/fail2ban/jail.conf this content:
+Avoid editing `/etc/fail2ban/jail.conf` directly.  Distribution updates may
+replace it, so keep local configuration in `/etc/fail2ban/jail.d/*.local` and
+filters in `/etc/fail2ban/filter.d/`.
+
+## OpenSIPS Log Source
+
+Fail2Ban can read either a regular log file or the systemd journal.  Pick the
+one that matches how OpenSIPS logs on your host.
+
+### Syslog File
+
+If your OS writes OpenSIPS syslog messages to a file, use that file as
+`logpath`.  If you want a dedicated OpenSIPS log file, add an rsyslog rule for
+the facility you already use.  For example, when OpenSIPS already uses
+`LOG_LOCAL0`:
 
 ```text
-
-[opensips]
-enabled  = true
-filter   = opensips
-action   = iptables-allports[name=opensips, protocol=all]
-           sendmail-whois[name=opensips, dest=destination@example.com, sender=source@example.com]
-logpath  = /var/log/opensips.log
-maxretry = 5
-bantime = 3600
-
+# /etc/rsyslog.d/30-opensips.conf
+local0.*    /var/log/opensips.log
 ```
 
-Create a file in /etc/fail2ban/filter.d/opensips.conf with the content:
+Then reload rsyslog:
+
 ```bash
+systemctl reload rsyslog
+```
 
-# Fail2Ban configuration file
-#
-#
-# $Revision: 250 $
-#
+Use the resulting file path in the Fail2Ban jail:
 
-[INCLUDES]
+```ini
+logpath = /var/log/opensips.log
+backend = auto
+```
 
-# Read common prefixes. If any customizations available -- read them from
-# common.local
-#before = common.conf
+### systemd Journal
 
+If OpenSIPS logs to the journal, use the `systemd` backend and do not set
+`logpath` for this jail:
+
+```ini
+backend = systemd
+journalmatch = SYSLOG_IDENTIFIER=opensips
+```
+
+Check the exact journal identifier on your system with:
+
+```bash
+journalctl -o short-iso -g FAIL2BAN_AUTH
+```
+
+## Fail2Ban Filter
+
+Create `/etc/fail2ban/filter.d/opensips.conf`:
+
+```ini
 [Definition]
-
-#_daemon = opensips
-
-# Option:  failregex
-# Notes.:  regex to match the password failures messages in the logfile. The
-#          host must be matched by a group named "host". The tag "<HOST>" can
-#          be used for standard IP/hostname matching and is only an alias for
-#          (?:::f{4,6}:)?(?P<host>\S+)
-# Values:  TEXT
-#
-
-failregex = Auth error for .* from <HOST> cause -[0-9]
-
-# Option:  ignoreregex
-# Notes.:  regex to ignore. If this regex matches, the line is ignored.
-# Values:  TEXT
-#
+failregex = ^.*FAIL2BAN_AUTH failed auth for \S+ from <ADDR> code=-(?:1|2)\b
 ignoreregex =
-
 ```
 
-Restart fail2ban
-```bash
- /etc/init.d/fail2ban restart 
+The marker string keeps the match narrow, while `<ADDR>` lets Fail2Ban extract
+IPv4 and IPv6 source addresses from the OpenSIPS log line.
+
+## Fail2Ban Jail
+
+Create `/etc/fail2ban/jail.d/opensips.local`.  The example below uses a
+file-based log path and bans both UDP and TCP SIP traffic using the OS selected
+`banaction`.
+
+```ini
+[opensips]
+enabled = true
+filter = opensips
+logpath = /var/log/opensips.log
+backend = auto
+maxretry = 5
+findtime = 10m
+bantime = 1h
+
+action = %(banaction)s[actname=opensips-udp, name=opensips-udp, port="5060,5061", protocol=udp]
+         %(banaction)s[actname=opensips-tcp, name=opensips-tcp, port="5060,5061", protocol=tcp]
 ```
 
-opensips and rsyslog configuration notes for CentOS6
+For a journal-based setup, replace `logpath` and `backend` with:
 
-> [!NOTE]
-> Use process above, but with some notes here
-
-LOCAL7 is in use by boot logging on CentOS 6, so use LOCAL6 instead.
-
-in /usr/local/etc/openssips.conf Change from:
-```opensips
-log_facility=LOG_LOCAL0
+```ini
+backend = systemd
+journalmatch = SYSLOG_IDENTIFIER=opensips
 ```
 
-To:
-```opensips
-log_facility=LOG_LOCAL6
+If your distribution does not select the right firewall backend by default, set
+it in `/etc/fail2ban/jail.d/defaults.local` rather than hard-coding an action
+inside the OpenSIPS jail:
+
+```ini
+[DEFAULT]
+# nftables based systems
+banaction = nftables
+
+# legacy iptables based systems
+# banaction = iptables
 ```
 
-Add this to /etc/rsyslog.conf (near the bottom):
+Check the action files shipped by your package under
+`/etc/fail2ban/action.d/`; some distributions also ship firewalld-specific
+actions.
 
-```text
- # logging facility for opensips
-local6.* 	/var/log/opensips.log 
-```
+## Validate and Start
 
-Fail2ban Installation and Configuration notes for CentOS6 
-
-> [!NOTE]
-> Use process above, but with some notes here
-
-Follow instructions for installation here : http://www.fail2ban.org/wiki/index.php/README
-
-Download the latest fail2ban package from : http://sourceforge.net/projects/fail2ban/files/
-
-Run these commands:
-
-```bash
-tar xvfj fail2ban-0.8.4.tar.bz2
-cd fail2ban-0.8.4
-python setup.py install
-```
-
-Edit configuration files /etc/fail2ban/jail.confand /etc/fail2ban/filter.d/opensips.conf as documented in the section above.
-
-To get startup / init.d script in place on CentOS6, copy the file named redhat-initd from the files folder inside fail2ban-0.8.4 directory to /etc/init.d with the command below.
-
-```bash
-$ cp redhat-initd /etc/init.d/fail2ban   
-```
-
-Ensure you check the owner and permissions of the copied file and then test the script:
+Test the filter against real OpenSIPS log lines before enabling the jail:
 
 ```bash
-$ /etc/init.d/fail2ban
-Usage: /etc/init.d/fail2ban {start|stop|status|restart}
-$ /etc/init.d/fail2ban status
-Fail2ban (pid 8323) is running...
-Status
-|- Number of jail:	0
-`- Jail list:		
-$ /etc/init.d/fail2ban stop
-Stopping fail2ban:                                         [  OK  ]
-$ ps -ef | grep fail
-root      8399  8235  0 13:10 pts/0    00:00:00 grep fail
-$ /etc/init.d/fail2ban start
-Starting fail2ban:                                         [  OK  ]
-$ /etc/init.d/fail2ban restart
-Stopping fail2ban:                                         [  OK  ]
-Starting fail2ban:                                         [  OK  ]
-$
+fail2ban-regex /var/log/opensips.log /etc/fail2ban/filter.d/opensips.conf
 ```
 
-To ensure that fail2ban starts at startup:
+For journal-based deployments:
 
 ```bash
-$ chkconfig --list fail2ban
-service fail2ban supports chkconfig, but is not referenced in any runlevel (run 'chkconfig --add fail2ban')
-$ chkconfig --add fail2ban
-$ chkconfig --list fail2ban
-fail2ban       	0:off	1:off	2:off	3:on	4:on	5:on	6:off
-$ chkconfig fail2ban on
-$ chkconfig --list fail2ban
-fail2ban       	0:off	1:off	2:on	3:on	4:on	5:on	6:off
-$ 
+fail2ban-regex systemd-journal /etc/fail2ban/filter.d/opensips.conf
 ```
+
+Restart Fail2Ban and check the jail:
+
+```bash
+systemctl restart fail2ban
+fail2ban-client status opensips
+```
+
+To test the full path, generate a failed REGISTER attempt and confirm that the
+line appears in the selected log source with the `FAIL2BAN_AUTH` marker.  After
+`maxretry` matches within `findtime`, Fail2Ban should report the source IP in
+the `opensips` jail status.
