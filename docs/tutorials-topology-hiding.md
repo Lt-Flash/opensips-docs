@@ -1,10 +1,10 @@
 ---
-title: "Topology Hiding with OpenSIPS"
-subtitle: "Topology Hiding"
-subtitleHref: "/modules/2-1/topology_hiding"
-description: "The purpose of this tutorial is to help you understand how the topology_hiding module works and also how it should be used."
+title: Topology Hiding with OpenSIPS
+description: The purpose of this tutorial is to help you understand how the
+  topology_hiding module works and also how it should be used.
+subtitle: Topology Hiding
+subtitleHref: /modules/devel/topology_hiding
 ---
-
 ## Tutorial Overview
 
 The purpose of this tutorial is to help you understand how the topology_hiding module works and also how it should be used.   
@@ -15,17 +15,11 @@ Topology hiding is usually utilized as an approach to enhance SIP network securi
 
 By default, when engaged, the module will hide the VIA, Record-Route, Route and Contact headers. VIA, Record-Route and Route headers will be fully removed when routing message from one side to the other, while the Contact header will be mangled to point to the outgoing interface IP.   
 
-  
-
 Optionally, the module can also hide the Call-ID on the outbound side, since often enough the Call-ID will contain the IP of the traffic originator.    
-
-  
 
 Also, the topology_hiding module can help ease integration by propagating various parts of the Contact header from one side to the other. The Contact username can be propagated ( eg. useful when you are dipping against LRN servers, but don't want to disclose your full topology to the service provider ). Also, various Contact header parameters can be passed, in order to allow for end-to-end features that rely on such params.   
 
-  
-
-See the [full module README](/modules/2-1/topology_hiding) for all the available parameters and functions.
+See the [full module README](/modules/head/topology_hiding) for all the available parameters and functions.
 
 ## How It Works
 
@@ -38,7 +32,6 @@ When running on top of the DIALOG module, you will get shorter messages ( all th
 ## Example Script
 
 ```opensips
-
 loadmodule "topology_hiding.so"
 
 route {
@@ -48,37 +41,43 @@ route {
     ....
 
     if (has_totag()) {
-        if (topology_hiding_match()) {
-            xlog("Succesfully matched this request to a topology hiding dialog. \n");
-            xlog("Calller side callid is $ci \n");
-            xlog("Callee side callid  is $TH_callee_callid \n");
+
+        # handle hop-by-hop ACK (no routing required)
+        if ( is_method("ACK") && t_check_trans() ) {
             t_relay();
             exit;
-        } else {
-            if ( is_method("ACK") ) {
-                if ( t_check_trans() ) {
-                    t_relay();
-                    exit;
-                } else
-                    exit;
-            }
-            sl_send_reply("404","Not here");
+        }
+
+        if (!topology_hiding_match()) {
+            send_reply(404,"Not here");
             exit;
         }
+
+        xlog("Succesfully matched this request to a topology hiding dialog. \n");
+        xlog("Calller side callid is $ci \n");
+        xlog("Callee side callid  is $TH_callee_callid \n");
+        t_relay();
+        exit;
+        
     }
 
     ....
     ....
     ....
 
-    # if it's an INVITE dialog, we can create the dialog now, will lead to cleaner SIP messages
-    if (is_method("INVITE"))
-        create_dialog();
+    # if it's an INVITE dialog
+    if (is_method("INVITE")) {
 
-    # we do topology hiding, preserving the Contact Username and also hiding the Call-ID
-    topology_hiding("UC");
+        # we can create the dialog now
+        create_dialog();
+        
+        # we do topology hiding, preserving the Contact Username and also hiding the Call-ID
+        topology_hiding("UC");
+    }
+    
+    ...
+    
     t_relay();
     exit;
 }
-
 ```
