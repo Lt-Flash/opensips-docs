@@ -52,16 +52,16 @@ The [XCAP_CLIENT module](/modules/devel/xcap_client) implements an XCAP client f
 
 - - -
 
-## Configuration
+## Configuration files
 
 The above architecture diagram shows a full/maximal configuration/setup, where (a) no restrictions are imposed, (b) with privacy permission rules handling enabled and (c) the use of a general XCAP server. 
-There is the possibility to simplify and addapt the setup according to your custom needs. This can be done by configuring the modules so that some connections are removed or others appear.
+There is the possibility to simplify and adapt the setup according to your custom needs. This can be done by configuring the modules so that some connections are removed or others appear.
 
 ### Basic Presence Server
 
-The most simple configuration is a presence server without privacy rules, when anybody is allowed to see the presence status of anybody and there is no need for an xcap server. In this case the xcap part disappears from the scheme.. This mode of operation is configured by setting the flag **force_active** which is a module parameter for **presence_xml** module.  
+The most simple configuration is a presence server without privacy rules, where anybody is allowed to see the presence status of anybody and there is no need for an XCAP server. In this case the XCAP part disappears from the scheme. This mode of operation is configured by setting the flag **force_active** which is a module parameter for **presence_xml** module.  
 
-You can see a [configuration file example for this case here](/tutorials-presence-simplepresconfig).
+You can see [here the full working configuration file for this scenario](https://github.com/OpenSIPS/opensips/tree/master/modules/presence/samples/opensips-presence-basic.cfg).
 
 ### Presence Server with integrated XCAP
 
