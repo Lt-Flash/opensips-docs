@@ -6,7 +6,7 @@ OpenSIPS is able to act as full SIP **Presence Server** - to share presence info
 
 The presence information may be of multiple types, like status info (if online, offline, buys, etc), calling info (if in a call or not), feature info (if certain features are enabled or not) .
 
-## Presence Server Key Features
+## Presence Server Key Capabilities
 
 * **extensible** - new events to be handled by the server can be added easily due to the layered architecture
 * **fast caching** with periodic update in database - a fallback to database mode can be configured useful when more than one server is used for a domain
@@ -59,35 +59,33 @@ There is the possibility to simplify and adapt the setup according to your custo
 
 ### Basic Presence Server
 
-The most simple configuration is a presence server without privacy rules, where anybody is allowed to see the presence status of anybody and there is no need for an XCAP server. In this case the XCAP part disappears from the scheme. This mode of operation is configured by setting the flag **force_active** which is a module parameter for **presence_xml** module.  
+The most simple configuration is a presence server without privacy rules, where anybody is allowed to see the presence status of anybody and there is no need for an XCAP server. In this case the XCAP part disappears from the scheme. This mode of operation is configured by setting the flag [force_active](/modules/devel/presence_xml/#param_force_active) which is a module parameter for [presence_xml](/modules/devel/presence_xml) module.  
 
 You can see [here the full working configuration file for this scenario](https://github.com/OpenSIPS/opensips/tree/master/modules/presence/samples/opensips-presence-basic.cfg).
 
 ### Presence Server with integrated XCAP
 
-If you want presence privacy rules enabled and you use a XCAP server, but one that communicates with the OpenSIPS Presence Server through a database table ( like OpenXCAP) than you can configure the presence server to work in an integrated xcap sever mode. For this you have to set the **integrated_xcap_server** parameter from **presence_xml** module. In this case the scheme simplifies by removing the xcap_client module and having the presence_xml module communicates only with the database.  
+If you want presence privacy rules enabled and you use a XCAP server, but one that communicates with the OpenSIPS Presence Server through a database table ( like OpenXCAP) than you can configure the presence server to work in an integrated xcap sever mode. For this you have to set the [integrated_xcap_server](/modules/devel/presence_xml/#param_integrated_xcap_server) parameter from  the [presence_xml](/modules/devel/presence_xml) module. In this case the scheme simplifies by removing the **xcap_client** module and having the [presence_xml](/modules/devel/presence_xml) module communicates only with the database.
 
-You will notice in the configuration file that the mi_xmlrpc module is also loaded. The MI interface needs to be activated, so that OpenXCAP can signal to OpenSIPS when a change occurs in the presence rules documents. In this way the changes be effective immediately.The MI command that is sent in this case is 'refreshWatchers'.  
+You will notice in the configuration file that the [mi_xmlrpc](/modules/devel/mi_xmlrpc) module is also loaded. The MI interface needs to be activated, so that OpenXCAP can signal to OpenSIPS when a change occurs in the presence rules documents. In this way the changes be effective immediately. The MI command that is sent in this case is [refresh_watchers](modules/devel/devel/presence/#mi_refresh_watchers).  
 
-See [configuration file example](/tutorials-presence-openxcappresconfig) here.
+You can see [here the full working configuration file for this scenario](https://github.com/OpenSIPS/opensips/tree/master/modules/presence/samples/opensips-presence-xcap.cfg).
 
 ### Presence Server with external XCAP
 
-If you decide to have a presence server with privacy authorization and not use an integrated xcap server, an improvement can be made in this case also. For a non integrated XCAp server, xcap_client module has to be used and the address of the server( or servers) must be set using the **presence_xml** modules parameter - **xcap_server**. The xcap_client module has the task to retrieve XCAP documents from XCAP servers and store them in database. Also the module can be asked to synchronize documents saved in database with those on the server. For this a mean of detecting an update is required. The general mean, that apply to every XCAP server is periodical query. There is however the possibility for the server to signal an update to the module. For this the module has to be able to send **refreshXcapDoc** MI command when an update occurs. If you are using a XCAP server able to send this command then you can configure the server to work in no periodical query mode. For this you have to unset the **xcap_client** module parameter **periodical_query** ( set it to 0). 
+If you decide to have a presence server with privacy authorization and not use an integrated xcap server, an improvement can be made in this case also. For a non integrated XCAp server, the [xcap_client](modules/devel/xcap_client) module has to be used and the address of the server( or servers) must be set using the [presence_xml](/modules/devel/presence_xml) modules parameter [xcap_server](modules/devel/presence_xml/#param_xcap_server).
 
-### Presence server with shared DB
-
-Another configuration option refers to the way the presence module stores information. The default method is caching with periodical update in database for fast processing. However, if you have more presence servers serving the same domain and sharing the same database, this mode will not work. In this case you need to ensure that the servers will be able to communicate through the database. This can be achieved by setting the **presence** module parameter **fallback2db**. 
+The **xcap_client** module has the task to retrieve XCAP documents from XCAP servers and store them in database. Also the module can be asked to synchronize documents saved in database with those on the server. For this a mean of detecting an update is required. The general mean, that apply to every XCAP server is periodical query. There is however the possibility for the server to signal an update to the module. For this the module has to be able to send [refreshXcapDoc](modules/devel/xcap_client/#mi_refreshXcapDoc) MI command when an update occurs. If you are using a XCAP server able to send this command then you can configure the server to work in no periodical query mode. For this you have to unset the  [xcap_client](modules/devel/xcap_client) module parameter [periodical_query](/modules/devel/xcap_client/#param_query_period) by setting it to 0. 
 
 - - -
 
 ## Database
 
-Presence Server requires 4 tables in database:
+Presence Server requires [4 tables in database](/manual/devel/install-dbschema/#presence):
 
-* active_watchers : stores the active Subscribe dialogs
-* presentity: stores the published information
-* watchers: stores the subscription status of the watchers
-* xcap: stores the XCAP documents
+* **active_watchers** : stores the active Subscribe dialogs
+* **presentity**: stores the published information
+* **watchers**: stores the subscription status of the watchers
+* **xcap**: stores the XCAP documents
 
-The first three tables are only used internally by the server. The **xcap** table is either used as a communication interface between the XCAP server (if the server is working in 'integrated_xcap' mode) or as a communication means between the **xcap_client** module which populates the table and **presence_xml** module which uses that information.
+The first three tables are only used internally by the server. The **xcap** table is either used as a communication interface between the XCAP server (if the server is working in [integrated_xcap_server](/modules/devel/presence_xml/#param_integrated_xcap_server) mode) or as a communication means between the **xcap_client** module which populates the table and **presence_xml** module which uses that information.
