@@ -499,6 +499,301 @@ OpenSIPS 4.0 uses the canonical `module:command` MI command names, such as
 
 ---
 
+## Optional FreeSWITCH Directory from OpenSIPS Subscribers
+
+The handoff above does not require FreeSWITCH directory users. Add this section
+when FreeSWITCH applications need a user object tied to each OpenSIPS
+subscriber, such as voicemail mailboxes, MWI data, per-user variables or
+directory lookups.
+
+The realtime version of this tutorial included this user-mapping information.
+It is kept here as an optional chapter so the basic SIP handoff stays small,
+while the directory integration remains available when FreeSWITCH services need
+it.
+
+SIP endpoints still register and authenticate to OpenSIPS. This mapping only
+lets FreeSWITCH build directory XML from the OpenSIPS `subscriber` table when a
+FreeSWITCH module asks for user data.
+
+### OpenSIPS Subscriber Fields for FreeSWITCH
+
+OpenSIPS 4.0 creates the `subscriber` table with `username`, `domain`,
+`password` and `ha1` fields. Add FreeSWITCH-specific fields for voicemail
+metadata:
+
+```sql
+ALTER TABLE subscriber
+  ADD COLUMN fs_vm_password VARCHAR(32) NOT NULL DEFAULT '1234',
+  ADD COLUMN fs_vm_email VARCHAR(128) NOT NULL DEFAULT '';
+```
+
+Set the values for the tutorial users:
+
+```sql
+UPDATE subscriber
+  SET fs_vm_password = '1001', fs_vm_email = 'alice@example.com'
+  WHERE username = 'alice' AND domain = 'example.com';
+
+UPDATE subscriber
+  SET fs_vm_password = '1002', fs_vm_email = 'bob@example.com'
+  WHERE username = 'bob' AND domain = 'example.com';
+```
+
+OpenSIPS ignores these extra columns. FreeSWITCH reads them only through the
+Lua handler below.
+
+### ODBC Access to the OpenSIPS Database
+
+Install UnixODBC and a MariaDB/MySQL ODBC driver for your Debian release. On
+Debian systems this is typically:
+
+```bash
+apt-get install -y unixodbc odbc-mariadb
+```
+
+Check the installed driver name:
+
+```bash
+odbcinst -q -d
+```
+
+Create `/etc/odbc.ini` and use the driver name reported on your system:
+
+```ini
+[opensips]
+Description = OpenSIPS database
+Driver      = MariaDB Unicode
+SERVER      = 127.0.0.1
+PORT        = 3306
+DATABASE    = opensips
+USER        = opensips
+PASSWORD    = opensipsrw
+```
+
+Check the DSN:
+
+```bash
+isql -v opensips opensips opensipsrw
+```
+
+### Lua Directory Handler
+
+Find the FreeSWITCH script directory:
+
+```bash
+fs_cli -x 'eval $${script_dir}'
+```
+
+On Debian packages this is commonly `/usr/share/freeswitch/scripts`. Create
+`opensips_directory.lua` in that directory:
+
+```lua
+local db_dsn = "opensips"
+local db_user = "opensips"
+local db_pass = "opensipsrw"
+local opensips_proxy = "192.0.2.10:5060"
+local default_vm_password = "1234"
+local debug_enabled = false
+
+local function log(level, message)
+        freeswitch.consoleLog(level, "[opensips_directory] " .. message .. "\n")
+end
+
+local function xml_escape(value)
+        value = tostring(value or "")
+        value = value:gsub("&", "&amp;")
+        value = value:gsub("<", "&lt;")
+        value = value:gsub(">", "&gt;")
+        value = value:gsub("\"", "&quot;")
+        value = value:gsub("'", "&apos;")
+        return value
+end
+
+local function sql_escape(value)
+        value = tostring(value or "")
+        value = value:gsub("\\", "\\\\")
+        value = value:gsub("'", "\\'")
+        return value
+end
+
+local function add(xml, line)
+        xml[#xml + 1] = line
+end
+
+local section = XML_REQUEST and XML_REQUEST["section"] or ""
+if section ~= "directory" then
+        XML_STRING = ""
+        return
+end
+
+local domain_name = params:getHeader("domain") or params:getHeader("sip_auth_realm") or ""
+local user = params:getHeader("user") or ""
+
+if user == "" or domain_name == "" or user == "*97" then
+        XML_STRING = ""
+        return
+end
+
+local dbh = freeswitch.Dbh(db_dsn, db_user, db_pass)
+if not dbh:connected() then
+        log("err", "database connection failed")
+        XML_STRING = ""
+        return
+end
+
+local sql = string.format(
+        "SELECT username, domain, password, ha1, fs_vm_password, fs_vm_email " ..
+        "FROM subscriber WHERE username = '%s' AND domain = '%s' LIMIT 1",
+        sql_escape(user),
+        sql_escape(domain_name)
+)
+
+if debug_enabled then
+        log("notice", sql)
+end
+
+local row_data = nil
+dbh:query(sql, function(row)
+        row_data = {
+                username = row.username or "",
+                domain = row.domain or "",
+                password = row.password or "",
+                ha1 = row.ha1 or "",
+                fs_vm_password = row.fs_vm_password or "",
+                fs_vm_email = row.fs_vm_email or ""
+        }
+end)
+dbh:release()
+
+if not row_data then
+        XML_STRING = ""
+        return
+end
+
+local username = row_data.username
+local domain = row_data.domain
+local vm_password = row_data.fs_vm_password
+if vm_password == "" then
+        vm_password = default_vm_password
+end
+
+local dial_string = "sofia/internal/sip:" .. username .. "@" .. domain ..
+        ";fs_path=sip:" .. opensips_proxy
+
+local xml = {}
+add(xml, [[<?xml version="1.0" encoding="UTF-8" standalone="no"?>]])
+add(xml, [[<document type="freeswitch/xml">]])
+add(xml, [[  <section name="directory">]])
+add(xml, [[    <domain name="]] .. xml_escape(domain) .. [[">]])
+add(xml, [[      <user id="]] .. xml_escape(username) .. [[">]])
+add(xml, [[        <params>]])
+
+if row_data.password ~= "" then
+        add(xml, [[          <param name="password" value="]] ..
+                xml_escape(row_data.password) .. [["/>]])
+end
+
+if row_data.ha1 ~= "" then
+        add(xml, [[          <param name="a1-hash" value="]] ..
+                xml_escape(row_data.ha1) .. [["/>]])
+end
+
+add(xml, [[          <param name="vm-enabled" value="true"/>]])
+add(xml, [[          <param name="vm-password" value="]] ..
+        xml_escape(vm_password) .. [["/>]])
+
+if row_data.fs_vm_email ~= "" then
+        add(xml, [[          <param name="vm-email-all-messages" value="true"/>]])
+        add(xml, [[          <param name="vm-attach-file" value="true"/>]])
+        add(xml, [[          <param name="vm-keep-local-after-email" value="true"/>]])
+        add(xml, [[          <param name="vm-mailto" value="]] ..
+                xml_escape(row_data.fs_vm_email) .. [["/>]])
+end
+
+add(xml, [[          <param name="dial-string" value="]] ..
+        xml_escape(dial_string) .. [["/>]])
+add(xml, [[        </params>]])
+add(xml, [[        <variables>]])
+add(xml, [[          <variable name="domain_name" value="]] ..
+        xml_escape(domain) .. [["/>]])
+add(xml, [[          <variable name="user_context" value="default"/>]])
+add(xml, [[          <variable name="effective_caller_id_name" value="]] ..
+        xml_escape(username) .. [["/>]])
+add(xml, [[          <variable name="effective_caller_id_number" value="]] ..
+        xml_escape(username) .. [["/>]])
+add(xml, [[        </variables>]])
+add(xml, [[      </user>]])
+add(xml, [[    </domain>]])
+add(xml, [[  </section>]])
+add(xml, [[</document>]])
+
+XML_STRING = table.concat(xml, "\n")
+
+if debug_enabled then
+        log("notice", XML_STRING)
+end
+```
+
+### Enable the Lua XML Directory Binding
+
+Edit `/etc/freeswitch/autoload_configs/modules.conf.xml` and make sure
+`mod_lua` is loaded:
+
+```xml
+<load module="mod_lua"/>
+```
+
+Edit `/etc/freeswitch/autoload_configs/lua.conf.xml` and add the directory XML
+handler:
+
+```xml
+<configuration name="lua.conf" description="LUA Configuration">
+  <settings>
+    <param name="script-directory" value="$${script_dir}/?.lua"/>
+    <param name="xml-handler-script" value="opensips_directory.lua"/>
+    <param name="xml-handler-bindings" value="directory"/>
+  </settings>
+</configuration>
+```
+
+Reload FreeSWITCH XML and `mod_lua`, or restart FreeSWITCH:
+
+```bash
+fs_cli -x 'reloadxml'
+fs_cli -x 'reload mod_lua'
+```
+
+Check that FreeSWITCH can fetch directory data for an OpenSIPS subscriber:
+
+```bash
+fs_cli -x 'user_data alice@example.com param vm-password'
+fs_cli -x 'user_data alice@example.com param a1-hash'
+```
+
+If the commands return the values from the OpenSIPS database, FreeSWITCH can
+map `alice@example.com` to a FreeSWITCH directory user whenever a FreeSWITCH
+application asks for directory data.
+
+---
+
+## Resulting Functions
+
+With the base setup:
+
+* OpenSIPS authenticates SIP subscribers and stores their contacts.
+* OpenSIPS routes subscriber-to-subscriber calls from its `location` table.
+* OpenSIPS sends star-prefixed media service calls to FreeSWITCH.
+* FreeSWITCH accepts trusted calls from OpenSIPS and answers the `9196` echo
+  service.
+
+With the optional directory mapping:
+
+* FreeSWITCH resolves OpenSIPS subscribers as FreeSWITCH directory users.
+* FreeSWITCH can use mapped mailbox metadata and user variables in modules that
+  consume directory data.
+
+---
+
 ## Data Used by This Setup
 
 OpenSIPS stores subscriber credentials in the `subscriber` table and registered
@@ -520,6 +815,13 @@ complete FreeSWITCH data needed for the handoff is:
   from OpenSIPS and transfers them to the `default` context
 * `/etc/freeswitch/dialplan/default/20_opensips_services.xml`, which defines
   the `9196` echo service used by the test call
+
+The optional directory mapping adds:
+
+* FreeSWITCH-specific columns in the OpenSIPS `subscriber` table
+* an ODBC DSN named `opensips`
+* `opensips_directory.lua` in the FreeSWITCH script directory
+* `mod_lua` directory XML binding in `lua.conf.xml`
 
 ---
 
