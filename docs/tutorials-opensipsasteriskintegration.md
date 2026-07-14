@@ -1,541 +1,270 @@
 ---
-title: "Realtime OpenSIPS - Asterisk Integration"
-description: "This tutorial presents the concept and implementation of a realtime integration of OpenSIPS SIP server and Asterisk media server."
+title: "OpenSIPS Asterisk Integration"
+description: "Build an OpenSIPS 4.0 and Asterisk integration using OpenSIPS Debian packages, an Asterisk 22 LTS install, a default OpenSIPS-based routing script, and minimal Asterisk PJSIP changes."
 ---
-
-> [!NOTE]
-> Other versions: [older than OpenSIPS 1.8](/tutorials-opensipsasteriskintegration-older-1-8).
 
 ## Realtime **OpenSIPS - Asterisk** Integration
 
-**This tutorial is made for OpenSIPS 1.8.x and Asterisk 1.8.x**
+This tutorial shows how to set up OpenSIPS 4.0 and Asterisk together using
+OpenSIPS Debian packages, an Asterisk 22 LTS install, a database-backed
+OpenSIPS registrar and a minimal Asterisk PJSIP configuration.
 
----
+OpenSIPS is the SIP edge server: users register with OpenSIPS, OpenSIPS
+authenticates them and routes user-to-user calls. Asterisk is used as a media
+application server. Calls to Asterisk services are sent from OpenSIPS by
+prefixing the dialed extension with `*`:
 
-### Scope
+* `*9196` is sent to Asterisk as `9196`
+* `**1234` would be sent to Asterisk as `*1234`
 
-This tutorial presents the concept and implementation of a realtime integration of OpenSIPS SIP server and Asterisk media server.
+The Asterisk side is intentionally small: keep the default configuration, keep
+Asterisk SIP away from OpenSIPS when both run on the same host, add one PJSIP
+endpoint that trusts traffic from OpenSIPS and add one dialplan extension used
+by the working test call.
 
-OpenSIPS is used a SIP server - users are registering with it, it routes calls, etc - while the purpose of Asterisk is to provide a full set of media services - like voicemail, conference, announcements, etc.
+### Topology Used Below
 
-It is a realtime integration because both OpenSIPS and Asterisk are provisioned in the same same time when comes to user accounts - when creating a new OpenSIPS users, automatically Asterisk will learn about it an provide and configure all necessary  media services for it.
+Replace these values with your own:
 
-Both OpenSIPS and Asterisk will be provisioned (for user accounts) via a shared mysql database.
-
----
-
-### Setup presentation
-
-The following services will be offered by this integrated configuration:
-* **voicemail** - users will get access to their mailbox; authentication will be done by OpenSIPS; while Asterisk will only provide voicemail IVR (with no access PIN);
-* **conference**' - opensips will detect and forward calls related to conference service (based on prefixes) to Asterisk, which will provide access (pin based) to the conference rooms;
-
-* **announcements** - OpenSIPS will identify the cases and types of announcements that needs to be played and will simply redirect to Asterisk.
-
----
-
-### Prerequisites
-
-### OpenSIPS
-
-Install OpenSIPS 1.8.x with mysql DB support (db_mysql module). if you use sources (tarballs or svn checkouts) do the following:
-```bash
-
-   $ make include_modules="db_mysql" prefix="/" all
-   $ make include_modules="db_mysql" prefix="/" install
-
-```
-
-### Asterisk
-
-Install Asterisk 1.8 from local repository:
-
-```bash
-
-   $ apt-get install asterisk
-
-```
-
-> [!NOTE]
-> if your repository does not have the Asterisk 1.8 version, you must install a backported version of Asterisk, by following these steps:
-
- * add the following line in the */etc/apt/sources.lst* file:
 ```text
-
-deb http://backports.debian.org/debian-backports squeeze-backports main
-
+SIP domain:       example.com
+OpenSIPS IP:      192.0.2.10
+Asterisk IP:      192.0.2.30
+OpenSIPS SIP:     udp:192.0.2.10:5060
+Asterisk SIP:     udp:192.0.2.30:5070
+Asterisk app:     9196 echo service
+Database:         MariaDB/MySQL on the OpenSIPS host
 ```
- * update the repository:
+
+If both services run on one host, keep the same idea and use different SIP
+ports, for example OpenSIPS on `5060` and Asterisk on `5070`.
+
+---
+
+## Installation
+
+### Base System
+
+Start from a supported Debian installation and install basic tools:
+
 ```bash
+apt-get update
+apt-get install -y ca-certificates curl gnupg lsb-release mariadb-server
+```
+
+The examples below use Debian's `VERSION_CODENAME`, so they work for supported
+Debian releases listed by the OpenSIPS APT selector.
+
+### Install OpenSIPS 4.0 from Debian Packages
+
+OpenSIPS packages are published at <https://apt.opensips.org/packages.php>.
+Select your OS and the `OpenSIPS 4.0` stable package there if you want the
+generated repository commands.
+
+```bash
+. /etc/os-release
+
+curl https://apt.opensips.org/opensips-org.gpg \
+    -o /usr/share/keyrings/opensips-org.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/opensips-org.gpg] https://apt.opensips.org ${VERSION_CODENAME} 4.0-releases" \
+    >/etc/apt/sources.list.d/opensips.list
+
+echo "deb [signed-by=/usr/share/keyrings/opensips-org.gpg] https://apt.opensips.org ${VERSION_CODENAME} cli-nightly" \
+    >/etc/apt/sources.list.d/opensips-cli.list
 
 apt-get update
-
-```
- * install asterisk from backports repository
-```bash
-
-apt-get -t squeeze-backports install asterisk
-
+apt-get install -y opensips opensips-cli opensips-auth-modules \
+    opensips-mysql-module opensips-mysql-dbschema
 ```
 
-Install UnixODBC interface:
+### Create the OpenSIPS Database
 
-```bash
+Create `/etc/opensips-cli.cfg`:
 
-   $ apt-get install unixodbc-dev libmyodbc
-   $ apt-get install asterisk-voicemail-odbcstorage
-
-```
-
-The latest version of the Meetme application needs the DAHDI telephony interface. Install the Asterisk Dahdi application:
-
-```bash
-
-   $ apt-get install asterisk-dahdi dahdi
-
-```
-
-If a module package is not available for your platform, you must create your own package from dahdi sources, by issuing the following commands:
-
-```bash
-
-   $ apt-get install dahdi-linux dahdi-source
-   $ cd /usr/src
-   $ m-a a-i dahdi
-   $ dpkg -i dahdi-modules-*.deb
-   $ modprobe dahdi
-
-```
-
----
-
-### DB Setup
-
-Only **voicemail** and **conference** services do require DB support. While the **conference** DB table will be exclusively be used by Asterisk (OpenSIPS does not require any information form there), the **voicemail** service do require a tight sharing of DB information about users between OpenSIPS and Asterisk.
-
-Considering OpenSIPS as the core SIP element of the platform, the core DB will be also belonging to OpenSIPS - we will use the OpenSIPS DB to drive both OpenSIPS and Asterisk. The tables required by Asterisk (for voicemail service) will be mapped over the OpenSIPS tables.
-
-This approach assumes two steps:
-* creating the OpenSIP tables and extend them to contain also the fields (info) required by Asterisk.
-* creating the mysql views over the OpenSIPS tables, in order to simulate the Asterisk tables
-
-#### Creating the OpenSIPS tables
-
-In file **/etc/opensips/opensipsctlrc** enable the mysql backend (see **DBENGINE**) and also configure the host where the mysql server is located, the name to be used for creating the opensips table, the read-only (ro) and read-write (rw) usernames and passwords to be created for accessing the opensips DB - see all the varaibles with **DB** prefix in the file.
-
-Proceed with creation of the OpenSIPS standard database:
-```bash
-
-   $ opensipsdbctl create
-
-```
-
-If you use the default values to DB host and mysql access users, you can access the DB by:
-```bash
-
-   $ mysql -h'localhost' -u'opensips' -p'opensipsrw' opensips
-     >
-
-```
-
-Once the default tables are created, we need to alter the **subscriber** table in order to add some additional fields required by the Asterisk DB view. These changes are:
-* add **vm_password** to be used as voicemail pin
-* add **first_name** and **last_name** as subscriber name
-* add **email_address** as subscriber's email address
-* add **datetime_created** as timestamp of the subscriber creation.
-
-Login to the **opensips** database (use the above login command) and run:
-```sql
-
-  > alter table subscriber add column `vmail_password` varchar(8) NOT NULL default '1234';
-  > alter table subscriber add column `first_name` varchar(25) NOT NULL default '';
-  > alter table subscriber add column `last_name` varchar(45) NOT NULL default '';
-  > alter table subscriber add column `email_address` varchar(50) NOT NULL default '';
-  > alter table subscriber add column `datetime_created` datetime NOT NULL default '0000-00-00 00:00:00';
-
-```
-
-#### Creating the Asterisk tables
-
-Create a separate database to be used by Asterisk - login as root into mysql server and run:
-```sql
-
-  > create database asterisk;
-  > GRANT ALL PRIVILEGES ON asterisk.* TO 'asterisk' IDENTIFIED  BY 'asterisk_pwd';
-
-```
-
-Create the Asterisk tables which are exclusively used only by Asterisk (as mysql tables):
-```sql
-
-# create table for the meetme service
-
-CREATE TABLE `meetme` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `confno` varchar(80) NOT NULL DEFAULT '0',
-  `username` varchar(64) NOT NULL DEFAULT '',
-  `domain` varchar(128) NOT NULL DEFAULT '',
-  `pin` varchar(20) DEFAULT NULL,
-  `adminpin` varchar(20) DEFAULT NULL,
-  `members` int(11) DEFAULT NULL,
-  PRIMARY KEY (`confno`),
-  UNIQUE KEY `id` (`id`)
-);
-
-# create table to store the voicemail massages
-CREATE TABLE `voicemessages` (
-  `id` int(11) NOT NULL auto_increment,
-  `msgnum` int(11) NOT NULL default '0',
-  `dir` varchar(80) default '',
-  `context` varchar(80) default '',
-  `macrocontext` varchar(80) default '',
-  `callerid` varchar(40) default '',
-  `origtime` varchar(40) default '',
-  `duration` varchar(20) default '',
-  `mailboxuser` varchar(80) default '',
-  `mailboxcontext` varchar(80) default '',
-  `recording` longblob,
-  PRIMARY KEY  (`id`),
-  KEY `dir` (`dir`)
-);
-
-```
-
-Create the Asterisk tables (as mysql views) that import the information from OpenSIPS tables:
-```sql
-
-# create the asterisk users tables as a view over the OpenSIPS subscriber table
-CREATE VIEW `sipusers` AS select
-  `opensips`.`subscriber`.`username` AS `name`
-  ,_latin1'friend' AS `type`,
-  NULL AS `secret`,
-  `opensips`.`subscriber`.`domain` AS `host`,
-  concat(`opensips`.`subscriber`.`rpid`,_latin1' ',_latin1'<',`opensips`.`subscriber`.`username`,_latin1'>') AS `callerid`,
-  _latin1'default' AS `context`,
-  `opensips`.`subscriber`.`username` AS `mailbox`,
-  _latin1'yes' AS `nat`,
-  _latin1'no' AS `qualify`,
-  `opensips`.`subscriber`.`username` AS `fromuser`,
-  NULL AS `authuser`,
-  `opensips`.`subscriber`.`domain` AS `fromdomain`,
-  NULL AS `insecure`,
-  _latin1'no' AS `canreinvite`,
-  NULL AS `disallow`,
-  NULL AS `allow`,
-  NULL AS `restrictcid`,
-  `opensips`.`subscriber`.`domain` AS `defaultip`,
-  `opensips`.`subscriber`.`domain` AS `ipaddr`,
-  _latin1'5060' AS `port`,
-  NULL AS `regseconds`,
-  `opensips`.`subscriber`.`username` AS `defaultuser`,
-  NULL AS `fullcontact`,
-  `opensips`.`subscriber`.`domain` AS `regserver`,
-  NULL AS `useragent`,
-  0 AS `lastms`
-from `opensips`.`subscriber`;
-
-# create the asterisk voceimail users table as a view over the OpenSIPS subscriber table
-CREATE VIEW `vmusers` AS select
-  concat(`opensips`.`subscriber`.`username`,`opensips`.`subscriber`.`domain`) AS `uniqueid`,
-  `opensips`.`subscriber`.`username` AS `customer_id`,
-  _latin1'default' AS `context`,
-  `opensips`.`subscriber`.`username` AS `mailbox`,
-  `opensips`.`subscriber`.`vmail_password` AS `password`,
-  _latin1'joe' AS `fullname`,
-  `opensips`.`subscriber`.`email_address` AS `email`,
-  NULL AS `pager`,
-  `opensips`.`subscriber`.`datetime_created` AS `stamp`
-from `opensips`.`subscriber`;
-
-#create the asterisk voicemail aliases table as a view over the OpenSIPS dbaliases table
-CREATE VIEW `asterisk`.`vmaliases` AS select
-  `opensips`.`dbaliases`.`alias_username` AS `alias`,
-  _latin1'default' AS `context`,
-  `opensips`.`dbaliases`.`username` AS `mailbox`
-from `opensips`.`dbaliases`;
-
-```
-
-Configure the access for Asterisk to the created database (via unixodbc):
-* in *etc/odbcinst.ini*
-```text
-
-[MySQL]
-Description     = MySQL driver
-Driver      = /usr/lib/odbc/libmyodbc.so
-Setup       = /usr/lib/odbc/libodbcmyS.so
-CPTimeout       =
-CPReuse     =
-UsageCount      = 1
-
-```
-
-* in */etc/odbc.ini*
-```text
-
-[MySQL-asterisk]
-Description = MySQL Asterisk database
-Trace       = Off
-TraceFile   = stderr
-Driver      = MySQL
-SERVER      = localhost
-USER        = asterisk
-PASSWORD    = asterisk_pwd
-PORT        = 3306
-DATABASE    = asterisk
-
-```
-
-* in */etc/asterisk/res_odbc.conf*
-```text
-
-[asterisk]
-enabled => yes
-dsn => MySQL-asterisk
-username => asterisk
-password => asterisk_pwd
-pre-connect => yes
-
-```
-
-* in */etc/asterisk/extconfig.conf*
-```text
-
-sipusers => odbc,asterisk,sipusers
-sippeers => odbc,asterisk,sipusers
-voicemail => odbc,asterisk,vmusers
-meetme => odbc,asterisk,meetme
-
-```
-
----
-
-### Asterisk dialplan
-
-The following extensions are set for Asterisk:
-
-* **VMR_** prefix indicates that the caller (identify by SIP FROM header) leaves a voicemail message to the user indicated by the RURI (after the prefix).
-
-* **VM_pickup** RURI indicates that the caller (identify by SIP FROM header) accesses his own voicemailbox IVR (to listen his messages); the access is done directly, without any PIN required from Asterisk
-
-* **AN_notavailable** plays the "Not Available" audio message
-
-* **AN_time** plays the current time message (for the given timezone)
-
-* **AN_date** plays the current time message (for the given timezone)
-
-* **AN_echo** accesses the echo audio service
-
-* **CR_** prefix indicates access to a conference room; the number of the room is part of the RURI, after the prefix (like CR_3322); Asterisk will perform the checks for conference room existence and for the access PIN code. 
-
-Set in ''/etc/asterisk/extensions.conf** :**
-```text
-
-[general]
-static=yes
-writeprotect=no
-
+```ini
 [default]
+database_admin_url: mysql://root@localhost
+database_url: mysql://opensips:opensipsrw@localhost/opensips
+database_name: opensips
+```
 
-; Voicemail 
-exten => _VMR_.,n,Ringing
-exten => _VMR_.,n,Wait(1)
-exten => _VMR_.,n,Answer
-exten => _VMR_.,n,Wait(1)
-exten => _VMR_.,n,Voicemail(${EXTEN:4}|u)
-exten => _VMR_.,n,Hangup
+Then create the database:
 
-; Allow users to call their Voicemail directly
-exten => VM_pickup,n,Ringing
-exten => VM_pickup,n,wait(1)
-exten => VM_pickup,n,VoicemailMain(${CALLERIDNUM}|s)
-exten => VM_pickup,n,Hangup
+```bash
+opensips-cli -x database create
+```
 
-; announcement: not available
-exten => AN_notavailable,1,Ringing
-exten => AN_notavailable,2,Playback(notavailable)
-exten => AN_notavailable,3,Hangup
+The command creates the `opensips` database, the `opensips` database user and
+the standard tables. If your MariaDB/MySQL setup does not allow the
+`root@localhost` URL above and you are working in a contained lab environment,
+you can temporarily remove the local `root` database password while creating the
+OpenSIPS database. On public, shared or production systems, keep the database
+root account protected and adjust `database_admin_url` to match a proper local
+database administrator account:
 
-; announcement: time
-exten => AN_time,1,Ringing
-exten => AN_time,2,Wait(1)
-exten => AN_time,3,SayUnixTime(,Europe/Bucharest,HMp)
-exten => AN_time,4,Hangup
+```ini
+database_admin_url: mysql://<ADMIN_USER>:<ADMIN_PASSWORD>@localhost
+```
 
-; announcement:date
-exten => AN_date,1,Ringing
-exten => AN_date,2,SayUnixTime(,Europe/Bucharest,ABdY)
-exten => AN_date,3,Hangup
+Add test subscribers:
 
-; announcement: echo
-exten => AN_echo,1,Ringing
-exten => AN_echo,2,Answer
-exten => AN_echo,3,Echo
+```bash
+opensips-cli -x user add alice@example.com alicepass
+opensips-cli -x user add bob@example.com bobpass
+```
 
-; Conference service
-exten => _CR_.,1,Ringing
-exten => _CR_.,n,Wait(1)
-exten => _CR_.,n,MeetMe(${EXTEN:3}|Mi)
+### Install Asterisk 22 LTS
 
+Debian Trixie does not ship an `asterisk` binary package in its stable package
+set. If your Debian suite or vendor repository provides Asterisk packages, use
+the package manager:
+
+```bash
+apt-get update
+apt-get install -y asterisk
+```
+
+On Debian Trixie, install Asterisk 22 LTS from upstream source. The upstream
+downloads page lists Asterisk 22 as an LTS branch, and the Asterisk source
+installation guide has the complete build details. A compact install sequence
+for a new lab host is:
+
+```bash
+apt-get update
+apt-get install -y build-essential ca-certificates curl tar
+
+cd /usr/src
+curl -LO https://downloads.asterisk.org/pub/telephony/asterisk/asterisk-22-current.tar.gz
+tar xzf asterisk-22-current.tar.gz
+cd asterisk-22*/
+
+./contrib/scripts/install_prereq install
+./configure
+make menuselect
+make
+make install
+make samples
+make config
+ldconfig
+systemctl enable --now asterisk
+```
+
+When using `make menuselect`, keep the PJSIP modules and `app_echo` enabled.
+If you also want the optional realtime mapping chapter below, keep `res_odbc`
+and `app_voicemail` enabled too. Run `make samples` only on a new installation
+where overwriting the sample Asterisk configuration is acceptable.
+
+Check that Asterisk starts and that PJSIP is available:
+
+```bash
+systemctl status asterisk
+asterisk -rx 'module show like res_pjsip'
+asterisk -rx 'core show version'
 ```
 
 ---
 
-### OpenSIPS configuration
+## OpenSIPS Configuration
 
-In this example we take the OpenSIPS default config file that provides user registration and authentication against the DB and extends the script for adding the following media oriented services:
+The script below is based on the default OpenSIPS 4.0 residential script, with
+the following additions:
 
-* voicemail
-  * leaving a message - if the called user is not registered on OpenSIPS, the call will be forwarded by OpenSIPS (by adding **VMR_** prefix) to Asterisk
-  * listening messages -if a subscriber calls to the *1111 number, OpenSIPS will rewrite it to **VM_pickup** and send it to Asterisk
-* announcements 
-  * service number *2111 for listening the current time message - OpenSIPS will rewrite it to **AN_time** and send it to Asterisk
-  * service number *2112 for listening the current date message - OpenSIPS will rewrite it to **AN_date** and send it to Asterisk
-  * service number *2113 for accessing the echo service - OpenSIPS will rewrite it to **AN_echo** and send it to Asterisk
-* conference
-  * service number *3XXX for dialling into the conference room XXX - OpenSIPS will rewrite it to **CR_XXX** and send it to Asterisk
+* MySQL-backed authentication
+* persistent, MySQL-backed user location
+* SIP Digest authentication for `REGISTER` and subscriber-originated calls
+* one-to-one mapping between SIP usernames and authentication usernames
+* one `route[asterisk]` block for star-prefixed media services
 
-In */etc/opensips/opensips.cfg* place (see the ASTERISK_HOOKS markers to find the script parts relevant to Asterisk integration):
+Save it as `/etc/opensips/opensips.cfg` and update the `CUSTOMIZE` values. Keep
+the packaged `mpath` value if your Debian architecture is not `amd64`.
+
 ```opensips
-
 ####### Global Parameters #########
 
-debug=3
-log_stderror=no
-log_facility=LOG_LOCAL0
+log_level=3
+xlog_level=3
+stderror_enabled=no
+syslog_enabled=yes
+syslog_facility=LOG_LOCAL0
 
-fork=yes
-children=4
+udp_workers=4
 
-/* uncomment the following lines to enable debugging */
-#debug=6
-#fork=no
-#log_stderror=yes
-
-port=5060
-
-/* uncomment and configure the following line if you want opensips to 
-   bind on a specific interface/port/proto (default bind on all available) */
-#listen=udp:192.168.1.2:5060
+socket=udp:192.0.2.10:5060   # CUSTOMIZE: OpenSIPS listener
+alias=example.com            # CUSTOMIZE: SIP domain
 
 ####### Modules Section ########
 
-#set module path
-mpath="/lib/opensips/modules/"
+mpath="/usr/lib/x86_64-linux-gnu/opensips/modules/"  # Debian amd64 path
 
-loadmodule "db_mysql.so"
 loadmodule "signaling.so"
 loadmodule "sl.so"
+
 loadmodule "tm.so"
+modparam("tm", "fr_timeout", 5)
+modparam("tm", "fr_inv_timeout", 30)
+modparam("tm", "restart_fr_on_each_reply", 0)
+modparam("tm", "onreply_avp_mode", 1)
+
 loadmodule "rr.so"
-loadmodule "maxfwd.so"
-loadmodule "usrloc.so"
-loadmodule "registrar.so"
-loadmodule "textops.so"
-loadmodule "mi_fifo.so"
-loadmodule "uri_db.so"
-loadmodule "uri.so"
-loadmodule "xlog.so"
-loadmodule "acc.so"
-loadmodule "auth.so"
-loadmodule "auth_db.so"
-loadmodule "domain.so"
-
-# ----------------- setting module-specific parameters ---------------
-
-# ----- mi_fifo params -----
-modparam("mi_fifo", "fifo_name", "/tmp/opensips_fifo")
-
-# ----- rr params -----
-# do not append from tag to the RR (no need for this script)
 modparam("rr", "append_fromtag", 0)
 
-# ----- usrloc params -----
-modparam("usrloc", "db_mode",   2)
-modparam("usrloc", "db_url",
-	"mysql://opensips:opensipsrw@localhost/opensips")
+loadmodule "maxfwd.so"
+loadmodule "sipmsgops.so"
 
-# ----- uri_db params -----
-modparam("uri_db", "use_uri_table", 0)
-modparam("uri_db", "db_url", "")
+loadmodule "mi_fifo.so"
+modparam("mi_fifo", "fifo_name", "/run/opensips/opensips_fifo")
+modparam("mi_fifo", "fifo_mode", 0666)
 
-# ----- acc params -----
-/* what sepcial events should be accounted ? */
-modparam("acc", "early_media", 1)
-modparam("acc", "report_cancels", 1)
-/* account triggers (flags) */
-modparam("acc", "failed_transaction_flag", 3)
-modparam("acc", "log_flag", 1)
-modparam("acc", "log_missed_flag", 2)
-/* uncomment the following lines to enable DB accounting also */
-modparam("acc", "db_flag", 1)
-modparam("acc", "db_missed_flag", 2)
+loadmodule "db_mysql.so"
 
-# ----- auth_db params -----
-modparam("auth_db", "calculate_ha1", yes)
-modparam("auth_db", "password_column", "password")
-modparam("auth_db", "db_url",
-	"mysql://opensips:opensipsrw@localhost/opensips")
+loadmodule "auth.so"
+loadmodule "auth_db.so"
+modparam("auth_db", "db_url", "mysql://opensips:opensipsrw@localhost/opensips")
+modparam("auth_db", "use_domain", true)
 modparam("auth_db", "load_credentials", "")
 
-# ----- domain params -----
-modparam("domain", "db_url",
-	"mysql://opensips:opensipsrw@localhost/opensips")
-modparam("domain", "db_mode", 1)   # Use caching
+loadmodule "usrloc.so"
+modparam("usrloc", "db_url", "mysql://opensips:opensipsrw@localhost/opensips")
+modparam("usrloc", "use_domain", true)
+modparam("usrloc", "working_mode_preset", "single-instance-sql-write-back")
 
-# ----- multi-module params -----
-/* uncomment the following line if you want to enable multi-domain support
-   in the modules (dafault off) */
-modparam("alias_db|auth_db|usrloc|uri_db", "use_domain", 1)
+loadmodule "registrar.so"
+modparam("registrar", "tcp_persistent_flag", "TCP_PERSISTENT")
+
+loadmodule "acc.so"
+modparam("acc", "early_media", 0)
+modparam("acc", "report_cancels", 0)
+modparam("acc", "detect_direction", 0)
+
+loadmodule "proto_udp.so"
 
 ####### Routing Logic ########
 
-# main request routing logic
-
-route{
-
-	if (!mf_process_maxfwd_header("10")) {
-		send_reply("483","Too Many Hops");
+route {
+	if (!mf_process_maxfwd_header(10)) {
+		send_reply(483, "Too Many Hops");
 		exit;
 	}
 
 	if (has_totag()) {
-		# sequential request withing a dialog should
-		# take the path determined by record-routing
-		if (loose_route()) {
-			if (is_method("BYE")) {
-				setflag(1); # do accounting ...
-				setflag(3); # ... even if the transaction fails
-			} else if (is_method("INVITE")) {
-				# even if in most of the cases is useless, do RR for
-				# re-INVITEs alos, as some buggy clients do change route set
-				# during the dialog.
-				record_route();
-			}
-			# route it out to whatever destination was set by loose_route()
-			# in $du (destination URI).
-			route(1);
-		} else {
-			if ( is_method("ACK") ) {
-				if ( t_check_trans() ) {
-					# non loose-route, but stateful ACK; must be an ACK after 
-					# a 487 or e.g. 404 from upstream server
-					t_relay();
-					exit;
-				} else {
-					# ACK without matching transaction ->
-					# ignore and discard
-					exit;
-				}
-			}
-			send_reply("404","Not here");
+		if (is_method("ACK") && t_check_trans()) {
+			t_relay();
+			exit;
 		}
+
+		if (!loose_route()) {
+			send_reply(404, "Not here");
+			exit;
+		}
+
+		if (is_method("BYE"))
+			do_accounting("log", "failed");
+
+		route(relay);
 		exit;
 	}
 
-	#initial requests
-
-	# CANCEL processing
 	if (is_method("CANCEL")) {
 		if (t_check_trans())
 			t_relay();
@@ -544,216 +273,527 @@ route{
 
 	t_check_trans();
 
-	# authenticate if from local subscriber
-	if (!(method=="REGISTER") && is_from_local()) {
-		if (!proxy_authorize("", "subscriber")) {
-			proxy_challenge("", "0");
+	if (!is_method("REGISTER")) {
+		if (is_myself("$fd")) {
+			if (!proxy_authorize("", "subscriber")) {
+				proxy_challenge("", "auth");
+				exit;
+			}
+
+			if ($au != $fU) {
+				send_reply(403, "Forbidden auth ID");
+				exit;
+			}
+
+			consume_credentials();
+		} else if (!is_myself("$rd")) {
+			send_reply(403, "Relay Forbidden");
 			exit;
 		}
-		if (!check_from()) {
-			send_reply("403","Forbidden auth ID");
-			exit;
-		}
-	
-		consume_credentials();
-		# caller authenticated
 	}
 
-	# preloaded route checking
 	if (loose_route()) {
-		xlog("L_ERR",
-		"Attempt to route with preloaded Route's [$fu/$tu/$ru/$ci]");
+		xlog("L_ERR", "Attempt to route with preloaded Route [$fu/$tu/$ru/$ci]\n");
 		if (!is_method("ACK"))
-			send_reply("403","Preload Route denied");
+			send_reply(403, "Preload Route denied");
 		exit;
 	}
 
-	# record routing
 	if (!is_method("REGISTER|MESSAGE"))
 		record_route();
 
-	# account only INVITEs
-	if (is_method("INVITE")) {
-		setflag(1); # do accounting
+	if (is_method("INVITE"))
+		do_accounting("log");
+
+	if (!is_myself("$rd")) {
+		append_hf("P-hint: outbound\r\n");
+		route(relay);
 	}
 
-	# if not a targetting a local SIP domain, just send it out
-	# based on DNS (calls to foreign SIP domains)
-	if (!is_uri_host_local()) {
-		append_hf("P-hint: outbound\r\n"); 
-		route(1);
+	if (is_method("PUBLISH|SUBSCRIBE")) {
+		send_reply(503, "Service Unavailable");
+		exit;
 	}
-
-	# requests for my domain
 
 	if (is_method("REGISTER")) {
-		# authenticate the REGISTER requests
 		if (!www_authorize("", "subscriber")) {
-			www_challenge("", "0");
+			www_challenge("", "auth");
 			exit;
 		}
-		if (!check_to()) {
-			send_reply("403","Forbidden auth ID");
+
+		if ($au != $tU) {
+			send_reply(403, "Forbidden auth ID");
 			exit;
 		}
 
 		if (!save("location"))
-			sl_reply_error();
+			xlog("L_ERR", "failed to register AoR $tu\n");
 
 		exit;
 	}
 
-	if ($rU==NULL) {
-		# request with no Username in RURI
-		send_reply("484","Address Incomplete");
+	if ($rU == NULL) {
+		send_reply(484, "Address Incomplete");
 		exit;
 	}
 
-	# ASTERISK HOOK - BEGIN
-	# media service number? (digits starting with *)
-	if ($rU=~"^\*[1-9]+") {
-		# we do provide access to media services only to our
-		# subscribers, who were previously authenticated 
-		if (!is_from_local()) {
-			send_reply("403","Forbidden access to media service");
-			exit;
-		}
-		#identify the services and translate to Asterisk extensions
-		if ($rU=="*1111") {
-			# access to own voicemail IVR
-			$ru = "sip:VM_pickup@ASTERISK_IP:ASTERISK_PORT";
-		} else
-		if ($rU=="*2111") {
-			# access to the "say time" announcement 
-			$ru = "sip:AN_time@ASTERISK_IP:ASTERISK_PORT";
-		} else
-		if ($rU=="*2112") {
-			# access to the "say date" announcement 
-			$ru = "sip:AN_date@ASTERISK_IP:ASTERISK_PORT";
-		} else
-		if ($rU=="*2113") {
-			# access to the "echo" service
-			$ru = "sip:AN_echo@ASTERISK_IP:ASTERISK_PORT";
-		} else
-		if ($rU=~"\*3[0-9]{3}") {
-			# access to the conference service 
-			# remove the "*3" prefix and place the "CR_" prefix
-			strip(2);
-			prefix("CR_");
-			rewritehostport("ASTERISK_IP:ASTERISK_PORT");
-		} else {
-			# unknown service
-			$ru = "sip:AN_notavailable@ASTERISK_IP:ASTERISK_PORT";
-		}
-		# after setting the proper RURI (to point to corresponding ASTERISK extension),
-		# simply forward the call
-		t_relay();
-		exit;
-	}
-	# ASTERISK HOOK - END
+	route(asterisk);
 
-	# do lookup
-	if (!lookup("location")) {
-		# ASTERISK HOOK - BEGIN
-		# callee is not registered, so different to Voicemail
-		# First add the VM recording prefix to the RURI
-		prefix("VMR_");
-		# forward to the call to Asterisk (replace below with real IP and port)
- 		rewritehostport("ASTERISK_IP:ASTERISK_PORT");
-		route(1);
-		# ASTERISK HOOK - END
+	if (!lookup("location", "method-filtering")) {
+		t_reply(404, "Not Found");
 		exit;
 	}
 
-	# when routing via usrloc, log the missed calls also
-	setflag(2);
-
-	# arm a failure route in order to catch failed calls
-	# targeting local subscribers; if we fail to deliver
-	# the call to the user, we send the call to voicemail
-	t_on_failure("1");
-
-	route(1);
+	do_accounting("log", "missed");
+	route(relay);
 }
 
-route[1] {
-	if (!t_relay()) {
-		sl_reply_error();
-	};
+route[asterisk] {
+	if (!is_method("INVITE"))
+		return;
+
+	if ($rU =~ "^\*") {
+		strip(1);
+		$du = "sip:192.0.2.30:5070";   # CUSTOMIZE: Asterisk PJSIP listener
+		route(relay);
+	}
+}
+
+route[relay] {
+	if (is_method("INVITE")) {
+		t_on_branch("per_branch_ops");
+		t_on_reply("handle_nat");
+		t_on_failure("missed_call");
+	}
+
+	if (!t_relay())
+		send_reply(500, "Internal Error");
+
 	exit;
 }
 
-failure_route[1] {
-	if (t_was_cancelled()) {
-		exit;
-	}
-
-	# if the failure code is "408 - timeout" or "486 - busy",
-	# forward the calls to voicemail recording
-	if (t_check_status("486|408")) {
-		# ASTERISK HOOK - BEGIN
-		# First revert the RURI to get the original user in RURI
-		# Then add the VM recording prefix to the RURI
-		revert_uri();
-		prefix("VMR_");
-		# forward to the call to Asterisk (replace below with real IP and port)
- 		rewritehostport("ASTERISK_IP:ASTERISK_PORT");
-		t_relay();
-		# ASTERISK HOOK - END
-		exit;
-	}
+branch_route[per_branch_ops] {
+	xlog("new branch at $ru\n");
 }
 
+onreply_route[handle_nat] {
+	xlog("incoming reply\n");
+}
+
+failure_route[missed_call] {
+	if (t_was_cancelled())
+		exit;
+}
+```
+
+Validate and restart OpenSIPS:
+
+```bash
+opensips -C -f /etc/opensips/opensips.cfg
+systemctl restart opensips
+systemctl status opensips
 ```
 
 ---
 
-### How to use it
+## Asterisk Configuration
 
-Add a SIP domain in the OpenSIPS server (note that the sip domain most point -via DNS- to your opensips server; also for a SIP domain, you can use the IP address of the SIP server too):
-```bash
+Do not replace the Asterisk configuration tree. Add one PJSIP transport and
+endpoint for OpenSIPS, then add one dialplan context for calls that arrive from
+OpenSIPS.
 
-$ mysql -h'localhost' -u'opensips' -p'opensipsrw' opensips
- > insert into domain (domain) values ("test.com");
+### PJSIP Listener and OpenSIPS Endpoint
 
-$ opensipsctl fifo domain_reload
+Add this to `/etc/asterisk/pjsip.conf` and update the `CUSTOMIZE` values:
 
+```ini
+[transport-udp-opensips]
+type=transport
+protocol=udp
+bind=192.0.2.30:5070        ; CUSTOMIZE: Asterisk listener
+
+[opensips-endpoint]
+type=endpoint
+transport=transport-udp-opensips
+context=from-opensips
+disallow=all
+allow=ulaw,alaw
+aors=opensips-aor
+direct_media=no
+trust_id_inbound=yes
+
+[opensips-aor]
+type=aor
+contact=sip:192.0.2.10:5060 ; CUSTOMIZE: OpenSIPS listener
+
+[opensips-identify]
+type=identify
+endpoint=opensips-endpoint
+match=192.0.2.10/32         ; CUSTOMIZE: OpenSIPS source IP
 ```
 
-Create some subscribers with your OpenSIPS platform (alice@test.com with SIP password '1234'):
+If Asterisk and OpenSIPS run on the same host, make sure no other PJSIP
+transport is binding the same IP and port as OpenSIPS.
+
+Reload PJSIP:
+
 ```bash
-
-$ opensipsctl add alice@test.com 1234
-$ opensipsctl add bob@test.com 4321
-
+asterisk -rx 'pjsip reload'
+asterisk -rx 'pjsip show endpoint opensips-endpoint'
 ```
 
-If you want to change the voicemail pin (for subscriber alice@test.com):
-```bash
+### Asterisk Service Extension
 
-$ mysql -h'localhost' -u'opensips' -p'opensipsrw' opensips
- > update subscriber set vm_password="6745" where username="alice" and domain="test.com";
+Add this to `/etc/asterisk/extensions.conf`:
 
+```ini
+[from-opensips]
+exten => 9196,1,Answer()
+ same => n,Echo()
+ same => n,Hangup()
 ```
 
-#### Test voicemail
-Register your **alice** subscriber (ex: using twinkle soft client) to your server. Keep **bob** unregistered.
+This gives the OpenSIPS-to-Asterisk handoff a complete target: dialing `*9196`
+from an OpenSIPS subscriber reaches Asterisk as `9196` and starts an echo test
+in the `from-opensips` context.
 
-From **alice** dial **bob** address -  you should get the prompt for leaving a voicemail messages/recording.
+Reload the dialplan:
 
-Register **bob** also and dial ***1111** - you should get the voicemail IVR and listen the recording left by **alice**.
-
-#### Test announcements
-Form a registered subscriber, simply dial the service numbers as configured in OpenSIPS (see the beginning of the previous chapter).
-
-#### Test conference
-
-Add a conference room to your system:
 ```bash
-
-$ mysql -h'localhost' -u'asterisk' -p'asterisk_pwd' asterisk
- > insert into meetme (confno, pin, adminpin) values ("761","1122","4322");
-
+asterisk -rx 'dialplan reload'
+asterisk -rx 'dialplan show from-opensips'
 ```
 
-From a registered SIP user, dial ***3761** (to dial in conf room 761) and at IVR prompt type **1122** access pin.
+Use a firewall or host ACLs so only OpenSIPS can reach the Asterisk PJSIP port.
+The PJSIP `identify` match is useful, but it is not a replacement for network
+access control.
+
+---
+
+## Testing
+
+Register `alice@example.com` and `bob@example.com` to OpenSIPS on port `5060`.
+
+Call flow checks:
+
+* `alice` calls `bob`: OpenSIPS authenticates the caller, looks up `bob` in
+  `location` and relays the call to Bob's registered contact.
+* `alice` calls `*9196`: OpenSIPS strips the first `*`, sends `9196` to
+  Asterisk at `192.0.2.30:5070`, and Asterisk answers the echo service from
+  the `from-opensips` dialplan context.
+* `alice` calls `**1234`: OpenSIPS strips only one `*`, so Asterisk receives
+  `*1234`. Add that extension in `from-opensips` if you need Asterisk star
+  feature codes.
+
+Useful checks:
+
+```bash
+opensips-cli -x mi ul:dump
+opensips-cli -x mi ps
+asterisk -rx 'pjsip show transports'
+asterisk -rx 'pjsip show endpoint opensips-endpoint'
+asterisk -rx 'core show channels'
+```
+
+OpenSIPS 4.0 uses the canonical `module:command` MI command names, such as
+`ul:dump`.
+
+---
+
+## Optional Asterisk Realtime Views from OpenSIPS Subscribers
+
+The handoff above does not require Asterisk user records. Add this section when
+Asterisk applications need user data that follows the OpenSIPS subscriber list,
+such as voicemail users, mailbox aliases or Asterisk-side PJSIP user objects.
+
+The realtime version of this tutorial included this user-mapping information.
+It is kept here as an optional chapter so the basic SIP handoff stays small,
+while the realtime integration remains available when Asterisk services need it.
+
+SIP endpoints still register and authenticate to OpenSIPS. These views let
+Asterisk read user data from the OpenSIPS database when Asterisk realtime asks
+for it.
+
+### OpenSIPS Subscriber Fields for Asterisk
+
+OpenSIPS 4.0 creates the `subscriber` table with `username`, `domain`,
+`password` and `ha1` fields. Add Asterisk-specific fields for voicemail and
+display data:
+
+```sql
+ALTER TABLE subscriber
+  ADD COLUMN ast_vm_password VARCHAR(32) NOT NULL DEFAULT '1234',
+  ADD COLUMN ast_first_name VARCHAR(64) NOT NULL DEFAULT '',
+  ADD COLUMN ast_last_name VARCHAR(64) NOT NULL DEFAULT '',
+  ADD COLUMN ast_email VARCHAR(128) NOT NULL DEFAULT '';
+```
+
+Set the values for the tutorial users:
+
+```sql
+UPDATE subscriber
+  SET ast_vm_password = '1001',
+      ast_first_name = 'Alice',
+      ast_last_name = 'Example',
+      ast_email = 'alice@example.com'
+  WHERE username = 'alice' AND domain = 'example.com';
+
+UPDATE subscriber
+  SET ast_vm_password = '1002',
+      ast_first_name = 'Bob',
+      ast_last_name = 'Example',
+      ast_email = 'bob@example.com'
+  WHERE username = 'bob' AND domain = 'example.com';
+```
+
+OpenSIPS ignores these extra columns. Asterisk reads them only through the
+views below.
+
+### Asterisk Database and Views
+
+Create a separate `asterisk` database for Asterisk realtime data:
+
+```sql
+CREATE DATABASE IF NOT EXISTS asterisk;
+
+CREATE USER IF NOT EXISTS 'asterisk'@'localhost'
+  IDENTIFIED BY 'asterisk_pwd';
+
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX
+  ON asterisk.* TO 'asterisk'@'localhost';
+
+GRANT SELECT ON opensips.* TO 'asterisk'@'localhost';
+
+FLUSH PRIVILEGES;
+```
+
+Create the realtime voicemail view over the OpenSIPS `subscriber` table:
+
+```sql
+CREATE OR REPLACE VIEW asterisk.vmusers AS
+SELECT
+  CONCAT(username, '@', domain) AS uniqueid,
+  username AS customer_id,
+  'from-opensips' AS context,
+  username AS mailbox,
+  ast_vm_password AS password,
+  TRIM(CONCAT(ast_first_name, ' ', ast_last_name)) AS fullname,
+  ast_email AS email,
+  NULL AS pager,
+  NOW() AS stamp
+FROM opensips.subscriber;
+```
+
+Create voicemail aliases from the OpenSIPS `dbaliases` table:
+
+```sql
+CREATE OR REPLACE VIEW asterisk.vmaliases AS
+SELECT
+  alias_username AS alias,
+  'from-opensips' AS context,
+  username AS mailbox
+FROM opensips.dbaliases;
+```
+
+Create an optional table for ODBC voicemail message storage:
+
+```sql
+CREATE TABLE IF NOT EXISTS asterisk.voicemessages (
+  id INT NOT NULL AUTO_INCREMENT,
+  msgnum INT NOT NULL DEFAULT 0,
+  dir VARCHAR(255) DEFAULT '',
+  context VARCHAR(80) DEFAULT '',
+  macrocontext VARCHAR(80) DEFAULT '',
+  callerid VARCHAR(80) DEFAULT '',
+  origtime VARCHAR(40) DEFAULT '',
+  duration VARCHAR(20) DEFAULT '',
+  mailboxuser VARCHAR(80) DEFAULT '',
+  mailboxcontext VARCHAR(80) DEFAULT '',
+  recording LONGBLOB,
+  PRIMARY KEY (id),
+  KEY dir (dir)
+);
+```
+
+Create optional PJSIP realtime views for Asterisk user objects. The basic
+OpenSIPS-to-Asterisk handoff still uses the static `opensips-endpoint`; these
+views are useful only if an Asterisk application or dialplan also wants to look
+up users such as `alice` and `bob` as PJSIP objects.
+
+```sql
+CREATE OR REPLACE VIEW asterisk.ps_endpoints AS
+SELECT
+  username AS id,
+  'transport-udp-opensips' AS transport,
+  CONCAT(username, '-aor') AS aors,
+  CONCAT(username, '-auth') AS auth,
+  'from-opensips' AS context,
+  'all' AS disallow,
+  'ulaw,alaw' AS allow,
+  'no' AS direct_media,
+  'yes' AS trust_id_inbound,
+  CONCAT(TRIM(CONCAT(ast_first_name, ' ', ast_last_name)),
+         ' <', username, '>') AS callerid,
+  'sip:192.0.2.10:5060;lr' AS outbound_proxy
+FROM opensips.subscriber;
+
+CREATE OR REPLACE VIEW asterisk.ps_aors AS
+SELECT
+  CONCAT(username, '-aor') AS id,
+  CONCAT('sip:', username, '@', domain) AS contact,
+  1 AS max_contacts,
+  'yes' AS remove_existing,
+  60 AS qualify_frequency
+FROM opensips.subscriber;
+
+CREATE OR REPLACE VIEW asterisk.ps_auths AS
+SELECT
+  CONCAT(username, '-auth') AS id,
+  'userpass' AS auth_type,
+  username AS username,
+  password AS password,
+  ha1 AS password_digest,
+  domain AS realm
+FROM opensips.subscriber;
+```
+
+### ODBC Access for Asterisk
+
+Install UnixODBC and a MariaDB/MySQL ODBC driver for your Debian release. On
+Debian systems this is typically:
+
+```bash
+apt-get install -y unixodbc odbc-mariadb
+```
+
+Check the installed driver name:
+
+```bash
+odbcinst -q -d
+```
+
+Create `/etc/odbc.ini` and use the driver name reported on your system:
+
+```ini
+[asterisk]
+Description = Asterisk database
+Driver      = MariaDB Unicode
+SERVER      = 127.0.0.1
+PORT        = 3306
+DATABASE    = asterisk
+USER        = asterisk
+PASSWORD    = asterisk_pwd
+```
+
+Check the DSN:
+
+```bash
+isql -v asterisk asterisk asterisk_pwd
+```
+
+Configure `/etc/asterisk/res_odbc.conf`:
+
+```ini
+[asterisk]
+enabled => yes
+dsn => asterisk
+username => asterisk
+password => asterisk_pwd
+pre-connect => yes
+```
+
+Reload ODBC and check the connection:
+
+```bash
+asterisk -rx 'module reload res_odbc.so'
+asterisk -rx 'odbc show'
+```
+
+### Asterisk Realtime Mapping
+
+Add the realtime families to `/etc/asterisk/extconfig.conf`:
+
+```ini
+[settings]
+voicemail => odbc,asterisk,vmusers
+voicemail_data => odbc,asterisk,voicemessages
+ps_endpoints => odbc,asterisk,ps_endpoints
+ps_aors => odbc,asterisk,ps_aors
+ps_auths => odbc,asterisk,ps_auths
+```
+
+Reload the affected modules:
+
+```bash
+asterisk -rx 'module reload res_config_odbc.so'
+asterisk -rx 'module reload app_voicemail.so'
+asterisk -rx 'module reload res_pjsip.so'
+```
+
+Check the mapped data:
+
+```bash
+asterisk -rx 'voicemail show users'
+asterisk -rx 'pjsip show endpoint alice'
+asterisk -rx 'pjsip show aor alice-aor'
+```
+
+If these commands show values from the OpenSIPS database, Asterisk can map
+`alice@example.com` and `bob@example.com` to Asterisk realtime users whenever a
+configured Asterisk application asks for that data.
+
+---
+
+## Resulting Functions
+
+With the base setup:
+
+* OpenSIPS authenticates SIP subscribers and stores their contacts.
+* OpenSIPS routes subscriber-to-subscriber calls from its `location` table.
+* OpenSIPS sends star-prefixed media service calls to Asterisk.
+* Asterisk accepts trusted calls from OpenSIPS and answers the `9196` echo
+  service.
+
+With the optional realtime mapping:
+
+* Asterisk resolves OpenSIPS subscribers as realtime voicemail users.
+* Asterisk can expose matching PJSIP realtime user objects for services that
+  consume Asterisk-side users.
+
+---
+
+## Data Used by This Setup
+
+OpenSIPS stores subscriber credentials in the `subscriber` table and registered
+contacts in the `location` table. The two working subscribers are created with:
+
+```bash
+opensips-cli -x user add alice@example.com alicepass
+opensips-cli -x user add bob@example.com bobpass
+```
+
+Asterisk does not authenticate the client SIP endpoints in this setup. The
+complete Asterisk data needed for the handoff is:
+
+* `/etc/asterisk/pjsip.conf`, which defines the OpenSIPS-facing transport,
+  endpoint, AOR and IP identify match
+* `/etc/asterisk/extensions.conf`, which defines the `9196` echo service used
+  by the test call
+
+The optional realtime mapping adds:
+
+* Asterisk-specific columns in the OpenSIPS `subscriber` table
+* the `asterisk` database with realtime views over OpenSIPS subscriber data
+* an ODBC DSN named `asterisk`
+* `res_odbc.conf` and `extconfig.conf` realtime mappings
+
+---
+
+## References
+
+* OpenSIPS APT repository: <https://apt.opensips.org/packages.php>
+* Debian Asterisk package page: <https://packages.debian.org/sid/asterisk>
+* Debian Asterisk package tracker: <https://tracker.debian.org/pkg/asterisk>
+* Asterisk installing overview: <https://docs.asterisk.org/Getting-Started/Installing-Asterisk/>
+* Asterisk source installation: <https://docs.asterisk.org/Getting-Started/Installing-Asterisk/Installing-Asterisk-From-Source/>
+* Asterisk supported versions and downloads: <https://www.asterisk.org/downloads/asterisk/all-asterisk-versions/>
