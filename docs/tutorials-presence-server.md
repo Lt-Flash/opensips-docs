@@ -50,7 +50,8 @@ The [XCAP module](/modules/devel/xcap) is responsible for storing and applying/c
 
 The [XCAP_CLIENT module](/modules/devel/xcap_client) implements an XCAP client for OpenSIPS - a way to retrieve XCAP rules from outside of OpenSIPS . It fetches XCAP elements, either documents or part of them, by sending HTTP GET requests.
 
-NOTE: the  XCAP_CLIENT module provides an internal API which allows you do build other modules that need XCAP access, as [described here.](/tutorials-presence-xcapclient)  
+> [!NOTE]
+> The XCAP_CLIENT module provides an internal API which allows you do build other modules that need XCAP access, as [described here.](/tutorials-presence-xcapclient)  
 
 - - -
 
