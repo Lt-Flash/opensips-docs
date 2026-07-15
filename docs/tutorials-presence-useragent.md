@@ -114,7 +114,7 @@ This module implements a presence gateway between XMPP and SIP. It requires **[p
 
 The operations performed by **pua_xmpp** module consist in translating the presence information format from XMPP to SIP and back and also dealing with logic incompatibilities (SIP is time based while XMPP is not).
 In the SIP part, the module sends **SUBSCRIBE** messages on behalf of the xmpp users and catches **NOTIFY's** in the script.
-Also it detects **SUBSCRIBE's** to users in XMPP domains and sends **SUBSCRIBE** with event presence.winfo to on behalf of those users to be notified when others **SUBSCRIBE** to its presence.
+Also it detects **SUBSCRIBE's** to users in XMPP domains and sends **SUBSCRIBE** with event *presence.winfo* to on behalf of those users to be notified when others **SUBSCRIBE** to its presence.
 
 This is achieved by calling the following functions in the script:
 
