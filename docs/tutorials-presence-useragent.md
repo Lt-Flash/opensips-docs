@@ -119,7 +119,7 @@ Also it detects **SUBSCRIBE's** to users in XMPP domains and sends **SUBSCRIBE**
 This is achieved by calling the following functions in the script:
 
 * **pua_xmpp_notify()**
-* **pua_xmpp_req_winfo(char *request_uri, char* expires)**
+* **pua_xmpp_req_winfo( URI*,* expires)**
 
 See a [configuration example here](https://github.com/OpenSIPS/opensips/tree/master/modules/pua_xmpp/samples/opensips-pua_xmpp.cfg).
 
