@@ -100,7 +100,9 @@ This module implements *BLA (Bridge Line Appearance)* according to draft [draft-
 It also requires to monitor **REGISTER** messages which means that, similar to [pua_usrloc](#pua_usrloc), it has to be collocated with the registrar or **REGISTER** messages has to be forwarded to the server.
 The BLA server works as a central entity that gathers bridge line information from the phones and then distributes it to all the phones registered to the line. 
 The gathering part is done by the [pua_bla](/modules/devel/pua_bla) module, with functionalities provided by the **pua** module. It is achieved by sending **SUBSCRIBE** messages to the phones when registering and then catching the **NOTIFY's** from the phones. The **NOTIFY** is then transformed into a **PUBLISH** message and sent to the presence server.
-The presence server is the one that will deal with the distributing part. It will receive the subscribe messages from the phones and using the published information sent by the [pua_bla](/modules/devel/pua_bla) module, it will send **NOTIFY's** with the state of the line. 
+The presence server is the one that will deal with the distributing part. It will receive the subscribe messages from the phones and using the published information sent by the [pua_bla](/modules/devel/pua_bla) module, it will send **NOTIFY's** with the state of the line.
+
+See a [configuration example here](https://github.com/OpenSIPS/opensips/tree/master/modules/pua_bla/samples/opensips-pua_bla.cfg).
 
 You can read the [module readme here](/modules/devel/pua_bla).
 
@@ -119,7 +121,7 @@ This is achieved by calling the following functions in the script:
 * **pua_xmpp_notify()**
 * **pua_xmpp_req_winfo(char *request_uri, char* expires)**
 
-See a [configuration example here](/tutorials-presence-puaxmppconfig).
+See a [configuration example here](https://github.com/OpenSIPS/opensips/tree/master/modules/pua_xmpp/samples/opensips-pua_xmpp.cfg).
 
 You can read the [module readme here](/modules/devel/pua_xmpp).
 
