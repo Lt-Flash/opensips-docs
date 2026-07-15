@@ -1,5 +1,5 @@
 ---
-title: OpenSIPS Presence Server
+title: Presence Server
 description: You can see a configuration file example for this case here.
 ---
 OpenSIPS is able to act as full SIP **Presence Server** - to share presence information between SIP parties. This means to **receive presence information** from different sources (typically via **PUBLISH** requests) , to potentially **process this information** and finally **distributed it to other parties** interested in such information - these parties are called watchers or subscribers and this is done via **SUBSCRIBE**/**NOTIFY** mechanism.  
