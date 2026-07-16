@@ -1,294 +1,317 @@
 ---
-title: "Radius"
-description: "RADIUS is a client/server networking protocol that provides centralized Authentication, Authorization, and Accounting management for clients to connect and u..."
+title: "RADIUS"
+description: "RADIUS is a client/server networking protocol that provides centralized Authentication, Authorization, and Accounting management for clients to connect and use a network service."
 ---
 
-RADIUS is a client/server networking protocol that provides centralized Authentication, Authorization, and Accounting management for clients to connect and use a network service.
+RADIUS is a client/server networking protocol that provides centralized Authentication, Authorization and Accounting (AAA) management.
 
 After completing this tutorial, you will be able to:
-* make a basic configuration for the RADIUS server
-* make a basic configuration for the RADIUS client
-* use accounting and authentication features provided by **OpenSIPS**
+
+* make a basic FreeRADIUS server configuration
+* configure OpenSIPS as a RADIUS client
+* use RADIUS-backed accounting and authentication from the OpenSIPS script
 * add and use custom attributes in RADIUS messages
-* send custom authentication requests and fetch data from responses
-* send custom accounting requests and inspect the server logs
+* send custom authentication and accounting requests with `aaa_radius`
 
----
+The examples below use `radcli` as the RADIUS client library. `radcli` is the preferred library for newer OpenSIPS deployments; it is source-compatible with the older `freeradius-client` and `radiusclient-ng` libraries, and OpenSIPS tries to use it first when building the `aaa_radius` module.
 
-## Installing RADIUS Server
+## Installing The RADIUS Server
 
-The first step is to install FreeRADIUS server. On a Debian based system this can be done using:
-
-```bash
-
-$ apt-get install freeradius
-
-```
-
-or you can go to [FreeRADIUS homepage](http://freeradius.org) , download the binaries and follow the instructions there.
-For more information, check out [FreeRADIUS Installation](http://wiki.freeradius.org/Installation) .
-
----
-
-## Installing RADIUS Client
-
-On a Debian based system you can install RADIUS client using:
+Install FreeRADIUS. On Debian-based systems:
 
 ```bash
-
-$ apt-get install libradiusclient-ng2
-
+apt-get update
+apt-get install -y freeradius
 ```
 
-or you can go to [radiusclient-ng homepage](http://developer.berlios.de/projects/radiusclient-ng/) , download the binaries and follow the instructions there.
+FreeRADIUS configuration paths vary by distribution and version. On newer Debian packages they are usually under `/etc/freeradius/3.0/`; older packages used `/etc/freeradius/` directly.
 
----
+## Installing The RADIUS Client
 
-## Tips and tricks to configure RADIUS Client and Server for Authentication
+Install `radcli`. If you build OpenSIPS from source, also install the development package before building `aaa_radius`.
 
-There are a few things you have to make sure you do properly, so that you can use RADIUS authentication. The accounting features need no special configuration.
-For the server configuration, you may need to be a super user.
-
-### Make sure both client and server know and share the same SIP dictionary
-
-The master dictionary path is specified for the RADIUS client in the */etc/radiusclient-ng/radiusclient.conf* file. The radiusclient comes with particular dictionaries located in the */etc/radiusclient-ng/* folder, including the **SIP** specific dictionary called *dictionary.sip* , but by default they are not included. You can add it manually at the end of the master dictionary, or you can include it to the master dictionary file by inserting the following line:
-
-```text
-
-$INCLUDE <desired_dictionary_path>
-
+```bash
+apt-get install -y radcli libradcli-dev
 ```
 
-where the `<desired_dictionary_path>` should be the path for the RADIUS dictionary, which is by default */etc/radiusclient-ng/dictionary.sip* .
-
-The master dictionary file for the freeRADIUS server is */etc/freeradius/dictionary* . It references the 
-pre-defined dictionary files included with the server that are located, by default,  in the */usr/share/freeradius/* folder. Also, the master dictionary does not include the **SIP** specific dictionary entries. You must include the same **SIP** dictionary the client does with the same insert method used by the client (`$INCLUDE`).
-
-### Configure RADIUS server and RADIUS client to share the same secret
-
-For the radiusclient, you need to specify in the *radiusclient-ng.conf* file the path for the file containing the secrets. By default, this path is */etc/radiusclient-ng/servers*.
-
-For the FreeRADIUS server, the file you need to configure is */etc/freeradius/clients.conf* .
-
-### Set up FreeRADIUS to handle digest authentication requests
-
-In order to do that, you just need to uncomment the digest lines in both **authenticate\{\}** and **authorize\{\}** sections of the site in the */etc/freeradius/sites-available/default* file.
-This is the default site, you may want to change that.
-
-### Configure the /etc/freeradius/users file to match the user you want to authenticate and the attributes you want to be returned
-
-For example:
+For older systems where `radcli` is not available, `freeradius-client` and `radiusclient-ng` may still work, but the examples in this tutorial use `radcli` paths:
 
 ```text
+/etc/radcli/radiusclient.conf
+/etc/radcli/servers
+/etc/radcli/dictionary.opensips
+```
 
-testdig Cleartext-Password:= opensips.cfg
+## Configuring The RADIUS Client And Server
+
+### Share The Same OpenSIPS Dictionary
+
+OpenSIPS accounting and authentication use OpenSIPS-specific RADIUS attributes such as `Sip-Method`, `Sip-Rpid`, `Sip-Call-Duration` and `SIP-AVP`. Both `radcli` and FreeRADIUS must know these attributes.
+
+Install or copy OpenSIPS' `dictionary.opensips` to a local path, for example:
+
+```bash
+cp /usr/share/opensips/dictionary.opensips /etc/radcli/dictionary.opensips
+cp /usr/share/opensips/dictionary.opensips /etc/freeradius/3.0/dictionary.opensips
+```
+
+If your package installs the file elsewhere, use that path instead. In source trees, the file is available as `etc/dictionary.opensips`.
+
+Tell `radcli` to load it from `/etc/radcli/radiusclient.conf`:
+
+```text
+dictionary /etc/radcli/dictionary.opensips
+```
+
+Tell FreeRADIUS to load the same dictionary. With FreeRADIUS 3.x on Debian, add this line to `/etc/freeradius/3.0/dictionary`:
+
+```text
+$INCLUDE /etc/freeradius/3.0/dictionary.opensips
+```
+
+### Configure The Shared Secret
+
+Configure the RADIUS servers in `/etc/radcli/radiusclient.conf`:
+
+```text
+authserver localhost
+acctserver localhost
+servers /etc/radcli/servers
+```
+
+Configure the matching client-side secret in `/etc/radcli/servers`:
+
+```text
+localhost testing123
+```
+
+Configure the same secret in FreeRADIUS. On FreeRADIUS 3.x this is usually `/etc/freeradius/3.0/clients.conf`:
+
+```text
+client localhost {
+    ipaddr = 127.0.0.1
+    secret = testing123
+}
+```
+
+### Enable Digest Authentication
+
+If you want FreeRADIUS to process SIP digest authentication requests, enable the `digest` module and make sure the active site calls it from both `authorize {}` and `authenticate {}`.
+
+On FreeRADIUS 3.x, the module is usually enabled by linking it into `mods-enabled`:
+
+```bash
+ln -s ../mods-available/digest /etc/freeradius/3.0/mods-enabled/digest
+```
+
+Then check the active site, usually `/etc/freeradius/3.0/sites-available/default`, and make sure `digest` is present in both sections:
+
+```text
+authorize {
+    ...
+    digest
+    ...
+}
+
+authenticate {
+    ...
+    digest
+    ...
+}
+```
+
+### Configure Test Users And Reply Attributes
+
+FreeRADIUS 3.x stores the default "users" file content in `/etc/freeradius/3.0/mods-config/files/authorize`. Older packages used `/etc/freeradius/users`.
+
+Example:
+
+```text
+testdig Cleartext-Password := "opensips.cfg"
         Reply-Message = "OpenSIPS Rules!",
         SIP-AVP = "sems:ann-account_locked",
-        Sip-Rpid = sip:+407433360111@opensips.org
+        Sip-Rpid = "sip:+407433360111@opensips.org"
 
 DEFAULT Auth-Type := Accept
         Reply-Message = "OpenSIPS Rules!",
         SIP-AVP = "sems:ann-account_locked",
-        Sip-Rpid = sip:+407433360111@opensips.org
-
+        Sip-Rpid = "sip:+407433360111@opensips.org"
 ```
 
-This is an example of a freeRADIUS users configuration file that contains two rules: one for a user called **testdig** and one for a **default** user. When a RADIUS request is received, the users are tested sequentially until a match can be made. DEFAULT matches any user. 
-If a DEFAULT user is not specified and no match is made, the request is ignored.
+The entries are tested sequentially until a match is found. `DEFAULT` matches any user, so keep it after any specific users.
 
----
+## Using RADIUS From The OpenSIPS Script
 
-## How to use RADIUS support from the OpenSIPS configuration script
+OpenSIPS uses RADIUS through its generic AAA interface:
 
-There are two types of RADIUS messages to send: accounting messages and authentication and authorization messages. **OpenSIPS** provides support for both types of RADIUS messages.
+* `aaa_radius` provides the RADIUS AAA backend.
+* `acc` uses AAA for RADIUS accounting.
+* `auth_aaa` uses AAA for RADIUS-backed SIP authentication and authorization.
 
-### Accounting
-
-Accounting refers to the tracking of the calls made by users. This information may be used for management, billing, or other purposes. Therefore, when the server receives an accounting message, it doesn't send any AVPs in the Radius reply, and so no attribute can be fetched from a reply, since the message contains no AVPs.
-
-The accounting logs held by the server can be inspected here: */var/log/freeradius/radacct/* . They are sorted by date and have suggestive names.
-
-#### OpenSIPS accounting module overview
-
-The **OpenSIPS** module that supports accounting is the ACC module. Its responsibility is to account transactions information to different back-ends, including a generic AAA back-end that has a RADIUS implementation.
-
-#### OpenSIPS accounting module configuration
-
-To enable the RADIUS accounting support, you have to set the script parameter called **aaa_url** for the ACC module like this:
+Load `aaa_radius` before the modules that use the AAA backend:
 
 ```opensips
-
-modparam("acc", "aaa_url", "radius:/etc/radiusclient-ng/radiusclient.conf")
-
+loadmodule "aaa_radius.so"
+loadmodule "acc.so"
+loadmodule "auth.so"
+loadmodule "auth_aaa.so"
 ```
 
-The **aaa_url** contains the name of the AAA protocol used, in this case RADIUS and the location of the
-configuration file of this protocol, separated by “:”.
+## Accounting
 
-There are other optional flags and parameters you may want to use, depending on your purpose. For example, you may want to do accounting for a specific **SIP** message, or for a whole transaction. 
-For more information about that and more, check [ACC AAA flags](/modules/devel/acc#id271395) .
+Accounting tracks SIP transactions or dialogs for billing, reporting or auditing. FreeRADIUS accounting logs are usually stored under `/var/log/freeradius/radacct/`.
 
-A special feature of the accounting module is the optional **aaa_extra** parameter. Its functionality is to account extra values via AAA (in our case, RADIUS). This functionality is a limited version of the custom RADIUS queries, which will be presented later on. You can set this parameter like this:
+Configure ACC to use RADIUS:
 
 ```opensips
-
-modparam(“acc”, “aaa_extra”, “via=$hdr(Via[*]); email=$avp(s:email); Bcontact=$ct / reply”)
-
+modparam("acc", "aaa_url", "radius:/etc/radcli/radiusclient.conf")
+modparam("acc", "service_type", 15)
 ```
 
-#### OpenSIPS accounting module usage
+The `aaa_url` value contains the AAA protocol name and the RADIUS client configuration path, separated by `:`.
 
-This is an example of usage of the AAA function provided by the ACC module in which a comment is appended.
+Enable accounting in the request route with `do_accounting()`:
 
 ```opensips
-
-...
-acc_aaa_request(“Some comment”);
-...
-
+if (is_method("INVITE") && !has_totag()) {
+    do_accounting("aaa", "cdr|missed|failed");
+}
 ```
 
-This function sends a predefined list of AVPs. To see what these AVPs are, after you configure the server, the client and the script properly, use this function and then inspect the server logs.
-
-### Authentication and authorization
-
-Authentication refers to verifying the client's identity. 
-To do that, the FreeRADIUS server checks the */etc/freeradius/users* to see if the user is known. If so, the FreeRADIUS checks the credentials received and sends a reply containing the result of the authentication. When performing authentication, the AAA server may include in the response additional information, i.e. those attributes you have previously configured for that user. Only these attributes can be inspected from the reply message. If the use doesn't match any entry in the users file, the request is ignored.
-
-#### OpenSIPS RADIUS authentication module overview
-
-The **OpenSIPS** module that supports authentication and authorization is the AUTH_AAA module. Its responsibility is to authenticate users using a AAA back-end that has a RADIUS implementation.
-The proxy will simply pass along the credentials to the freeRADIUS server and expect the result of authentication.
-
-#### OpenSIPS RADIUS authentication module configuration
-
-Similar to the accounting module, to enable authentication, you have to set the **aaa_url** from the script.
+You can still send an explicit one-shot accounting record with `acc_aaa_request()`:
 
 ```opensips
-
-modparam("auth_aaa", "aaa_url", "radius:/etc/radiusclient-ng/radiusclient.conf")
-
+acc_aaa_request("403 Destination not allowed");
 ```
 
-There are other optional flags and parameters you may want to use, depending on your purpose. For more information about them, check [AUTH_AAA flags](/modules/devel/auth_aaa#id227283).
+### Extra Accounting Attributes
 
-#### OpenSIPS authentication module usage
+Use `extra_fields` for additional RADIUS accounting attributes. For AAA accounting, the right-hand side after `->` must be an attribute known by the RADIUS dictionary.
 
-Here are some examples of usage for the functions exported by the AUTH_AAA module:
+For example, add these local attributes to the dictionary loaded by both `radcli` and FreeRADIUS:
 
-```opensips
-
-...
-if (!aaa_www_authorize("opensips.org")) {
-        www_challenge("opensips.org", "1");
-};
-...
-...
-if (!aaa_proxy_authorize("")) {   # Realm and URI user will be auto-generated
-        proxy_challenge("", "1");
-};
-...
-if (!aaa_proxy_authorize("$pd", "$pU")) { # Realm and URI user are taken
-        proxy_challenge("$pd", "1");         # from P-Preferred-Identity
-};                                           # header field
-...
-
-```
-
-### Custom accounting and authentication
-
-OpenSIPS has introduced a new feature that allows any type of RADIUS queries to be yielded directly from the script, and also, to inspect RADIUS replies for certain attributes. The module that handles these operations is the AAA_RADIUS module.
-
-To enable this module, you simply have to set the **radius_config** parameter, containing the path for the radiusclient library configuration file.
-For example:
-
-```opensips
-
-modparam("aaa_radius", "radius_config", "/etc/radiusclient-ng/radiusclient.conf")
-
-```
-
-#### Custom RADIUS AVPs
-
-Since all other RADIUS operations use predefined attributes, the custom queries provided by the AAA_MODULE have the ability to use custom attributes also.
-
-In addition to the standard attributes, RADIUS supports also custom attributes, that can be vendor proprietary, or manually configured.
-According to RFC2865, the value of an attribute is represented on 1 octet. Hence, the maximum value for an attribute will be 255.
-Using the Vendor Specific Attribute encapsulation, the vendor proprietary attributes are allowed to have values greater than 255.
-
-For vendor specific attribute encapsulation, check out: [RADIUS dictionary manual](http://linux.die.net/man/5/dictionary) .
-The following part of this tutorial will handle only non-vendor specific attributes.
-
-Due to the fact that for an attribute to be correctly interpreted by both server and client, for setting up a custom attribute, you have to edit the dictionary files for both of them.
-
-For the RADIUS server,  you have to add to one of the dictionaries included, preferably to the **SIP** specific dictionary a new entry with the desired attribute name, value and type. The value must be smaller than 256. 
-The same thing has to be done for the radius client dictionary file also. Make sure the entries are identical for the server and for the client.
-
-#### How to specify a query
-
-Both accounting and authenticating custom queries use a common way of specification, that is a **set**.
-They are used when building custom RADIUS requests (set of input RADIUS AVPs) or when fetching data from the RADIUS reply (set of output RADIUS AVPs). 
-
-The format for a set definition is the following: 
 ```text
-set_name = ( attribute_name1 = var1 [, attribute_name2 = var2 ]* )  
+ATTRIBUTE Sip-Via      240 string
+ATTRIBUTE Sip-Email    241 string
+ATTRIBUTE Sip-Bcontact 242 string
 ```
 
-The left-hand side of the assignment must be an attribute name known by the RADIUS dictionary. 
-The right-hand side of the assignment must be a script pseudo variable or a script AVP. For more information about them see [Documentation - Scripting Variables](/manual/devel).
-For example:
+Then map OpenSIPS accounting fields to those attributes:
 
 ```opensips
+modparam("acc", "extra_fields",
+    "aaa: via->Sip-Via; email->Sip-Email; bcontact->Sip-Bcontact")
 
-modparam("aaa_radius","sets","set1 = (User-Name=$var(usr), Sip-Group = $var(grp), Service-Type = $var(type)) ")
-
+route {
+    $acc_extra(via) = $hdr(Via);
+    $acc_extra(email) = $avp(email);
+    $acc_extra(bcontact) = $ct;
+}
 ```
 
-When a query is made, the SIP AVPs will be expanded and the the pairs (attribute_name, var) will be added to the RADIUS message.
+Make sure any extra attributes you use are present in both the `radcli` and FreeRADIUS dictionaries.
 
-#### Custom accounting queries
+## Authentication And Authorization
 
-To send an accounting custom query, the function to be used is **radius_send_acct** .
-The function takes only one parameter that represents the name of the set that contains the list of attributes and pvars that will form the accounting request.
-Only one set is needed as a parameter because no AVPs can be extracted from the accounting replies.
-The set must be defined using the "sets" exported parameter.
-For example:
+`auth_aaa` passes SIP digest credentials to the AAA backend and checks the RADIUS result. The RADIUS reply may also include attributes such as `SIP-AVP` and `Sip-Rpid`.
+
+Configure `auth_aaa` to use RADIUS:
 
 ```opensips
-...
-radius_send_acct(“set1”);
-...
-
+modparam("auth_aaa", "aaa_url", "radius:/etc/radcli/radiusclient.conf")
 ```
 
-#### Custom authentication queries
-
-To send an accounting custom query, the function to be used is **radius_send_auth** .
-The function takes two parameters: the name of the set that contains the list of attributes and pvars that will form the authentication request and the name of the set that contains the list of attributes and pvars that will be extracted form the authentication reply.
-The sets must be defined using the "sets" exported parameter.
-For example:
+Example usage:
 
 ```opensips
-...
-radius_send_auth(“set1”,”set2”);
-...
-
+if (!aaa_www_authorize("opensips.org")) {
+    www_challenge("opensips.org", "auth");
+    exit;
+}
 ```
 
----
+Proxy authentication examples:
 
-## Useful links:
+```opensips
+if (!aaa_proxy_authorize("")) {
+    proxy_challenge("", "auth");
+    exit;
+}
 
-http://wiki.freeradius.org/
+if (!aaa_proxy_authorize($pd, $pU)) {
+    proxy_challenge($pd, "auth");
+    exit;
+}
+```
 
-http://www.opensips.org/html/modules/devel/aaa_radius.html
+In the second example, the realm and URI user are taken from the `P-Preferred-Identity` domain and user pseudo-variables.
 
-http://www.opensips.org/html/modules/devel/acc.html
+## Custom RADIUS Queries
 
-http://www.opensips.org/html/modules/devel/auth_aaa.html
+The `aaa_radius` module can send custom RADIUS authentication and accounting requests directly from the script and can extract selected attributes from authentication replies.
 
-http://www.ietf.org/rfc/rfc2865.txt
+Configure the `aaa_radius` client file:
 
-http://www.ietf.org/rfc/rfc2866.txt
+```opensips
+modparam("aaa_radius", "radius_config", "/etc/radcli/radiusclient.conf")
+```
 
-http://voiprookie.blogspot.com/2009/04/freeradius-and-mysql.html
+### Custom RADIUS Attributes
+
+RADIUS dictionaries must be consistent between OpenSIPS' RADIUS client and FreeRADIUS. For non-vendor-specific attributes, use values below 256. For vendor-specific attributes, use the standard Vendor-Specific Attribute encapsulation and define the same vendor and attribute names on both sides.
+
+Add OpenSIPS-specific or local custom attributes to the dictionary file loaded by both sides. For example:
+
+```text
+ATTRIBUTE Custom-SIP-Reason 240 string
+```
+
+### Defining Attribute Sets
+
+Custom queries use named sets. A set maps RADIUS attributes to OpenSIPS pseudo-variables or AVPs:
+
+```text
+set_name = ( Attribute-Name-1 = variable1 [, Attribute-Name-2 = variable2 ]* )
+```
+
+The left-hand side must be an attribute known by the RADIUS dictionary. The right-hand side must be an OpenSIPS variable or AVP.
+
+Example:
+
+```opensips
+modparam("aaa_radius", "sets",
+    "auth_in = (User-Name=$var(user), Sip-Group=$var(group), Service-Type=$var(type))")
+
+modparam("aaa_radius", "sets",
+    "auth_out = (Reply-Message=$var(reply), Sip-Rpid=$avp(rpid))")
+```
+
+### Custom Accounting Queries
+
+Use `radius_send_acct(input_set_name)` to send a custom accounting request:
+
+```opensips
+radius_send_acct("auth_in");
+```
+
+Accounting replies do not carry the output attributes used by authentication replies, so only one set is needed.
+
+### Custom Authentication Queries
+
+Use `radius_send_auth(input_set_name, output_set_name)` to send a custom authentication request and fetch selected reply attributes:
+
+```opensips
+if (radius_send_auth("auth_in", "auth_out")) {
+    xlog("RADIUS reply: $var(reply), RPID: $avp(rpid)\n");
+}
+```
+
+## Useful Links
+
+* [FreeRADIUS](https://freeradius.org/)
+* [radcli](https://github.com/radcli/radcli)
+* [OpenSIPS aaa_radius module](/modules/4-1/aaa_radius)
+* [OpenSIPS acc module](/modules/4-1/acc)
+* [OpenSIPS auth_aaa module](/modules/4-1/auth_aaa)
+* [RFC 2865 - RADIUS](https://www.rfc-editor.org/rfc/rfc2865)
+* [RFC 2866 - RADIUS Accounting](https://www.rfc-editor.org/rfc/rfc2866)
