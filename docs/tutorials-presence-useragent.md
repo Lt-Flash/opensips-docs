@@ -37,7 +37,7 @@ OpenSIPS offers the possibility to publish any kind of information to the Presen
 
 The available commands are:
 
-1. **[publish](modules/devel/pua_mi/#mi_publish)**
+1. **[publish](/modules/devel/pua_mi/#mi_publish)**
 
 Example:
 
@@ -47,7 +47,7 @@ opensips-cli -x mi pua_mi:publish sip:system@opensips.org 3600 presence applicat
 
 This example publishes the state of a system( CPU/MEM). This feature can be used in many applications, one example is advertising and publishing news and offers through the presence status of a dummy SIP account.
 
-2. **[subscribe](modules/devel/pua_mi/#mi_subscribe)**
+2. **[subscribe](/modules/devel/pua_mi/#mi_subscribe)**
 
 ```text
 opensips-cli -x mi pua_mi:subscribe sip:system@opensips.org sip:400@opensips.org presence 3600
@@ -63,7 +63,7 @@ You can read the [modules readme here](/modules/devel/pua_mi).
 
 This module publishes information about *reg* events according to to RFC 3680. This can be used distribute the registration-info status to the subscribed watchers.
 
-This module **PUBLISH-**es information when a new user registers at this server (e.g. when "save()" is called) to users, which have subscribed for the reg-info for this user.
+This module **PUBLISH**-es information when a new user registers at this server (e.g. when "save()" is called) to users, which have subscribed for the reg-info for this user.
 
 This module can **SUBSCRIBE** for information at another server, so it will receive **NOTIFY** requests, when the information about a user changes.
 
@@ -83,7 +83,7 @@ You can read the [modules readme here](/modules/devel/pua_reginfo).
 
 There are still many SIP phones( especially hard phones) that do not implement presence support. Even so, the server is aware if the phone is online or not from whether the phone is registered or not. This information is used by this module to send basic presence information to the Presence Server about any phone.
 
-The [pua_usrloc](/modules/devel/pua_usrloc) module hooks on top of the *usrloc* module in order to "see" when a user registers a devices (in order to publish him as *online*) or when all his registrations are removed/expired (in order to publish him as *offline*)
+The **[pua_usrloc](/modules/devel/pua_usrloc)** module hooks on top of the *usrloc* module in order to "see" when a user registers a devices (in order to publish him as *online*) or when all his registrations are removed/expired (in order to publish him as *offline*)
 
 See here a [configuration file example](https://github.com/OpenSIPS/opensips/tree/master/modules/pua_usrloc/samples/opensips-pua_usrloc.cfg).
 
