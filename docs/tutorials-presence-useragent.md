@@ -10,12 +10,12 @@ Architecturally speaking, the core functionality of the Presence User Agent is p
 
 Depending on the type of information to be published, OpenSIPS has some presence extensions that offer  very interesting features:
 
-* Dialog info / Busy Lamp Field (BLF, event:dialog), via the module [pua_dialoginfo](#pua_dialoginfo)
-* Sending Publish and Subscribe messages using the MI interface, via the module [pua_mi](#pua_mi)
-* Registration status sharing (RFC 3680), via the module [pua_reginfo](#pua_reginfo)
-* Get presence status from Register, via the module [pua_usrloc](#pua_usrloc)
-* Bridge Line Appearance (BLA, event: dialog;sla), via the module [pua_bla](#pua_bla)
-* Gateway to xmpp presence, via the module [pua_xmpp](#pua_xmpp)
+* Dialog info / Busy Lamp Field (BLF, event:dialog), via the module **[pua_dialoginfo](#pua_dialoginfo)**
+* Sending Publish and Subscribe messages using the MI interface, via the module **[pua_mi](#pua_mi)**
+* Registration status sharing (RFC 3680), via the module **[pua_reginfo](#pua_reginfo)**
+* Get presence status from Register, via the module **[pua_usrloc](#pua_usrloc)**
+* Bridge Line Appearance (BLA, event: dialog;sla), via the module **[pua_bla](#pua_bla)**
+* Gateway to xmpp presence, via the module **[pua_xmpp](#pua_xmpp)**
 
 - - -
 
@@ -23,7 +23,7 @@ Depending on the type of information to be published, OpenSIPS has some presence
 
 This module enables **BLF feature** in the server by monitoring and publishing dialog information to a presence server. Basically this module uses the [dialog](/modules/devel/dialog) module (which is a tracker for INVITE based dialog). Callbacks are registered to be called whenever a SIP calls starts / fails / establishes / terminates / times out . These callbacks translates the new state of the dialog into an *application/dialog-info+xml* data format text which is sent to the presence server as a body for a PUBLISH message.
 
-Then, the rest of the job is done by the presence server. On the presence server side, you need to enable the handling for this event by loading the [presence_dialoginfo](/modules/devel/presence_dialoginfo) corresponding module -  that will register the 'dialog-info' event to the presence server. The presence server will receive **SUBSCRIBE** messages from the UA's and generate **NOTIFY**'s with the information received in **PUBLISH** messages sent by the pua_dialoginfo module. 
+Then, the rest of the job is done by the presence server. On the presence server side, you need to enable the handling for this event by loading the **[presence_dialoginfo](/modules/devel/presence_dialoginfo)** corresponding module -  that will register the *'dialog-info'* event to the presence server. The presence server will receive **SUBSCRIBE** messages from the UA's and generate **NOTIFY**'s with the information received in **PUBLISH** messages sent by the pua_dialoginfo module. 
 
 See here a [configuration file example](https://github.com/OpenSIPS/opensips/tree/master/modules/pua_dialoginfo/samples/opensips-pua_dialoginfo.cfg).
 
