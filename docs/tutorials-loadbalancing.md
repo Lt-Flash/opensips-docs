@@ -1,6 +1,7 @@
 ---
 title: Load Balancing with OpenSIPS
-description: This tutorial applied for OpenSIP versions 1.9 and newer
+description: This tutorial is about how to implement a SIP load balancer for SIP
+  calls by using OpenSIPS (versions 1.9 and above)
 ---
 The "load-balancing" module comes to provide traffic routing based on load. Shortly, when **OpenSIPS** routes calls to a set of destinations, it is able to keep the load status (as number of ongoing calls) of each destination and to choose to route to the less loaded destination (at that moment).
 **OpenSIPS** is aware of the capacity of each destination - it is preconfigured with the maximum load accepted by the destinations. To be more precise, when routing, **OpenSIPS** will consider the less loaded destination not the destination with the smallest number of ongoing calls, but the destination with the largest available slot.
@@ -20,7 +21,7 @@ When looking at the LB implementation in **OpenSIPS**, we have 3 aspects:
 
 A destination is defined by its address (a SIP URI) and its description as capacity.
 
-Form the LB module perspective, the **destinations are not homogeneous** - they are not alike; and not only from capacity point of view, but also from what kind of **services/resources** they offer. For example, you may have a set of FreeSWTICH/Asterisk boxes for media-related services -some of them are doing transcoding, other voicemail or conference,  other simple announcement , other PSTN termination. But you may have mixed boxes - one box may do PSTN and voicemail in the same time. So each destination from the set may offer a different set of services/resources.
+Form the LB module perspective, the **destinations are not homogeneous** - they are not alike; and not only from capacity point of view, but also from what kind of **services/resources** they offer. For example, you may have a set of FreeSWITCH/Asterisk boxes for media-related services -some of them are doing transcoding, other voicemail or conference,  other simple announcement , other PSTN termination. But you may have mixed boxes - one box may do PSTN and voicemail in the same time. So each destination from the set may offer a different set of services/resources.
 
 So, for each destination, the LB module defines the offered resources, and for each resource, it defines the **capacity / maximum load** as number of concurrent calls the destination can handle for that resource.
 
@@ -63,7 +64,7 @@ The resource detection is done in the **OpenSIPS** routing script, based on what
   }
 ```
 
-The first parameter of the function identifies the LB set to be used (see the group_id column in the above DB snapshot). Second parameter is list of the required resource for the call. A third optional parameter my be passed to instruct the LB engine on how to estimate the load - in absolute value (how many channels are used) or in relative value (how many percentages are used).
+The first parameter of the function identifies the LB set to be used (see the *group_id* column in the above DB snapshot). Second parameter is list of the required resource for the call. A third optional parameter my be passed to instruct the LB engine on how to estimate the load - in absolute value (how many channels are used) or in relative value (how many percentages are used).
 
 The **[lb_start](/modules/devel/load_balancer/#func_lb_start)()** will automatically create the dialog state for the call (in order to monitor it) and will also allocate the requested resources for it (from the selected box).  
 
@@ -77,7 +78,7 @@ The LB module provides an MI function that allows the admin to inspect the curre
 
 The logic used by the LB module to select the destination is:
 
-* gets the **destination set based on the group_id** (first parameter of the *load_balance()* function)
+* gets the **destination set based on the group_id** (first parameter of the *lb_start()* function)
 * selects from the set only the **destinations that are able to provide the requested resources** (second parameter of the *[lb_start](/modules/devel/load_balancer/#func_lb_start)()* function)
 * for the selected destinations, it **evaluated the current load** for each requested resource
 * the winning destination is the one with **the biggest value for the minimum available load** per resources.
@@ -91,7 +92,7 @@ Example:
     3) offers 50 voicemail channels and 300 for conference
     4) offers 10 voicemail, 10 conference, 10 transcoding and 32 PSTN
 
-when calling lb_Start(1,"transc;pstn") ->
+when calling lb_start(1,"transc;pstn") ->
 
 1) only boxes (1) and (4) will be selected at as they offer both transcoding and pstn
 
@@ -154,9 +155,9 @@ Here is the full configuration and script for performing LB between media peers.
 
 ### Configuration
 
-Let's consider the following case: a cluster of media servers providing voicemail service and PSTN (in and out) service. So the boxes will be able to receive calls for Voicemail or for PSTN termination, but they will be able to send back calls only for PSTN inbound.
+Let's consider the following case: a cluster of media servers providing voicemail service and PSTN (in and out) service. So the boxes will be able to receive (from Core SIP Servers) calls for Voicemail or for PSTN termination, but they will be able to send back (to Core SIP Servers) calls coming only from PSTN (inbound).
 
-We also want the destinations to be disabled from script (when a failure is detected); The re-enabling of the destinations will be done based on pinging - we do pinging only when the destination is in "failed" status.
+We also want the destinations to be disabled from script (when a failure is detected). The re-enabling of the destinations will be done based on pinging - we do pinging only when the destination is in "failed" status.
 
 ```text
 4 destinations/boxes in the LB set
@@ -179,6 +180,4 @@ This translated into the following setup:
 
 ### OpenSIPS Scripting
 
-### OpenSIPS Scripting
-
-The **[full config file is here](https://github.com/OpenSIPS/opensips/tree/master/modules/load_balancer/samples/opensips-load-balancer.cfg)**, doing load balancing for the INVITEs, with failover to another destination if 5xx is received or upon timeout (no reply) from destination.
+The **[full config file is here](https://github.com/OpenSIPS/opensips/tree/master/modules/load_balancer/samples/opensips-load-balancer.cfg)**.
