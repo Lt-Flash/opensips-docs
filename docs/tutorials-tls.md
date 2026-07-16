@@ -1,185 +1,339 @@
 ---
 title: "TLS"
 author: "by Ionut-Razvan Ionita"
-description: "Configuring TLS can sometimes be time consuming, most times because of badly generated or used certificates. What this tutorial is trying to do is providing..."
+description: "Configuring TLS can sometimes be time consuming, most times because of badly generated or used certificates. This tutorial provides an OpenSIPS TLS setup."
 ---
-
-> [!NOTE]
-> Other versions: [OpenSIPS 2.1 version](/tutorials-tls-2-1).
 
 ## Introduction
 
-Configuring TLS can sometimes be time consuming, most times because of badly generated or used certificates. What this tutorial is trying to do is providing a basic TLS configuration for OpenSIPS which we know for sure that will work and be the entry point for future, more complicated, TLS setups. At first we will be trying to do the most important thing of all: generating some certificates which we can use to later configure OpenSIPS. If all you want to do is testing the TLS, you can always skip to section [**2.4 Using OpenSIPS built-in certificates**](/tutorials-tls-2-2). The next step will be writing a script for OpenSIPS which will use TLS. After starting OpenSIPS, what we must do is testing that OpenSIPS works fine listening for TLS connections from UACs and creating new connections with UACs and debugging the handshake.
+This tutorial was built using OpenSIPS 4.1.
 
-## Generating certificates
-### Overview
-Before configuring OpenSIPS we need to have a CA and be able to sign certificates with this CA. In order to do this, we will configure a new CA and a user certificate signed by this CA. We will use OpenSIPS to achieve these goals, since it offers a very simple way to manage certificate related issues using **opensipsctl** script. Also, you can always create your own CA or set of certificates using the scripts provided by openSSL or by other means.
+It shows a basic TLS setup that can be used as a known-good starting point for more advanced deployments. It covers certificate generation, file-based TLS domains, optional database provisioning and basic troubleshooting.
 
-### Creating the CA
-#### Creating context
-First thing we need to do is setup the context for our certificates to be created. Let’s say that you want to use `$OPENSIPS_HOME/tls_cnf` (`$OPENSIPS_HOME` represents the path to your OpenSIPS install).
-Create this folder (if it doesn’t exist) and inside create a folder named tls. Will explain later why we needed  to do this.
-```bash
-cd $OPENSIPS_HOME 
-mkdir tls_cnf; cd tls_cnf; mkdir tls
+The examples use the following lab values:
+
+```text
+OpenSIPS TLS socket: 192.0.2.10:5061
+Remote TLS UAS:      198.51.100.20:5061
+TLS files:           /etc/opensips/tls
+SIP domain:          example.com
 ```
 
-#### Setting up ca.conf file
-Next we need to generate our certificating authority, but first we need a configuration file for this, because based on this configuration file, OpenSIPS will know the details of your request. In this configuration file you can set the paths where the CA will be generated,  validity, DN etc.  For users who did this before, it looks similar to “openssl.cnf” file. You can find an example in `$OPENSIPS_HOME/etc/tls/ca.conf`. In this tutorial we only want to make it work, so we will use that file by copying it to our **tls_cnf/tls** folder.
-```bash
-cp $OPENSIPS_HOME/etc/tls/ca.conf $OPENSIPS_HOME/tls_cnf/tls/ 
+Replace them with your own addresses and domains.
+
+## Generating Certificates
+
+Before configuring OpenSIPS, create a local CA and at least one certificate signed by that CA. For a lab setup, the [`opensips-cli` TLS module](https://github.com/OpenSIPS/opensips-cli/blob/master/docs/modules/tls.md) can generate these files directly.
+
+Create `/etc/opensips-cli.cfg`:
+
+```ini
+[default]
+tls_ca_dir: /etc/opensips/tls/rootCA
+tls_ca_cert_file: cacert.pem
+tls_ca_key_file: private/cakey.pem
+tls_ca_overwrite: yes
+tls_ca_common_name: example.com
+tls_ca_country: RO
+tls_ca_state: Bucharest
+tls_ca_locality: Bucharest
+tls_ca_organisation: OpenSIPS
+tls_ca_organisational_unit: Project
+tls_ca_notafter: 315360000
+tls_ca_key_size: 4096
+tls_ca_md: SHA256
+
+tls_user_cert_file: cert.pem
+tls_user_key_file: privkey.pem
+tls_user_calist_file: calist.pem
+tls_user_overwrite: yes
+tls_user_cacert: /etc/opensips/tls/rootCA/cacert.pem
+tls_user_cakey: /etc/opensips/tls/rootCA/private/cakey.pem
+tls_user_country: RO
+tls_user_state: Bucharest
+tls_user_locality: Bucharest
+tls_user_organisation: OpenSIPS
+tls_user_organisational_unit: Project
+tls_user_notafter: 315360000
+tls_user_key_size: 4096
+tls_user_md: SHA256
 ```
 
-#### Creating the CA
-Now that we set up the context, we can create the CA. Go to your `$OPENSIPS_HOME/scripts` folder.
-```bash
-cd $OPENSIPS_HOME/scripts
-```
-
-Here you should be able to find the **opensipsctl** script. Use the following command:
-```bash
-./opensipsctl tls rootCA $OPENSIPS_HOME/tls_cnf/tls 
-```
-
-The rootCA parameter specifies to the script that you want to create a new certificating authority (the parameter cannot be changed). The last parameter specifies the folder where we want this CA to be installed, so we will chose the folder we set up earlier. 
-After giving the command you will be requested to introduce a passphrase. We will use this passphrase later when we will create the certificates. The server certificate will consist of the certificate found in the new **rootCA** folder created `$OPENSIPS_HOME/tls_cnf/tls/rootCA/cacert.pem`, and the private key will be in `$OPENSIPS_HOME/tls_cnf/tls/rootCA/private/cakey.pem`.
-
-### Creating server and client certificates
-To create a user certificate you will need to create **request.conf** and **`<user_name>`.conf** file in order to use **opensipsctl**. In this tutorial we will simply use the files provided by OpenSIPS in `$OPENSIPS_HOME/etc/tls` called **request.conf** and **user.conf**.
+Create the CA:
 
 ```bash
-cp $OPENSIPS_HOME/etc/tls/request.conf $OPENSIPS_HOME/tls_cnf/tls/  
-cp $OPENSIPS_HOME/etc/tls/user.conf $OPENSIPS_HOME/tls_cnf/tls/     
+opensips-cli -x tls rootCA
 ```
 
-Next we have to go again to `$OPENSIPS_HOME/scripts` and use **opensipsctl**.
+Create the certificate OpenSIPS presents on incoming TLS connections:
 
 ```bash
-cd $OPENSIPS_HOME/scripts 
-./opensipsctl tls userCERT user $OPENSIPS_HOME/tls_cnf/tls
+opensips-cli \
+    -o tls_user_dir=/etc/opensips/tls/server \
+    -o tls_user_common_name=sip.example.com \
+    -x tls userCERT
 ```
 
-The third parameter’s meaning is the name of the user which must be the same as the **`<user_name>`.conf** file. So, for example, if we wanted the user **alice**, the file must have had the name **alice.conf** . The fourth parameter represents the path where you have the configuration files. Now, that we have created the certificates we can move to the following section, a script example to use TLS with OpenSIPS.
+Create a separate certificate for OpenSIPS to present when it acts as a TLS client:
 
-### Using **OpenSIPS** built-in certificates
-If all you want to do is testing, you can always use the certificates located in `$OPENSIPS_HOME/etc/tls`, but we strongly recommend to you not to use this certificates in real case scenarios, because, as you can imagine, everyone has access to them. Also notice that the passphrase with which the CA is configured
-is **opensips**.
+```bash
+opensips-cli \
+    -o tls_user_dir=/etc/opensips/tls/client \
+    -o tls_user_common_name=client.example.com \
+    -x tls userCERT
+```
 
-**IMPORTANT: in the following sections we will refer to the folder where the certificates are located as `$CERT_DIR`, so none of the paths presented above are valid anymore, but we will keep the notations rootCA as the folder where the CA is installed and user where the user certificates are.**
+For quick interoperability tests you may use the test certificates shipped with the OpenSIPS packages, but do not use them in production.
 
-## Script example
-### Overview
-As you probably discovered, in OpenSIPS 2.2 the tls became a module, so now, every parameter we want to pass to TLS will be a **modparam** parameter. The scenario is very simple, UAC is trying to send an invite to an UAS by using OpenSIPS as a proxy, and both connections     UAC↔OpenSIPS and OpenSIPS↔UAS are using encrypted data transfer, using TLS. So we will try to provide a basic TLS script configuration which tries to use basically all the configurable parameters of the TLS module, from which you can start building your own.
+In the examples below, `$CERT_DIR` means `/etc/opensips/tls`.
 
-### The listener
-In order to accept TLS connections, OpenSIPS must have a TLS listener. In order to do this we have to include the following line in our script:
+## Script Example
+
+### TLS Modules and Socket
+
+OpenSIPS TLS support uses three parts:
+
+* `proto_tls` for the SIP-over-TLS transport.
+* `tls_mgm` for TLS domains, certificates and TLS parameters.
+* One TLS backend module, such as `tls_openssl` or `tls_wolfssl`.
+
+Load the TLS backend before `tls_mgm`, then load `proto_tls`:
+
 ```opensips
-listen=tls:<your-ip-address>:<port>
-```
+socket=tls:192.0.2.10:5061
 
-When OpenSIPS will start, you should be able to see the listener by entering the following command in your command line
-```bash
-netstat -tlp | grep <port>
-```
-
-where port is the port you gave to listen line in your script.
-
-### Including TLS module and setting the parameters
-
-Since TLS became a module, now we need to insert the following line in the modules section
-
-```opensips
+loadmodule "tls_openssl.so"
+loadmodule "tls_mgm.so"
 loadmodule "proto_tls.so"
 ```
 
-Also, since version 2.2 almost all tls parameters were moved to a new module, **tls_mgm**, proto_tls handling only connection related jobs.
+The newer socket syntax is `socket=proto:ip:port`. Older examples may use `listen=...`; update them when moving to newer style configuration.
+
+### File-Based TLS Domains
+
+The example has two TLS domains:
+
+* `sv_dom`: server-side domain used for incoming TLS connections to `192.0.2.10:5061`.
+* `cl_dom`: client-side domain used when OpenSIPS opens a TLS connection to `198.51.100.20:5061`.
+
+In newer OpenSIPS configurations, `server_domain` and `client_domain` only define the domain name. Address matching is configured separately with `match_ip_address`, and domain-scoped values use the `[domain]value` syntax.
+
 ```opensips
+modparam("tls_mgm", "server_domain", "sv_dom")
+modparam("tls_mgm", "match_ip_address", "[sv_dom]192.0.2.10:5061")
+modparam("tls_mgm", "certificate", "[sv_dom]/etc/opensips/tls/server/cert.pem")
+modparam("tls_mgm", "private_key", "[sv_dom]/etc/opensips/tls/server/privkey.pem")
+modparam("tls_mgm", "ca_list", "[sv_dom]/etc/opensips/tls/server/calist.pem")
+modparam("tls_mgm", "tls_method", "[sv_dom]TLSv1_2-TLSv1_3")
+modparam("tls_mgm", "verify_cert", "[sv_dom]0")
+modparam("tls_mgm", "require_cert", "[sv_dom]0")
+
+modparam("tls_mgm", "client_domain", "cl_dom")
+modparam("tls_mgm", "match_ip_address", "[cl_dom]198.51.100.20:5061")
+modparam("tls_mgm", "certificate", "[cl_dom]/etc/opensips/tls/client/cert.pem")
+modparam("tls_mgm", "private_key", "[cl_dom]/etc/opensips/tls/client/privkey.pem")
+modparam("tls_mgm", "ca_list", "[cl_dom]/etc/opensips/tls/client/calist.pem")
+modparam("tls_mgm", "tls_method", "[cl_dom]TLSv1_2-TLSv1_3")
+modparam("tls_mgm", "verify_cert", "[cl_dom]0")
+modparam("tls_mgm", "require_cert", "[cl_dom]0")
+```
+
+The `verify_cert` and `require_cert` values are disabled here only to keep a lab handshake simple. For production, keep peer verification enabled and provision the proper CA chain.
+
+### Full TLS Fragment
+
+The following fragment contains only the TLS-related parts. Add it to a complete OpenSIPS routing script that loads your normal SIP modules.
+
+```opensips
+socket=tls:192.0.2.10:5061
+
+loadmodule "tls_openssl.so"
 loadmodule "tls_mgm.so"
+loadmodule "proto_tls.so"
+
+modparam("tls_mgm", "server_domain", "sv_dom")
+modparam("tls_mgm", "match_ip_address", "[sv_dom]192.0.2.10:5061")
+modparam("tls_mgm", "certificate", "[sv_dom]/etc/opensips/tls/server/cert.pem")
+modparam("tls_mgm", "private_key", "[sv_dom]/etc/opensips/tls/server/privkey.pem")
+modparam("tls_mgm", "ca_list", "[sv_dom]/etc/opensips/tls/server/calist.pem")
+modparam("tls_mgm", "tls_method", "[sv_dom]TLSv1_2-TLSv1_3")
+modparam("tls_mgm", "verify_cert", "[sv_dom]0")
+modparam("tls_mgm", "require_cert", "[sv_dom]0")
+
+modparam("tls_mgm", "client_domain", "cl_dom")
+modparam("tls_mgm", "match_ip_address", "[cl_dom]198.51.100.20:5061")
+modparam("tls_mgm", "certificate", "[cl_dom]/etc/opensips/tls/client/cert.pem")
+modparam("tls_mgm", "private_key", "[cl_dom]/etc/opensips/tls/client/privkey.pem")
+modparam("tls_mgm", "ca_list", "[cl_dom]/etc/opensips/tls/client/calist.pem")
+modparam("tls_mgm", "tls_method", "[cl_dom]TLSv1_2-TLSv1_3")
+modparam("tls_mgm", "verify_cert", "[cl_dom]0")
+modparam("tls_mgm", "require_cert", "[cl_dom]0")
 ```
 
-Since this is a test scenario, we only want to check that the TLS handshake works fine, so we won’t 
-set parameters to enable certificate checking or ciphers. As OpenSIPS enables these checkings by default because a real TLS configuration must check the certificates, we will need to disable them.
+To send traffic to the remote UAS over TLS from script, relay to a TLS destination, for example:
 
 ```opensips
-modparam("tls_mgm", "verify_cert", "0") 
-modparam("tls_mgm", "require_cert", "0") 
-modparam("tls_mgm", "ciphers_list", "NULL") 
+route[to_tls_uas] {
+    $du = "sip:198.51.100.20:5061;transport=tls";
+
+    if (!t_relay())
+        send_reply(500, "Relay failed");
+}
 ```
 
-We will need to specify the TLS method which will specify what type of protocol we will use. In this tutorial we will use “TLSv1”, but you can always use another one, see the full list in the **[module’s documentation section](/modules/2-2/proto_tls#id294154)**. 
+## Database Provisioning
 
-```opensips
-modparam("tls_mgm", "tls_method", "TLSv1")
+`tls_mgm` domains can also be provisioned from SQL. This is useful when certificates are managed outside the OpenSIPS script or when you want to reload TLS domains without editing the config file.
+
+Create the OpenSIPS database with the `tls_mgm` table. If you are creating a new database, include `tls_mgm` in `database_modules` or use `ALL`:
+
+```ini
+[default]
+database_admin_url: mysql://root@localhost
+database_url: mysql://opensips:opensipsrw@localhost/opensips
+database_name: opensips
+database_modules: tls_mgm
 ```
 
-### Setting up TLS domains
-
-As specified in section [**3.1 Overview**](/tutorials-tls-2-2), our scenario includes two TLS connections, one from the UAC to OpenSIPS and the second one from OpenSIPS to the UAS. Whereas in the first connection OpenSIPS will be the server side of the connection, in the second one it will be the client side so we need to define two different TLS domains.
-
-```opensips
- #first the  server domain
- modparam("tls_mgm", "server_domain", "sv_dom=<your-ip-address>:<port>")           
- modparam("tls_mgm", "certificate", "sv_dom:$CERT_DIR/rootCA/cacert.pem")           
- modparam("tls_mgm", "private_key", "sv_dom:$CERT_DIR/rootCA/private/cakey.pem")    
- modparam("tls_mgm", "ca_list", "sv_dom:$CERT_DIR/rootCA/cacert.pem")                
-                                                                                     
- #and the client domain                                                               
- modparam("tls_mgm", "client_domain", "cl_dom=<UAS-ip-address>:<port>")            
- modparam("tls_mgm", "certificate", "cl_dom:$CERT_DIR/user/user-cert.pem")          
- modparam("tls_mgm", "private_key", "cl_dom:$CERT_DIR/user/user-privkey.pem")       
- modparam("tls_mgm", "ca_list", "cl_dom:$CERT_DIR/user/user-calist.pem")             
+```bash
+opensips-cli -x database create
 ```
 
-**IMPORTANT: The ip address and port from the server domain must be the ones you set in the “listen” script line for OpenSIPS to match that domain. When OpenSIPS acts as client, the ip address and port must be the ones of the server (remote peer) with whom initiates the TLS handshake.**
+If the database already exists, add only the `tls_mgm` table:
 
-### Full script example
-Now that we specified all we need to set in order to be able to use TLS both as a server and as a client we will specify here a full script (only the TLS part) in order to make things more clear. Basically it is all we explained in the previous sections of this chapter put together.
+```bash
+opensips-cli -x database add tls_mgm
+```
+
+Load the SQL module and point `tls_mgm` at the database:
 
 ```opensips
- #define the listener(proto_tls)
- listen = tls:<your-ip-address>:<port>
+socket=tls:192.0.2.10:5061
 
- #set module path
- loadmodule "proto_tls.so"
- loadmodule "tls_mgm.so"
+loadmodule "db_mysql.so"
+loadmodule "tls_openssl.so"
+loadmodule "tls_mgm.so"
+loadmodule "proto_tls.so"
 
- #set global tls parameters
- modparam("tls_mgm", "verify_cert", "0")
- modparam("tls_mgm", "require_cert", "0")
- modparam("tls_mgm", "ciphers_list", "NULL")
- modparam("tls_mgm", "tls_method", "TLSv1")
+modparam("tls_mgm", "db_url", "mysql://opensips:opensipsrw@localhost/opensips")
+```
 
- #server domain
- modparam("tls_mgm","server_domain","sv_dom=<your-ip-address>:<port>")
- modparam("tls_mgm", "certificate","sv_dom:$CERT_DIR/rootCA/cacert.pem")
- modparam("tls_mgm","private_key","sv_dom:$CERT_DIR/rootCA/private/cakey.pem")
- modparam("tls_mgm", "ca_list","sv_dom:$CERT_DR/rootCA/cacert.pem")
+For MySQL/MariaDB, the certificate, private key, CA list and DH parameters are stored as BLOB values. The `type` value is `2` for a server domain and `1` for a client domain:
 
- #client domain
- modparam("tls_mgm", "client_domain", "cl_dom=<UAS-ip-address>:<port>")
- modparam("tls_mgm", "certificate", "cl_dom:$CERT_DIR/user/user-cert.pem")
- modparam("tls_mgm", "private_key","cl_dom:$CERT_DIR/user/user-privkey.pem")
- modparam("tls_mgm", "ca_list","cl_dom:$CERT_DR/user/user-calist.pem")
+```sql
+INSERT INTO tls_mgm
+    (domain, match_ip_address, match_sip_domain, type, method,
+     verify_cert, require_cert, certificate, private_key, ca_list)
+VALUES
+    ('sv_dom', '192.0.2.10:5061', NULL, 2, 'TLSv1_2-TLSv1_3',
+     0, 0,
+     LOAD_FILE('/etc/opensips/tls/server/cert.pem'),
+     LOAD_FILE('/etc/opensips/tls/server/privkey.pem'),
+     LOAD_FILE('/etc/opensips/tls/server/calist.pem')),
+    ('cl_dom', '198.51.100.20:5061', NULL, 1, 'TLSv1_2-TLSv1_3',
+     0, 0,
+     LOAD_FILE('/etc/opensips/tls/client/cert.pem'),
+     LOAD_FILE('/etc/opensips/tls/client/privkey.pem'),
+     LOAD_FILE('/etc/opensips/tls/client/calist.pem'));
+```
+
+`LOAD_FILE()` requires the database server to be allowed to read the files. If your database blocks this through `secure_file_priv` or filesystem permissions, import the BLOB values using your database tooling instead, or use file-based script parameters.
+
+After changing DB-provisioned domains, reload them with:
+
+```bash
+opensips-cli -x mi tls_mgm:reload
 ```
 
 ## Troubleshooting
-### Overview
-Now that we’ve set up  OpenSIPS and started it, we need to do some debugging and see if everything works fine. There will be presented two ways to debug your TLS connection. First just verifying the TLS handshake with openSSL **s_client** and after this a more complex type of debugging which is teaching **Wireshark** to decrypt messages using the private key of the connection.
-### S_client simple testing
-A very simple and fast method to see that the handshake works fine is the **s_client** tool that openSSL provides. The command for the script in the previous chapter looks like this
+
+### Check the TLS Socket
+
+After OpenSIPS starts, verify that it listens on the TLS socket:
 
 ```bash
-    openssl s_client -showcerts -debug -connect <your-ip-address>:<port> -no_ssl2 -bugs
+ss -ltnp | grep 5061
 ```
 
-The ip address and the port are the ones you have set earlier in the **listen** section of the script. If you want more advanced debugging, check the following section which tells you how to debug the tls connection using **Wireshark**.
+### Test with OpenSSL
 
-### Wireshark tracing
+Use `openssl s_client` to validate the handshake:
 
-**Wireshark** allows us to catch the TLS handshake and also to decrypt the traffic, but in order to do this we must configure it to know the private keys of the connection. Go to **Edit → Preferences → Protocols → SSL**. Click the **Edit** button in **RSA keys list** section. Click the **New** button and add the ip address and port on which OpenSIPS is listening, the protocol (in our case **sip**) and in the **Key File** section search for the private key OpenSIPS uses for the connection ( for the example above `$CERT_DIR/rootCA/private/cakey.pem`). Save the configuration and then you can see both the TLS handshakes and the TCP messages that are being sent to and from OpenSIPS listening interface.
+```bash
+openssl s_client \
+    -showcerts \
+    -connect 192.0.2.10:5061 \
+    -servername sip.example.com
+```
 
-**IMPORTANT: Depending on your configuration, it might be necessary to configure both the private key of the server and the client in Wireshark!!!**
+For mutual TLS tests, also provide the client certificate and CA:
 
-### Sharka
+```bash
+openssl s_client \
+    -showcerts \
+    -connect 192.0.2.10:5061 \
+    -servername sip.example.com \
+    -cert /etc/opensips/tls/client/cert.pem \
+    -key /etc/opensips/tls/client/privkey.pem \
+    -CAfile /etc/opensips/tls/client/calist.pem
+```
 
-Sharka is a bash script shared by Giovanni Maruzzelli that captures TLS traffic using [tshark](https://www.wireshark.org//man-pages/tshark.html) network analyzer. You can find the script in [this](https://freeswitch.org/confluence/display/FREESWITCH/Packet+Capture#PacketCapture-TLSwithsharka) tutorial or you can download it from our local [sources](http://opensips.org/pub/tutorials/tls/sharka.sh). All you have to do is to set **SERVERIP** and **SERVERADDRESS** of the captured interface and the path of the **PRIVKEY** that will be used in the TLS negotiation. After this you can start the script and will be able to capture TLS packets using only the command line.
+### Inspect Loaded TLS Domains
+
+Use the `tls_mgm:list` MI command to see the domains OpenSIPS loaded:
+
+```bash
+opensips-cli -x mi tls_mgm:list
+```
+
+Check that `sv_dom` is a server domain, `cl_dom` is a client domain and that the match addresses are the expected `ip:port` values.
+
+### Wireshark Tracing
+
+Wireshark can inspect TLS handshakes and, for older RSA key-exchange captures, decrypt traffic if it has the private key. Modern TLS deployments often use forward-secret key exchanges, so packet decryption may require key log material from the TLS endpoint instead of only the private key.
+
+For handshake debugging, filter on the OpenSIPS TLS socket:
+
+```text
+tcp.port == 5061
+```
+
+## Legacy OpenSIPS 2.1 Example
+
+OpenSIPS 2.1 kept TLS certificate and domain parameters under `proto_tls`. It did not support database-backed TLS provisioning, so certificates and domains had to be defined directly in the script.
+
+The example below is preserved as migration context only. For newer OpenSIPS versions, use the `tls_openssl`/`tls_wolfssl` + `tls_mgm` + `proto_tls` layout shown above.
+
+```opensips
+# OpenSIPS 2.1 legacy syntax
+listen=tls:<your-ip-address>:<port>
+
+loadmodule "proto_tls.so"
+
+modparam("proto_tls", "verify_cert", "0")
+modparam("proto_tls", "require_cert", "0")
+modparam("proto_tls", "tls_method", "TLSv1")
+
+modparam("proto_tls", "certificate", "$CERT_DIR/rootCA/cacert.pem")
+modparam("proto_tls", "private_key", "$CERT_DIR/rootCA/private/cakey.pem")
+modparam("proto_tls", "ca_list", "$CERT_DIR/rootCA/cacert.pem")
+modparam("proto_tls", "ca_dir", "$CERT_DIR/rootCA/")
+
+modparam("proto_tls", "server_domain", "sv_dom=<your-ip-address>:<port>")
+modparam("proto_tls", "certificate", "sv_dom:$CERT_DIR/rootCA/cacert.pem")
+modparam("proto_tls", "private_key", "sv_dom:$CERT_DIR/rootCA/private/cakey.pem")
+modparam("proto_tls", "ca_list", "sv_dom:$CERT_DIR/rootCA/cacert.pem")
+
+modparam("proto_tls", "client_domain", "cl_dom=<UAS-ip-address>:<port>")
+modparam("proto_tls", "certificate", "cl_dom:$CERT_DIR/user/user-cert.pem")
+modparam("proto_tls", "private_key", "cl_dom:$CERT_DIR/user/user-privkey.pem")
+modparam("proto_tls", "ca_list", "cl_dom:$CERT_DIR/user/user-calist.pem")
+```
+
+When migrating that snippet to newer versions:
+
+* Move TLS domain settings from `proto_tls` to `tls_mgm`.
+* Load one TLS backend module before `tls_mgm`.
+* Replace `listen=tls:...` examples with `socket=tls:...`.
+* Replace `sv_dom:path` values with `[sv_dom]path`.
+* Define domain names with `server_domain` / `client_domain`, then match addresses with `match_ip_address`.
