@@ -2,17 +2,18 @@
 title: "Diameter Client/Server"
 subtitle: "How to build and process Diameter requests using OpenSIPS scripting"
 author: "by Liviu Chircu"
-description: "This tutorial has been written for a Xubuntu 22.04 LTS, which comes with freeDiameter library v1.2.1 packages. Other distros, such as Debian 10, are also kno..."
+description: "How to use the aaa_diameter module to send custom Diameter requests and process incoming Diameter requests from OpenSIPS script."
 ---
 
 ## Setting up the freeDiameter libraries
 
-This tutorial has been written for a Xubuntu 22.04 LTS, which comes with freeDiameter library v1.2.1 packages.  Other distros, such as Debian 10, are also known to offer standard package-based support for freeDiameter v1.2.1, so they are expected to be compatible just as well.
+The current **aaa_diameter** module dynamically links against the
+freeDiameter libraries and requires **libfdcore** and **libfdproto** version
+**1.2.1 or newer**.  On Debian/Ubuntu systems, install the development package
+before building the OpenSIPS module from source:
 
 ```bash
-
 sudo apt -y install libfreediameter-dev
-
 ```
 
 ## Installing the "aaa_diameter" OpenSIPS module
@@ -20,36 +21,39 @@ sudo apt -y install libfreediameter-dev
 If you are building from source:
 
 ```bash
-
 include_modules=aaa_diameter make install
-
 ```
 
-  
-
-Otherwise, if you are installing from packages, make sure to grab the **opensips-diameter-module**:
+Otherwise, if you are installing from Debian packages, install the
+**opensips-diameter-module** package:
 
 ```bash
-
 sudo apt -y install opensips-diameter-module
-
 ```
 
 ## Defining a Generic Diameter Request + Answer
 
-While the *freeDiameter* library is very robust, this also means it will be very *nitpicky* with its "known" set of Diameter Applications and Commands.  The set of currently known apps and commands (along with each command's precise AVP structure!) make up the library's **dictionary**, in freeDiameter terminology.
+The *freeDiameter* library only builds messages for Diameter Applications,
+Commands and AVPs that exist in its dictionary.  This means that before
+OpenSIPS can build and send a custom Diameter request, the request and answer
+must be described in a dictionary file.
 
-  
+Attach the `;extra-avps-file:<path-to-dictionary.opensips>` option to the
+[aaa_url](/modules/devel/aaa_diameter#param_aaa_url) modparam of
+**aaa_diameter**.  The **dictionary.opensips** syntax supports custom Diameter
+Applications, Commands and grouped AVPs.  See
+[dm_send_request()](/modules/devel/aaa_diameter#func_dm_send_request) for the
+full module reference.
 
-This means that before we can build and send a generic request, we must make sure to *define the request in the freeDiameter dictionary*.  You can achieve this by attaching an **;extra-avps-file:`<path-to-dictionary.opensips>`** option to the [aaa_url](/modules/3-5/aaa_diameter#param_aaa_url) modparam of **aaa_diameter**.  In order to define Apps and Command AVP structure, we have extended the classic, AAA **dictionary.opensips** AVP definitions file to support this.  See [dm_send_request](/modules/3-5/aaa_diameter#func_dm_send_request) for full examples.
-
-  
-
-For our case, we only need the following in *dictionary.opensips*:
-
-  
+For this tutorial, put the following definitions in
+`/etc/opensips/dictionary.opensips`:
 
 ```text
+ATTRIBUTE out_gw            232 string
+ATTRIBUTE trunk_id          233 string
+
+ATTRIBUTE rated_duration    234 integer
+ATTRIBUTE call_cost         235 integer
 
 ATTRIBUTE Exponent          429 integer32
 ATTRIBUTE Value-Digits      447 integer64
@@ -82,14 +86,13 @@ REQUEST 92001 My-Custom-Request
 	Origin-Host | REQUIRED | 1
 	Origin-Realm | REQUIRED | 1
 	Destination-Realm | REQUIRED | 1
-	Transaction-Id | REQUIRED | 1
 	Sip-From-Tag | REQUIRED | 1
 	Sip-To-Tag | REQUIRED | 1
-	Acct-Session-Id | REQUIRED | 1
 	Sip-Call-Duration | REQUIRED | 1
 	Sip-Call-Setuptime | REQUIRED | 1
 	Sip-Call-Created | REQUIRED | 1
 	Sip-Call-MSDuration | REQUIRED | 1
+	out_gw | REQUIRED | 1
 	call_cost | REQUIRED | 1
 	Cost-Information | OPTIONAL | 1
 }
@@ -99,39 +102,36 @@ ANSWER 92001 My-Custom-Answer
 	Origin-Host | REQUIRED | 1
 	Origin-Realm | REQUIRED | 1
 	Destination-Realm | REQUIRED | 1
-	Transaction-Id | REQUIRED | 1
 	Result-Code | REQUIRED | 1
 }
-
 ```
 
 ## opensips.cfg: Sending Generic Diameter Requests
 
-OpenSIPS **3.2** and above releases offer the option of building *generic* Diameter requests with full control over the AVPs of the request, as well as full access to the content of the response.  Below is a short tutorial on how to send a Diameter request.
+OpenSIPS **3.2** and newer can build generic Diameter requests with full
+control over the request AVPs and full access to the answer AVPs.
 
-  
-
-After making sure that **aaa_diameter** is loaded, start by building the request's AVP list as a JSON array:
-
-  
+Load **aaa_diameter**, point it to the freeDiameter client configuration, and
+load the custom dictionary through `extra-avps-file`:
 
 ```opensips
-
 log_stdout = yes
 ...
 loadmodule "aaa_diameter.so"
 modparam("aaa_diameter", "fd_log_level", 0)
 modparam("aaa_diameter", "realm", "diameter.test")
 modparam("aaa_diameter", "peer_identity", "server")
-...
+modparam("aaa_diameter", "aaa_url",
+    "diameter:/etc/freeDiameter/freeDiameter-client.conf;extra-avps-file:/etc/opensips/dictionary.opensips")
 
+loadmodule "json.so"
+...
 ```
 
-  
+Build the request AVP list as a JSON array:
 
 ```opensips
-
-# Building an sending an My-Custom-Request (92001) for the
+# Building and sending a My-Custom-Request (92001) for the
 # My Diameter Application (42)
 $var(payload) = "[
 	{ \"Origin-Host\": \"client.diameter.test\" },
@@ -139,68 +139,61 @@ $var(payload) = "[
 	{ \"Destination-Realm\": \"diameter.test\" },
 	{ \"Sip-From-Tag\": \"dc93-4fba-91db\" },
 	{ \"Sip-To-Tag\": \"ae12-47d6-816a\" },
-	{ \"Acct-Session-Id\": \"a59c-dff0d9efd167\" },
+	{ \"Session-Id\": \"a59c-dff0d9efd167\" },
 	{ \"Sip-Call-Duration\": 6 },
 	{ \"Sip-Call-Setuptime\": 1 },
 	{ \"Sip-Call-Created\": 1652372541 },
 	{ \"Sip-Call-MSDuration\": 5850 },
 	{ \"out_gw\": \"GW-774\" },
-	{ \"cost\": \"10.84\" },
+	{ \"call_cost\": 10 },
 	{ \"Cost-Information\": [
 		{\"Unit-Value\": [{\"Value-Digits\": 1000}]},
 		{\"Currency-Code\": 35}
 		]}
 ]";
-
 ```
 
-  
-
-... and, finally, send the request out (in a blocking fashion, for async support, see [async dm_send_request()](/modules/3-5/aaa_diameter#idp5591744)):
-
-  
+Then send the request in blocking mode:
 
 ```opensips
-
-dm_send_request(42, 92001, $var(payload), $var(rpl_avps));
-
+$var(rc) = dm_send_request(42, 92001, $var(payload), $var(rpl_avps));
+xlog("rc: $var(rc), Reply AVPs: $var(rpl_avps)\n");
 ```
 
-  
-
-In this example, the Diameter Application ID is **42**, and the Command's Code is **92001**.  Finally, the response AVPs are available under `$var(rpl_avps)`.  Just use the OpenSIPS [JSON module](/modules/3-5/json) in order to parse & access them:
-
-  
+In this example, the Diameter Application ID is **42**, and the Command Code is
+**92001**.  The return code is the `Result-Code` AVP value when an answer was
+received.  The response AVPs are available under `$var(rpl_avps)`.  Use the
+OpenSIPS [JSON module](/modules/devel/json) to parse and access them:
 
 ```opensips
-
 $json(rpl) := $var(rpl_avps);
 xlog("Reply AVPs: $json(rpl)\n");
 $var(i) = 0;
 while ($json(rpl[$var(i)])) {
   xlog("   AVP: $json(rpl[$var(i)])\n");
+  $var(i) = $var(i) + 1;
 }
-
 ```
+
+For non-blocking requests, use the asynchronous
+[dm_send_request()](/modules/devel/aaa_diameter#afunc_dm_send_request) form.
 
 ## opensips.cfg: Processing Generic Diameter Requests
 
-Starting with OpenSIPS **3.5**, there is the option of acting as a **Diameter Server** and process incoming Diameter requests, as well as to provide the appropriate AVPs for the Diameter answer, which may also be an error, of course.  Here are the steps to achieve this:
-
-  
-
-First, make sure the [event_route](/modules/3-5/event_route) module is loaded.  It is required in order to gain access to the **event_route**, which will be triggered with a **E_DM_REQUEST** event on each incoming Diameter request:
-
-  
+Starting with OpenSIPS **3.5**, **aaa_diameter** can also act as a Diameter
+server and process incoming Diameter requests.  Load
+[event_route](/modules/devel/event_route) so OpenSIPS can consume the
+**E_DM_REQUEST** events emitted for incoming Diameter requests:
 
 ```opensips
-
 log_stdout = yes
 ...
 loadmodule "aaa_diameter.so"
 modparam("aaa_diameter", "fd_log_level", 0)
 modparam("aaa_diameter", "realm", "diameter.test")
 modparam("aaa_diameter", "peer_identity", "server")
+modparam("aaa_diameter", "aaa_url",
+    "diameter:/etc/freeDiameter/freeDiameter-client.conf;extra-avps-file:/etc/opensips/dictionary.opensips")
 
 loadmodule "event_route.so"
 ...
@@ -209,27 +202,25 @@ event_route [E_DM_REQUEST]
     xlog("Req: $param(sess_id) / $param(app_id) / $param(cmd_code)\n");
     xlog("AVPs: $param(avps_json)\n");
 }
-
 ```
 
-  
-
-Notice there are several pieces of information provided through the event's *parameters*:
+The event provides the following parameters:
 
 * **app_id** (integer) - the Diameter Application Identifier
 * **cmd_code** (integer) - the Diameter Command Code
-* **sess_id** (string) - the value of either the **Session-Id** AVP, **Transaction-Id** AVP or a **NULL** value if neither of these transaction-identifying AVPs is present in the Diameter request
-* **avps_json** (string) - a JSON Array containing the AVPs of the request
+* **sess_id** (string) - the value of either the **Session-Id** AVP,
+  **Transaction-Id** AVP or a **NULL** value if neither AVP is present
+* **avps_json** (string) - a JSON array containing the AVPs of the request
 
-  
-
-Next, the request must be processed according to the application specifications.  Effectively, the result will be a set of AVPs to be included in the answer.  Make sure to pack them as a JSON Array (similar to the input of [dm_send_request()](/modules/3-5/aaa_diameter#func_dm_send_request)), before finally calling [dm_send_answer()](/modules/3-5/aaa_diameter#func_dm_send_answer):
-
-  
+After processing the request, pack the answer AVPs as a JSON array and call
+[dm_send_answer()](/modules/devel/aaa_diameter#func_dm_send_answer):
 
 ```opensips
+event_route [E_DM_REQUEST]
+{
+  xlog("Req: $param(sess_id) / $param(app_id) / $param(cmd_code)\n");
+  xlog("AVPs: $param(avps_json)\n");
 
-  ...
   $var(ans_avps) = "[
           { \"Vendor-Specific-Application-Id\": [{
                   \"Vendor-Id\": 0
@@ -243,5 +234,5 @@ Next, the request must be processed according to the application specifications.
 
   if (!dm_send_answer($var(ans_avps)))
     xlog("ERROR - failed to send Diameter answer\n");
-
+}
 ```

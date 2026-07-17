@@ -2,310 +2,291 @@
 title: "Diameter Authentication and Accounting"
 subtitle: "How to configure and deploy Diameter Authentication and Accounting"
 author: "by Liviu Chircu"
-description: "This tutorial has been written for a Xubuntu 20.04 LTS, which comes with freeDiameter v1.2.1 packages, which is the only version we've tested so far. Other d..."
+description: "How to configure OpenSIPS Diameter authentication and accounting with aaa_diameter, auth_aaa, acc and a freeDiameter peer."
 ---
 
 ## Setting up freeDiameter
 
-This tutorial has been written for a Xubuntu 20.04 LTS, which comes with freeDiameter v1.2.1 packages, which is the only version we've tested so far.  Other distros, such as Debian 10, are also known to offer standard package-based support for freeDiameter v1.2.1, so they are expected to be compatible just as well.
+The current [*aaa_diameter*](/modules/devel/aaa_diameter) OpenSIPS module uses
+the freeDiameter libraries and requires **libfdcore** and **libfdproto**
+version **1.2.1 or newer**.  The examples below use Debian/Ubuntu package
+names; adjust them for your distribution if needed.
 
-  
-
-First, let's go ahead and install the server:
+Install the freeDiameter daemon, the development headers and the standard
+freeDiameter extensions:
 
 ```bash
-
-  apt install freediameter
-
+sudo apt install freediameter freediameter-extensions libfreediameter-dev
 ```
 
 ## freeDiameter Client
 
-The client side is represented by both the "aaa_diameter" OpenSIPS module and the freeDiameter client library.  In this section, we will perform the necessary steps in order to configure the freeDiameter client library.
+The client side is represented by the **aaa_diameter** OpenSIPS module and the
+freeDiameter client library.  This section configures the freeDiameter client
+library used by OpenSIPS.
 
 ### DNS
 
-It seems freeDiameter is strongly tied to DNS hostnames, so let's add entries to the `/etc/hosts` file nominating the client and server.  For this tutorial, we will be using the "diameter.test" realm, with the "client" and "server" subdomains.  In my case, I point both records to the local machine:
+freeDiameter identities are DNS hostnames, so make sure the client and server
+names resolve.  This tutorial uses the `diameter.test` realm with
+`client.diameter.test` and `server.diameter.test` as peer identities.  For a
+single-host lab setup, `/etc/hosts` can contain:
 
 ```text
-
-  192.168.1.5 client.diameter.test
-  192.168.1.5 server.diameter.test
-
+127.0.0.1 client.diameter.test
+127.0.0.1 server.diameter.test
 ```
+
+Use the real host addresses if the Diameter peers run on separate machines.
 
 ### Packages
 
-The [*aaa_diameter*](/modules/3-2/aaa_diameter) OpenSIPS connector module makes use of the *libfdcore.so* and *libfdproto.so* shared libraries.  These libraries can be installed via:
+The **aaa_diameter** module dynamically links with `libfdcore` and
+`libfdproto`.  If you install OpenSIPS from Debian packages, the module is
+shipped by:
 
 ```bash
-
-  sudo apt install libfdcore6 libfdproto6
-
+sudo apt install opensips-diameter-module
 ```
+
+If you build OpenSIPS from source, make sure `libfreediameter-dev` is installed
+before compiling **aaa_diameter**.  At runtime, the module also needs the
+freeDiameter shared libraries, typically packaged as `libfdcore6` and
+`libfdproto6` on Debian/Ubuntu systems.
 
 ### Creating TLS Certificates
 
-Even though we will disable TLS support, freeDiameter will not start unless we plug some certificates into it.  So let's clone the freeDiameter project, which contains some nice built-in helper tools.  For ease of use, we will generate wildcard-certificates resembling "*.diameter.test":
+Even when the test peers use `No_TLS`, freeDiameter still expects certificate
+paths in the configuration file.  The following commands create a local CA and
+a test certificate valid for both tutorial identities:
 
 ```bash
+sudo install -d -m 0755 /etc/freeDiameter/tls
 
-  # clone the freeDiameter source code
-  sudo apt install mercurial
-  mkdir -p ~/src; cd ~/src
-  hg clone http://www.freediameter.net/hg/freeDiameter
-  cd freeDiameter
-  hg checkout 1.2.1
+sudo openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+  -subj "/CN=diameter.test test CA" \
+  -keyout /etc/freeDiameter/tls/ca.key \
+  -out /etc/freeDiameter/tls/ca.pem
 
-  # generate a certificate/key pair for the client
-  cd contrib/PKI/ca_script2
-  make init topca=my_diameter_ca
-  make newcert name="*.diameter.test" ca=my_diameter_ca
+sudo openssl req -newkey rsa:2048 -nodes \
+  -subj "/CN=*.diameter.test" \
+  -keyout /etc/freeDiameter/tls/peer.key \
+  -out /etc/freeDiameter/tls/peer.csr
 
-  # notice that the certs have been created under the "ca_data" directory (I suggest you browse its structure a bit, it's quite fun!)
-  # Extra: running "make help" will list all commands available within this tool
+printf "subjectAltName=DNS:client.diameter.test,DNS:server.diameter.test\n" | \
+  sudo tee /etc/freeDiameter/tls/peer.ext
 
+sudo openssl x509 -req -days 3650 \
+  -in /etc/freeDiameter/tls/peer.csr \
+  -CA /etc/freeDiameter/tls/ca.pem \
+  -CAkey /etc/freeDiameter/tls/ca.key \
+  -CAcreateserial \
+  -extfile /etc/freeDiameter/tls/peer.ext \
+  -out /etc/freeDiameter/tls/peer.pem
 ```
+
+These certificates are suitable for a local tutorial only.
 
 ### The freeDiameter client configuration file
 
-Edit `/etc/freeDiameter/freeDiameter-client.conf` and provide the following:
+Create `/etc/freeDiameter/freeDiameter-client.conf`:
 
 ```text
-
 Identity = "client.diameter.test";
 Realm = "diameter.test";
 Port = 3866;
 SecPort = 3867;
 No_SCTP;
 
-TLS_Cred = "/path/to/freeDiameter/contrib/PKI/ca_script2/ca_data/my_diameter_ca/clients/*.diameter.test/cert.pem",
-"/path/to/freeDiameter/contrib/PKI/ca_script2/ca_data/my_diameter_ca/clients/*.diameter.test/privkey.pem";
-TLS_CA = "/path/to/freeDiameter/contrib/PKI/ca_script2/ca_data/my_diameter_ca/clients/*.diameter.test/certchain.pem";
+TLS_Cred = "/etc/freeDiameter/tls/peer.pem",
+"/etc/freeDiameter/tls/peer.key";
+TLS_CA = "/etc/freeDiameter/tls/ca.pem";
 
 ConnectPeer = "server.diameter.test" {
   No_TLS;
 };
-
 ```
 
-Notice how we instruct the client to establish a TCP-based Diameter connection to the "server.diameter.test" Diameter peer.
+This instructs the OpenSIPS/freeDiameter client peer to establish a TCP
+Diameter connection to `server.diameter.test`.
 
 ## freeDiameter Server
 
-The server side is represented by the [*app_opensips*](https://github.com/OpenSIPS/opensips/tree/master/modules/aaa_diameter/app_opensips) freeDiameter application, running within the freeDiameter daemon.
+The server side is represented by the
+[*app_opensips*](https://github.com/OpenSIPS/opensips/tree/master/modules/aaa_diameter/app_opensips)
+freeDiameter application, running inside the freeDiameter daemon.
 
 ### Compiling app_opensips
 
+Build the extension against the same freeDiameter tree that provides your
+daemon and libraries:
+
 ```bash
+sudo apt install mercurial cmake flex bison gcc make build-essential \
+  g++ swig libsctp-dev libgcrypt20-dev libgnutls28-dev libidn2-dev \
+  libmariadb-dev libmariadb-dev-compat
 
-  apt install mercurial cmake flex bison gcc make build-essential \
-    g++ libfreediameter-dev libidn11-dev ssl-cert debhelper fakeroot \
-    swig libsctp-dev libgcrypt20-dev libgnutls28-dev
+cd /path/to/freeDiameter
 
-  # for Digest Auth support, the MySQL devel library is needed.  On Debian, for example:
-  apt install libmariadb-dev libmariadb-dev-compat
+# copy or symlink the app_opensips directory into the freeDiameter extensions/ directory
+cp -r /path/to/opensips/modules/aaa_diameter/app_opensips extensions/app_opensips
 
-  cd /path/to/freeDiameter
-  # copy or symlink the app_opensips directory into the freeDiameter extensions/ directory
-  cp -r /path/to/opensips-master/modules/aaa_diameter/app_opensips extensions/app_opensips
-
-  # enlist the app_opensips extension for compilation
-  cat >>extensions/CMakeLists.txt <<EOF
+# enlist the app_opensips extension for compilation
+cat >>extensions/CMakeLists.txt <<EOF
 FD_EXTENSION_SUBDIR(app_opensips "OpenSIPS Diameter integration for SIP Authorization, Authentication (RFC 4740) and Accounting" ON)
 EOF
 
-  # also, fix a strange compilation issue specific to this revision, by applying this patch:
-  patch -p1 < <(base64 -d <<EOF | gzip -dc
-H4sIAAAAAAAAA4WSX0/bMBTFn8mnuHQaoqSBOAXCgjY1yx/IqOwoSdn2ZLmxQy06ByUpT3z4eQ1M
-ooVyX2z5nHNt/a65rCqwGnDK+QV3ETu1zzgs5bziZd2Ik7bsHo5Lw7IsYCebx3s56yAXD+CcAkLe
-2PHGCBwbnYNpX9i2YZomzLdTxWIFP1YKkAs28tDYQ190ykE6NdapyQQs5JzZIxfM53UyMWBP15F4
-FKqDrxCH0W1KA/yLRllGsstenjeC3f/bG9YnWXFRAZmGNA+KlOYkuIkK6qeJYWoNtCiV4IdvGIbw
-9AT7L4ZejHBIYz+ZRiGNbiNcDNcXlqwVsGnw+rcUmR9ENIy+z64O49l0OoJBJkohHwXfioCqO1nJ
-knWyVoPh5XYHH2PyO8FXugvoWgoFHnxerAajPmt9axVtheK0YnIp+HHbVlS77rqFbtcTdZ+Juh8Q
-za9nRUh+4k2outZc1U6w+zvJHhzAK7CYFEmcBH6REJzTvCBp+h7iHdY3kCc4JlvId7R4NYIR/GHN
-vVR30C0EsLatS7kWQCoQTVM30HasE/9H9f6//Aug0Y8DXwMAAA==
-EOF
-)
+mkdir -p fDbuild
+cd fDbuild
+cmake \
+  -DBUILD_TEST_APP:BOOL=ON \
+  -DBUILD_DBG_MONITOR:BOOL=ON \
+  -DSKIP_TESTS:BOOL=ON \
+  -DCMAKE_BUILD_TYPE:STRING=Debug \
+  ..
 
-  # create a build configuration (one-time operation, feel free to disable some of these flags or include others!)
-  mkdir fDbuild
-  cd fDbuild
-  cmake \
-    -DBUILD_TEST_APP:BOOL=ON \
-    -DBUILD_DBG_MONITOR:BOOL=ON \
-    -DSKIP_TESTS:BOOL=ON \
-    -DCMAKE_BUILD_TYPE:STRING=Debug \
-    ..
-
-  # now build both freeDiameter and its extensions (any time you change the app_opensips code)
-  make -j
-
+make -j
 ```
 
-If done correctly, you should be able to see the "app_opensips.fdx" freeDiameter extension module:
-
-```bash
-
-  [liviu@Z370 fDbuild]$ ls extensions/app_opensips.fdx -la
-  -rwxrwxr-x 1 liviu liviu 112048 iun 16 22:58 extensions/app_opensips.fdx
-
-```
-
-Congratulations for making it this far, as the hard part is over!
+If the build completes, the extension module should be available as
+`extensions/app_opensips.fdx` under the freeDiameter build directory.
 
 ### DNS
 
-If your freeDiameter server is running on a separate machine, edit `/etc/hosts` once again and populate the appropriate DNS entries on that box as well:
-
-```text
-
-  192.168.1.5 client.diameter.test
-  192.168.1.5 server.diameter.test
-
-```
-
-### Packages
-
-As we will be using the "dict_sip" freeDiameter extension, install the appropriate package (FWIW, you've already built it in the previous step, but it's nicer this way):
-
-```bash
-
-  sudo apt install freediameter-extensions
-
-```
+If your freeDiameter server runs on a separate machine, add the same
+`client.diameter.test` and `server.diameter.test` DNS records on that host as
+well.
 
 ### The freeDiameter server configuration file
 
-Edit `/etc/freeDiameter/freeDiameter.conf` and provide the following:
+Create `/etc/freeDiameter/freeDiameter.conf`:
 
 ```text
-
 Identity = "server.diameter.test";
 Realm = "diameter.test";
 Port = 3868;
 No_SCTP;
 
-# Notice we're using the same wildcard certificate!
-TLS_Cred = "/path/to/freeDiameter/contrib/PKI/ca_script2/ca_data/my_diameter_ca/clients/*.diameter.test/cert.pem",
-"/path/to/freeDiameter/contrib/PKI/ca_script2/ca_data/my_diameter_ca/clients/*.diameter.test/privkey.pem";
-TLS_CA = "/path/to/freeDiameter/contrib/PKI/ca_script2/ca_data/my_diameter_ca/clients/*.diameter.test/certchain.pem";
+TLS_Cred = "/etc/freeDiameter/tls/peer.pem",
+"/etc/freeDiameter/tls/peer.key";
+TLS_CA = "/etc/freeDiameter/tls/ca.pem";
 
-# Load the standard SIP AVP dictionary, as well as the app_opensips module!
+# Load the standard SIP AVP dictionary and the app_opensips module.
 LoadExtension = "/usr/lib/freeDiameter/dict_sip.fdx";
 LoadExtension = "/path/to/freeDiameter/fDbuild/extensions/app_opensips.fdx";
 
-# Per your preference: the server may optionally also establish the Diameter connection to OpenSIPS on startup (useful after a server restart)
+# Optional: also initiate the Diameter connection towards OpenSIPS on startup.
 ConnectPeer = "client.diameter.test" {
   No_TLS;
   port = 3866;
 };
-
 ```
 
-Let's test that *app_opensips* boots properly by launching freeDiameter in full logging mode, in a separate console:
+The `dict_sip.fdx` path may differ by distribution, so adjust it to the
+installed location of the freeDiameter extensions.
+
+Test that **app_opensips** loads:
 
 ```bash
-
-$ freeDiameterd -dd
-23:18:24  NOTI   libfdproto '1.2.1' initialized.
-23:18:24  NOTI   libgnutls '3.6.13' initialized.
-23:18:24   DBG   Core state: 0 -> 1
-23:18:24  NOTI   libfdcore '1.2.1' initialized.
-23:18:24   DBG   Generating fresh Diffie-Hellman parameters of size 1024 (this takes some time)... 
-23:18:24   DBG   Loading : /usr/lib/freeDiameter/dict_sip.fdx
-23:18:24   DBG   Extension 'Dictionary definitions for SIP' initialized
-23:18:24   DBG   Loading : /home/liviu/src/freeDiameter/fDbuild/extensions/app_opensips.fdx
-23:18:24   DBG   opensips entry
-23:18:24   DBG   [AUTH] connected to MySQL
-23:18:24  NOTI   All extensions loaded.
-23:18:24  NOTI   freeDiameter configuration:
-23:18:24  NOTI     Default trace level .... : +1
-23:18:24  NOTI     Configuration file ..... : /etc/freeDiameter/freeDiameter.conf
-...
-
+freeDiameterd -dd
 ```
 
-If it worked, make sure to give yourself another pat on the back!  You are an excellent developer!
+The startup log should show `dict_sip.fdx`, `app_opensips.fdx`, and the
+`[AUTH] connected to MySQL` message if the hardcoded tutorial database
+connection succeeds.
 
 ## OpenSIPS configuration
 
-As long as you can compile *aaa_diameter* with the below command, you only need to worry about the *opensips.cfg* file after this step:
+If you are building from source, verify that **aaa_diameter** compiles:
 
 ```bash
-
 make modules module=aaa_diameter
-
-make[1]: Entering directory '/home/liviu/src/opensips-3.3/modules/aaa_diameter'
-Compiling aaa_impl.c
-Compiling aaa_diameter.c
-Compiling peer.c
-Compiling app_opensips/avps.c
-Linking aaa_diameter.so
-make[1]: Leaving directory '/home/liviu/src/opensips-3.3/modules/aaa_diameter'
-
 ```
+
+For package-based deployments, install `opensips-diameter-module` instead.
 
 ### Digest Authentication
 
-For now, *app_opensips* will connect on startup to a MySQL OpenSIPS database, hardcoded to "mysql://opensips:opensipsrw@localhost/opensips", where it will access the *subscriber* table data, so make sure to provide the necessary infrastructure.  As the application becomes more sophisticated, this section will also be updated.
+The current **app_opensips** tutorial server code connects to MySQL using:
 
-Here are the relevant *opensips.cfg* sections to perform SIP digest authentication via Diameter:
+```text
+mysql://opensips:opensipsrw@localhost/opensips
+```
+
+It reads the `subscriber` table and expects the HA1 hash in the `ha1` column.
+Create the OpenSIPS database accordingly before starting freeDiameter.
+
+Here are the relevant `opensips.cfg` sections for SIP digest authentication
+over Diameter:
 
 ```opensips
-
-log_stdout = yes # very important, to see the freeDiameter library logs
+log_stdout = yes # required in order to see the freeDiameter library logs
 ...
 alias = udp:sipdomain.invalid:5060
 ...
 loadmodule "auth.so"
 
-loadmodule "auth_aaa.so"
-modparam("auth_aaa", "aaa_url", "diameter:freeDiameter-client.conf")
-
 loadmodule "aaa_diameter.so"
-modparam("aaa_diameter", "fd_log_level", 0) # max amount of logging, quite annoying
+modparam("aaa_diameter", "fd_log_level", 0)
 modparam("aaa_diameter", "realm", "diameter.test")
 modparam("aaa_diameter", "peer_identity", "server")
+
+loadmodule "auth_aaa.so"
+modparam("auth_aaa", "aaa_url", "diameter:/etc/freeDiameter/freeDiameter-client.conf")
 ...
 route {
     ...
 
     if (is_method("INVITE")) {
         ...
-        if (!aaa_proxy_authorize("sipdomain.invalid"))
-            proxy_challenge("sipdomain.invalid");
+        if (!aaa_proxy_authorize("sipdomain.invalid")) {
+            proxy_challenge("sipdomain.invalid", "auth");
+            exit;
+        }
         ...
     }
 }
 ...
-
 ```
 
-  
+The **aaa_diameter** module must be loaded before **auth_aaa**, because
+**auth_aaa** binds to the configured AAA protocol through its `aaa_url`
+parameter.
 
-And here is what a Diameter authentication request and a "success" reply look like in Wireshark:
+Here is what a Diameter authentication request and a successful reply look like
+in Wireshark:
 
-|  [http://opensips.org/pub/images/diameter-auth-request.png](https://opensips.org/pub/images/diameter-auth-request.png) |  [http://opensips.org/pub/images/diameter-auth-reply-success.png](https://opensips.org/pub/images/diameter-auth-reply-success.png) |
-| --- | --- |
+Diameter authentication request:
+
+![Diameter authentication request](/public/uploads/diameter-auth-request.png)
+
+Successful Diameter authentication reply:
+
+![Diameter authentication success reply](/public/uploads/diameter-auth-reply-success.png)
 
 ### Accounting
 
-As of now, *app_opensips* will append each CDR to a hardcoded file path of "/var/log/freeDiameter/acc.log", rotating this file daily, around midnight.  Also, there is no way of configuring the custom AVPs required by "acc_extra", however this section will be updated as soon as that is in place.
+The current **app_opensips** tutorial server appends CDRs to
+`/var/log/freeDiameter/acc.log` and rotates this file daily.  It also writes
+the AAA AVPs generated by the OpenSIPS **acc** module, including the CDR fields
+enabled by the `cdr` accounting flag.
 
-To enable Diameter accounting support in your *opensips.cfg* file, make sure to set:
+To enable Diameter accounting support in `opensips.cfg`, configure the relevant
+modules as follows:
 
 ```opensips
-
-log_stdout = yes # very important, to see the freeDiameter library logs
+log_stdout = yes # required in order to see the freeDiameter library logs
 ...
-loadmodule "acc.so"
-modparam("acc", "aaa_url", "diameter:freeDiameter-client.conf")
+loadmodule "rr.so"
+loadmodule "dialog.so"
 
 loadmodule "aaa_diameter.so"
-modparam("aaa_diameter", "fd_log_level", 0) # max amount of logging, quite annoying
+modparam("aaa_diameter", "fd_log_level", 0)
 modparam("aaa_diameter", "realm", "diameter.test")
 modparam("aaa_diameter", "peer_identity", "server")
+
+loadmodule "acc.so"
+modparam("acc", "aaa_url", "diameter:/etc/freeDiameter/freeDiameter-client.conf")
 ...
 route {
     ...
@@ -319,9 +300,7 @@ route {
     }
 }
 ...
-
 ```
 
-  
-
-And that's it!  Your OpenSIPS will be sending each CDR to freeDiameter now!
+The `cdr` flag requires dialog support, so **dialog** must be loaded and a
+dialog must be created for the initial INVITE.
