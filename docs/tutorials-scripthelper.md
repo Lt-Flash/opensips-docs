@@ -36,9 +36,11 @@ SIP logic provided:
 
 ### Scripting examples
 
-This is the [OpenSIPS script with the script_helper support](./modules/devel/.samples/script_helper/samples/opensips-script-helper.cfg "include").
+This is the OpenSIPS script with the script_helper support.
+[OpenSIPS script with the script_helper support](./modules/devel/.samples/script_helper/samples/opensips-script-helper.cfg "include").
 
-You can check it against the [regular OpenSIPS script without the script_helper support](./modules/devel/.samples/script_helper/samples/opensips-regular.cfg "include")
+You can check it against the regular OpenSIPS script without the script_helper support.
+[regular OpenSIPS script without the script_helper support](./modules/devel/.samples/script_helper/samples/opensips-regular.cfg "include")
 
 ### Scripts differences
 
