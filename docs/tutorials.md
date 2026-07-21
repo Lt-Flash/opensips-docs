@@ -69,9 +69,9 @@ Presence User Agent - support and configuration in **OpenSIPS**.
 - - -
 
 ## [Presence Resource List Server](/tutorials-presence-rls)
-﻿
+
 Presence RLS - support and configuration in **OpenSIPS**.
-﻿
+
 - - -
 
 ## [Load-Balancing](/tutorials-loadbalancing)
@@ -128,7 +128,7 @@ How to install, configure, integrate and use FreeRADIUS server and Radiusclient-
 
 - - -
 
-## [SIP Redirect with script](/tutorials-redirect)
+## [SIP Redirect Server](/tutorials-redirect)
 
 How setup OpenSIPS as a SIP redirect using a external script - also restricting base on ip address:
 Please note since I am new to OpenSIPS this may need be cleaned up a bit.
