@@ -1,5 +1,5 @@
 ---
-title: Using the Script Helper module
+title: Script Helper usage
 description: The purpose of this new module is to help you start in an easy way
   with the OpenSIPS script. The learning curve gets milder as the beginner...
 subtitle: Script Helper
@@ -45,9 +45,6 @@ You can check it against the regular OpenSIPS script without the script_helper s
 [regular OpenSIPS script without the script_helper support](./modules/devel/.samples/script_helper/samples/opensips-regular.cfg "include")
 
 ### Scripts differences
-
-
-* **With Script Helper**
 
 ```diff
 --- modules/script_helper/samples/opensips-regular.cfg	2026-07-21 13:11:53.483884563 +0300
