@@ -122,12 +122,6 @@ How to compile and configure the TLS support in **OpenSIPS** - script example in
 
 - - -
 
-## [Replace 183 early media reply with perl module](/tutorials-perl-183-to-180)
-
-Example script showing how to replace SIP status replies on the fly, as this is not (yet?) possible within the OpenSIPS routing script.
-
-- - -
-
 ## [A basic tutorial on RADIUS](/tutorials-radius)
 
 How to install, configure, integrate and use FreeRADIUS server and Radiusclient-ng with OpenSIPS modules for accounting and authorization.
