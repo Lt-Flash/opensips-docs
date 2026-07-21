@@ -41,7 +41,14 @@ See [the opensips-cli documentation](https://github.com/OpenSIPS/opensips-cli/bl
 * **Alias limit**: each MI command can define up to **4** aliases.
 * **Group listing**: *which command=module:* lists all commands from that module/group.
 
-The following table summarizes all MI function migration changes:
+MI commands not listed in the table keep the same local command name and are
+migrated by prefixing it with the owning MI group, using the `group:command`
+format. For example, trace becomes `tracer:trace` and `address_reload` becomes
+`permissions:address_reload`. Protocol modules use the protocol name as MI
+group, without the `proto_` prefix, so `proto_ws` exports `ws:*`, `proto_tls`
+exports `tls:*`, etc.
+
+The following table summarizes the MI function migration changes:
 
 | Module | Old MI function | New MI function |
 | --- | --- | --- |
@@ -75,6 +82,11 @@ The following table summarizes all MI function migration changes:
 | *auth_aka* | aka_av_drop_all | [**auth_aka:av_drop_all**](/modules/4-0/auth_aka#mi_av_drop_all) |
 | *auth_aka* | aka_av_fail | [**auth_aka:av_fail**](/modules/4-0/auth_aka#mi_av_fail) |
 | *b2b_entities* | b2be_list | [**b2b_entities:list**](/modules/4-0/b2b_entities#mi_list) |
+| *b2b_entities* | ua_session_client_start | [**b2b_entities:ua_session_client_start**](/modules/4-0/b2b_entities#mi_ua_session_client_start) |
+| *b2b_entities* | ua_session_list | [**b2b_entities:ua_session_list**](/modules/4-0/b2b_entities#mi_ua_session_list) |
+| *b2b_entities* | ua_session_reply | [**b2b_entities:ua_session_reply**](/modules/4-0/b2b_entities#mi_ua_session_reply) |
+| *b2b_entities* | ua_session_terminate | [**b2b_entities:ua_session_terminate**](/modules/4-0/b2b_entities#mi_ua_session_terminate) |
+| *b2b_entities* | ua_session_update | [**b2b_entities:ua_session_update**](/modules/4-0/b2b_entities#mi_ua_session_update) |
 | *b2b_logic* | b2b_bridge | [**b2b_logic:bridge**](/modules/4-0/b2b_logic#mi_bridge) |
 | *b2b_logic* | b2b_list | [**b2b_logic:list**](/modules/4-0/b2b_logic#mi_list) |
 | *b2b_logic* | b2b_terminate_call | [**b2b_logic:terminate_call**](/modules/4-0/b2b_logic#mi_terminate_call) |
@@ -123,6 +135,13 @@ The following table summarizes all MI function migration changes:
 | *config* | config_push | [**config:push**](/modules/4-0/config#mi_push) |
 | *config* | config_push_bulk | [**config:push_bulk**](/modules/4-0/config#mi_push_bulk) |
 | *config* | config_reload | [**config:reload**](/modules/4-0/config#mi_reload) |
+| *cfgutils* | check_config_hash | [**cfgutils:check_config_hash**](/modules/4-0/cfgutils#mi_check_config_hash) |
+| *cfgutils* | get_config_hash | [**cfgutils:get_config_hash**](/modules/4-0/cfgutils#mi_get_config_hash) |
+| *cfgutils* | rand_get_prob | [**cfgutils:rand_get_prob**](/modules/4-0/cfgutils#mi_rand_get_prob) |
+| *cfgutils* | rand_reset_prob | [**cfgutils:rand_reset_prob**](/modules/4-0/cfgutils#mi_rand_reset_prob) |
+| *cfgutils* | rand_set_prob | [**cfgutils:rand_set_prob**](/modules/4-0/cfgutils#mi_rand_set_prob) |
+| *cfgutils* | shv_get | [**cfgutils:shv_get**](/modules/4-0/cfgutils#mi_shv_get) |
+| *cfgutils* | shv_set | [**cfgutils:shv_set**](/modules/4-0/cfgutils#mi_shv_set) |
 | *cpl_c* | GET_CPL | [**cpl_c:get**](/modules/4-0/cpl_c#mi_get) |
 | *cpl_c* | LOAD_CPL | [**cpl_c:load**](/modules/4-0/cpl_c#mi_load) |
 | *cpl_c* | REMOVE_CPL | [**cpl_c:remove**](/modules/4-0/cpl_c#mi_remove) |
@@ -142,6 +161,11 @@ The following table summarizes all MI function migration changes:
 | *dialog* | dlg_send_sequential | [**dialog:send_sequential**](/modules/4-0/dialog#mi_send_sequential) |
 | *dialog* | dlg_set_profile | [**dialog:set_profile**](/modules/4-0/dialog#mi_set_profile) |
 | *dialog* | dlg_unset_profile | [**dialog:unset_profile**](/modules/4-0/dialog#mi_unset_profile) |
+| *dialog* | list_all_profiles | [**dialog:list_all_profiles**](/modules/4-0/dialog#mi_list_all_profiles) |
+| *dialog* | profile_end_dlgs | [**dialog:profile_end_dlgs**](/modules/4-0/dialog#mi_profile_end_dlgs) |
+| *dialog* | profile_get_size | [**dialog:profile_get_size**](/modules/4-0/dialog#mi_profile_get_size) |
+| *dialog* | profile_get_values | [**dialog:profile_get_values**](/modules/4-0/dialog#mi_profile_get_values) |
+| *dialog* | profile_list_dlgs | [**dialog:profile_list_dlgs**](/modules/4-0/dialog#mi_profile_list_dlgs) |
 | *dialog* | set_dlg_profile | [**dialog:set_profile**](/modules/4-0/dialog#mi_set_profile) |
 | *dialog* | unset_dlg_profile | [**dialog:unset_profile**](/modules/4-0/dialog#mi_unset_profile) |
 | *dialplan* | dp_reload | [**dialplan:reload**](/modules/4-0/dialplan#mi_reload) |
@@ -166,6 +190,10 @@ The following table summarizes all MI function migration changes:
 | *freeswitch_scripting* | fs_reload | [**freeswitch_scripting:reload**](/modules/4-0/freeswitch_scripting#mi_reload) |
 | *freeswitch_scripting* | fs_subscribe | [**freeswitch_scripting:subscribe**](/modules/4-0/freeswitch_scripting#mi_subscribe) |
 | *freeswitch_scripting* | fs_unsubscribe | [**freeswitch_scripting:unsubscribe**](/modules/4-0/freeswitch_scripting#mi_unsubscribe) |
+| *gflags* | get_gflags | [**gflags:get**](/modules/4-0/gflags#mi_get) |
+| *gflags* | is_gflag | [**gflags:check**](/modules/4-0/gflags#mi_check) |
+| *gflags* | reset_gflag | [**gflags:reset**](/modules/4-0/gflags#mi_reset) |
+| *gflags* | set_gflag | [**gflags:set**](/modules/4-0/gflags#mi_set) |
 | *httpd* | httpd_list_root_path | [**httpd:list_root_path**](/modules/4-0/httpd#mi_list_root_path) |
 | *imc* | imc_list_members | [**imc:list_members**](/modules/4-0/imc#mi_list_members) |
 | *imc* | imc_list_rooms | [**imc:list_rooms**](/modules/4-0/imc#mi_list_rooms) |
@@ -173,6 +201,7 @@ The following table summarizes all MI function migration changes:
 | *load_balancer* | lb_reload | [**load_balancer:reload**](/modules/4-0/load_balancer#mi_reload) |
 | *load_balancer* | lb_resize | [**load_balancer:resize**](/modules/4-0/load_balancer#mi_resize) |
 | *load_balancer* | lb_status | [**load_balancer:status**](/modules/4-0/load_balancer#mi_status) |
+| *lua* | watch | [**lua:watch**](/modules/4-0/lua#mi_watch) |
 | *media_exchange* | media_exchange_from_call_to_uri | [**media_exchange:from_call_to_uri**](/modules/4-0/media_exchange#mi_from_call_to_uri) |
 | *media_exchange* | media_exchange_from_call_to_uri_body | [**media_exchange:from_call_to_uri_body**](/modules/4-0/media_exchange#mi_from_call_to_uri_body) |
 | *media_exchange* | media_fork_from_call_to_uri | [**media_exchange:fork_from_call_to_uri**](/modules/4-0/media_exchange#mi_fork_from_call_to_uri) |
@@ -189,12 +218,18 @@ The following table summarizes all MI function migration changes:
 | *msrp_ua* | msrp_ua_start_session | [**msrp_ua:start_session**](/modules/4-0/msrp_ua#mi_start_session) |
 | *nathelper* | nh_enable_ping | [**nathelper:enable_ping**](/modules/4-0/nathelper#mi_enable_ping) |
 | *opentelemetry* | otel_enable | [**opentelemetry:enable**](/modules/4-0/opentelemetry#mi_enable) |
+| *permissions* | address_dump | [**permissions:address_dump**](/modules/4-0/permissions#mi_address_dump) |
+| *permissions* | address_reload | [**permissions:address_reload**](/modules/4-0/permissions#mi_address_reload) |
+| *permissions* | allow_uri | [**permissions:allow_uri**](/modules/4-0/permissions#mi_allow_uri) |
+| *permissions* | subnet_dump | [**permissions:subnet_dump**](/modules/4-0/permissions#mi_subnet_dump) |
 | *pi_http* | pi_reload_tbls_and_cmds | [**pi_http:reload_tbls_and_cmds**](/modules/4-0/pi_http#mi_reload_tbls_and_cmds) |
 | *pike* | pike_list | [**pike:list**](/modules/4-0/pike#mi_list) |
 | *pike* | pike_rm | [**pike:rm**](/modules/4-0/pike#mi_rm) |
+| *presence* | cleanup | [**presence:cleanup**](/modules/4-0/presence#mi_cleanup) |
 | *presence* | pres_expose | [**presence:expose**](/modules/4-0/presence#mi_expose) |
 | *presence* | pres_phtable_list | [**presence:phtable_list**](/modules/4-0/presence#mi_phtable_list) |
 | *presence* | refreshWatchers | [**presence:refresh_watchers**](/modules/4-0/presence#mi_refresh_watchers) |
+| *presence* | subs_phtable_list | [**presence:subs_phtable_list**](/modules/4-0/presence#mi_subs_phtable_list) |
 | *presence_dfks* | dfks_set_feature | [**presence_dfks:set_feature**](/modules/4-0/presence_dfks#mi_set_feature) |
 | *pua_mi* | pua_publish | [**pua_mi:publish**](/modules/4-0/pua_mi#mi_publish) |
 | *pua_mi* | pua_subscribe | [**pua_mi:subscribe**](/modules/4-0/pua_mi#mi_subscribe) |
@@ -224,6 +259,7 @@ The following table summarizes all MI function migration changes:
 | *rtp_relay* | rtp_relay_list | [**rtp_relay:list**](/modules/4-0/rtp_relay#mi_list) |
 | *rtp_relay* | rtp_relay_update | [**rtp_relay:update**](/modules/4-0/rtp_relay#mi_update) |
 | *rtp_relay* | rtp_relay_update_callid | [**rtp_relay:update_callid**](/modules/4-0/rtp_relay#mi_update_callid) |
+| *rtpengine* | teardown | [**rtpengine:teardown**](/modules/4-0/rtpengine#mi_teardown) |
 | *rtpengine* | rtpengine_enable | [**rtpengine:enable**](/modules/4-0/rtpengine#mi_enable) |
 | *rtpengine* | rtpengine_reload | [**rtpengine:reload**](/modules/4-0/rtpengine#mi_reload) |
 | *rtpengine* | rtpengine_show | [**rtpengine:show**](/modules/4-0/rtpengine#mi_show) |
@@ -236,6 +272,7 @@ The following table summarizes all MI function migration changes:
 | *sql_cacher* | sql_cacher_reload | [**sql_cacher:reload**](/modules/4-0/sql_cacher#mi_reload) |
 | *stir_shaken* | stir_shaken_ca_reload | [**stir_shaken:ca_reload**](/modules/4-0/stir_shaken#mi_ca_reload) |
 | *stir_shaken* | stir_shaken_crl_reload | [**stir_shaken:crl_reload**](/modules/4-0/stir_shaken#mi_crl_reload) |
+| *tcp* | tcp_trace | [**tcp:trace**](/modules/4-0/proto_tcp#tcp-trace) |
 | *tcp_mgm* | tcp_reload | [**tcp_mgm:reload**](/modules/4-0/tcp_mgm#mi_reload) |
 | *tls* | tls_trace | [**tls:trace**](/modules/4-0/proto_tls#mi_trace) |
 | *tls_mgm* | tls_list | [**tls_mgm:list**](/modules/4-0/tls_mgm#mi_list) |
@@ -244,6 +281,7 @@ The following table summarizes all MI function migration changes:
 | *tm* | t_reply | [**tm:reply**](/modules/4-0/tm#mi_reply) |
 | *tm* | t_uac_cancel | [**tm:uac_cancel**](/modules/4-0/tm#mi_uac_cancel) |
 | *tm* | t_uac_dlg | [**tm:uac_dlg**](/modules/4-0/tm#mi_uac_dlg) |
+| *tracer* | trace | [**tracer:trace**](/modules/4-0/tracer#mi_trace) |
 | *tracer* | trace_start | [**tracer:start**](/modules/4-0/tracer#mi_start) |
 | *tracer* | trace_stop | [**tracer:stop**](/modules/4-0/tracer#mi_stop) |
 | *trie* | trie_number_delete | [**trie:number_delete**](/modules/4-0/trie#mi_number_delete) |
@@ -269,6 +307,7 @@ The following table summarizes all MI function migration changes:
 | *usrloc* | ul_sync | [**usrloc:sync**](/modules/4-0/usrloc#mi_sync) |
 | *ws* | ws_trace | [**ws:trace**](/modules/4-0/proto_ws#mi_trace) |
 | *wss* | wss_trace | [**wss:trace**](/modules/4-0/proto_wss#mi_trace) |
+| *xcap_client* | refreshXcapDoc | [**xcap_client:refreshXcapDoc**](/modules/4-0/xcap_client#mi_refreshXcapDoc) |
 
 ## Script migration
 The following is the full list of backwards-incompatible syntax or functional changes in the OpenSIPS configuration script:
