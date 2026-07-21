@@ -14,7 +14,7 @@ Unveils how SIP accounting works in OpenSIPS, from basic to complex scenarios wi
 
 - - -
 
-## [Easier scripting with the script_helper module](/tutorials-scripthelper)
+## [Script_Helper usage](/tutorials-scripthelper)
 
 Module description and a complete usage example.
 
@@ -68,13 +68,13 @@ Presence User Agent - support and configuration in **OpenSIPS**.
 
 - - -
 
-## [Presence Resource List Server](/tutorials-presence-rls)
+## [Presence Resource List Server (RLS)](/tutorials-presence-rls)
 
 Presence RLS - support and configuration in **OpenSIPS**.
 
 - - -
 
-## [Load-Balancing](/tutorials-loadbalancing)
+## [Call Load Balancing](/tutorials-loadbalancing)
 
 How to use the load-balancing module from **OpenSIPS** to do traffic routing based on the real load of the destinations.
 
