@@ -1,153 +1,139 @@
 ---
 title: "Memory Caching"
-description: "The Memory Caching support from OpenSIPS wants to provide a way of caching at runtime different kind of data. These data will globally available (anywhere in..."
+description: "Use OpenSIPS memory caching support to store runtime data and reduce repeated database lookups, with a password caching example for digest authentication."
 ---
 
 ## OpenSIPS MemCache
 
-The **Memory Caching** support from **OpenSIPS** wants to provide a way of caching at runtime different kind of data. These data will globally available (anywhere in the routing script) and shared between all **OpenSIPS** processes.
+The **Memory Caching** support in **OpenSIPS** provides a way to cache runtime data from the routing script. Cached data is globally available to the script and shared between all **OpenSIPS** processes that use the same cache backend.
 
-The idea is to be able to store (cache) custom values for later usage. The main purpose of this MemCache support is to reduce the number of DB queries by caching data that does not need constant update from DB. DB queries are known to be one of bottle necks in the current design (see [design considerations](https://www.opensips.org/Development/NewDesign)) and MemCache support will help in avoiding unnecessary DB hits.
+The goal is to store custom values for later use, especially data that is expensive to fetch and does not need to be read from the database on every request. Database queries are a common bottleneck in SIP platforms, so caching stable data can significantly reduce backend load.
 
 ---
 
 ## OpenSIPS MemCache Design
 
-The **Memory Caching** support in **OpenSIPS** has a flexible and expendable design. The idea is to have a simple and transparent way of operating (in the same time) with multiple implementations / forms of memory caching. A memory caching system can be via the local shared memory (see [Local Cache module](/modules/1-5/localcache)) or via the System V shared memory (mem cache shared across independent applications) or via the [MemCache server](http://www.danga.com/memcached/).
+The memory caching support in **OpenSIPS** is exposed through the generic Key-Value API. The script uses the same functions regardless of the selected backend, while modules provide the actual storage implementation.
 
-The **OpenSIPS** core offers an API for operating with any memory caching system from the script. This API is composed out of three functions that allow the basic operations with a memory cache:
-* store - [cache_store()](/manual/devel/script-corefunctions)
-* fetch - [cache_fetch()](/manual/devel/script-corefunctions)
-* remove - [cache_remove()](/manual/devel/script-corefunctions)
+The core API offers the basic cache operations:
+* store - [cache_store()](/manual/devel/script-corefunctions#cache_store)
+* fetch - [cache_fetch()](/manual/devel/script-corefunctions#cache_fetch)
+* remove - [cache_remove()](/manual/devel/script-corefunctions#cache_remove)
 
-The MemCache design from  **OpenSIPS** allow to set a lifetime (timeout) to an attribute when inserting it in the cache. This provides support for auto-removal of attributes (for re-fetching or clean-up purposes) from the cache.
+When storing a value, the script can also set a lifetime for the attribute. This allows OpenSIPS to automatically expire cached data and periodically refresh it from the authoritative source.
 
-The implementations for the memory caching support are provided by the **OpenSIPS** modules. Right now there is a single implementation (see [Local Cache module](/modules/1-5/localcache)) that caches the data into the shared memory of **OpenSIPS**. In the future release, more implementations are planned to be added.
+Cache backends are provided by modules. For local shared-memory caching, use the [cachedb_local module](/modules/devel/cachedb_local). Other deployments can use external cache backends, such as Redis or Memcached, through their corresponding cachedb modules.
 
 ---
 
-## MemCache usage - Password caching for DB authentication
+## MemCache Usage: Password Caching for DB Authentication
 
-The best way of describing the MemCache way of usage is to provide a real example - how to use memcache support for reducing the DB queries due user authentication.
+The best way to describe memory caching is with a practical example: reducing the number of database queries caused by subscriber authentication.
 
-### The idea - how to
+### The Idea
 
-The idea is, after performing a DB authentication (authentication by fetching the password from DB) to store the password in memcache; the password is stored with a certain lifetime to ensure that from time to time the password is read from DB again.
+After a successful database authentication, OpenSIPS stores the subscriber password in cache for a limited time. The next authentication attempt first checks the cache. If the password is available and not expired, OpenSIPS authenticates directly from script variables, without a database lookup.
 
-When a new authentication is needed, first we check if the password is available in memcache (previously stored and not yet expired); if so, we use the value from there to perform authentication without a DB hit. 
+Because passwords for multiple users are cached at the same time, the cache attribute name must include the authenticated user. For REGISTER authentication, the example below uses the To URI, resulting in keys such as `passwd_$tu`.
 
-As we have to store in the same time the passwords of more than one users, we need to use different names for the attributes -> the attribute name will contain the user name, something like "passwd_*username*".
-
-### The logic - diagram
+### The Logic
 
 * REGISTER request received
-* is password stored in "`passwd_$tu`" attribute?
-  * NO -> perform DB authentication 
-  * store the used password into "`passwd_$tu`" with s lifetime (1200 seconds - 10 minutes)
-  * DONE
-* YES -> use the value from the memcache do to authentication from script variables.
-* DONE
+* check whether `passwd_$tu` exists in cache
+* if it exists, load it into `$var(auth_password)` and run `pv_www_authorize()`
+* if it does not exist, run `www_authorize()` against the database
+* after successful database authentication, store the loaded password as `passwd_$tu`
 
 ### Script
 
-Current format of authentication script for REGISTER is:
+A normal database-backed REGISTER authentication block looks like this:
+
 ```opensips
-
-	if (!www_authorize("", "subscriber")) {
-		www_challenge("", "0");
-		exit;
-	};
-
-```
-
-By adding memcache support, the script looks like:
-```opensips
-
-....
-loadmodule "modules/db_mysql/db_mysql.so"
-loadmodule "modules/auth/auth.so"
-loadmodule "modules/auth_db/auth_db.so"
-loadmodule "modules/localcache/localcache.so"
-....
-modparam("auth","username_spec","$avp(i:54)")
-modparam("auth","password_spec","$avp(i:55)")
-modparam("auth","calculate_ha1",1)
-
-modparam("auth_db", "calculate_ha1", yes)
-modparam("auth_db", "password_column", "password")
-modparam("auth_db", "db_url","mysql://opensips:opensipsrw@localhost/opensips_1_2")
-modparam("auth_db", "load_credentials", "$avp(i:55)=password")
-....
-
-....
-route[x]{
-	.....
-	# do we have the password cached ?
-	if(cache_fetch("local","passwd_$tu",$avp(i:55))) {
-		$avp(i:54) = $tU;
-		xlog("SCRIPT: stored password is $avp(i:55)\n");
-		# perform auth from variables
-		# $avp(i:54) contains the username
-		# $avp(i:55) contains the password
-		if (!pv_www_authorize("")) {
-			# authentication failed -> do challenge			
-			www_challenge("", "0");
-			exit;
-		};
-	} else {
-		# perform DB authentication ->
-		# password will be loaded from DB automatically
-		if (!www_authorize("", "subscriber")) {
-			# authentication failed -> do challenge		
-			www_challenge("", "0");
-			exit;
-		};
-		# after DB authentication, the password is available
-		# in $avp(i:55) because of the "load_credentials"
-		# module parameter.
-		xlog("SCRIPT: storing password <$avp(i:55)>\n");
-		# use a 20 minutes lifetime for the password;
-		# after that, it will erased from cache and we do
-		# db authentication again (refresh the passwd from DB)
-		cache_store("local","passwd_$tu","$avp(i:55)",1200);
-	}
-
-	....
+if (!www_authorize("", "subscriber")) {
+	www_challenge("", "auth");
+	exit;
 }
-
 ```
+
+With password caching, the configuration can look like this:
+
+```opensips
+loadmodule "db_mysql.so"
+loadmodule "signaling.so"
+loadmodule "auth.so"
+loadmodule "auth_db.so"
+loadmodule "cachedb_local.so"
+
+modparam("auth", "username_spec", "$var(auth_user)")
+modparam("auth", "password_spec", "$var(auth_password)")
+modparam("auth", "calculate_ha1", 1)
+
+modparam("auth_db", "calculate_ha1", 1)
+modparam("auth_db", "password_column", "password")
+modparam("auth_db", "db_url", "mysql://opensips:opensipsrw@localhost/opensips")
+modparam("auth_db", "load_credentials", "$avp(cached_password)=password")
+```
+
+The `auth_db` module loads the database password into the named AVP `$avp(cached_password)` after a successful `www_authorize()` call. The `auth` module uses `$var(auth_user)` and `$var(auth_password)` when `pv_www_authorize()` validates credentials from cached data.
+
+```opensips
+route[AUTH_REGISTER] {
+	if (cache_fetch("local", "passwd_$tu", $var(auth_password))) {
+		$var(auth_user) = $tU;
+
+		xlog("[$ci] using cached password for $tu\n");
+
+		if (!pv_www_authorize("")) {
+			if ($rc == -2)
+				cache_remove("local", "passwd_$tu");
+
+			www_challenge("", "auth");
+			exit;
+		}
+	} else {
+		if (!www_authorize("", "subscriber")) {
+			www_challenge("", "auth");
+			exit;
+		}
+
+		xlog("[$ci] storing password in cache for $tu\n");
+
+		cache_store("local", "passwd_$tu", "$avp(cached_password)", 1200);
+	}
+}
+```
+
+The cache lifetime above is 1200 seconds, or 20 minutes. After that interval, the password is removed from cache and the next authentication refreshes it from the database.
 
 References:
-* auth module - see [functions and parameters](/modules/1-5/auth)
-* auth_db module - see [functions and parameters](/modules/1-5/auth_db)
+* [auth module](/modules/devel/auth)
+* [auth_db module](/modules/devel/auth_db)
+* [cachedb_local module](/modules/devel/cachedb_local)
 
 ---
 
 ### Improvements
 
-You can easily add 2 improvements to the previous script.
+#### Force Password Re-Fetching
 
-#### Force password re-fetching
+When cached authentication fails with return code `-2`, `pv_www_authorize()` found a valid user but the password did not match. This can happen when the subscriber password changed in the database while the old value was still cached.
 
-When PV authentication (based on cached password) fails because of invalid password (see the [error codes of the pv_www_authorize() function](/modules/devel/auth#id271238)). So, if the function returns "-2" (invalid password) it may mean that the password may changed (in DB), so you need to re-fresh. 
+In that case, remove the cached password with `cache_remove()` and challenge the user again. The next request will miss the cache, run database authentication and store the new password value.
 
-In such a case, you can simple remove the cached password and try to do DB authentication (that will use the DB password). Of course, after such a re-load, store into the cache the new value.
+#### WWW and PROXY Authentication
 
-#### WWW and PROXY authentication
+The same approach works for both WWW authentication, typically used for REGISTER requests, and PROXY authentication, typically used for INVITE, MESSAGE and other in-dialog or out-of-dialog requests.
 
-You can use the same cached password for both WWW (REGISTER) and PROXY (INVITE, MESSAGE, etc) authentication. The logic is the same in both blocks (WWW and PROXY) and you can share the same cached password for both blocks. This will dramatically reduce the number of DB queries.
+For WWW authentication, the authentication name is extracted from the To header, so build the cache key with the To URI or To user, such as `passwd_$tu` or `passwd_$tU`. For PROXY authentication, the authentication name is extracted from the From header, so use a From-based key, such as `passwd_$fu` or `passwd_$fU`.
 
-> [!NOTE]
-> for WWW authentication the authentication name is extracted from TO hedear, but for PROXY authentication the auth name is extracted from FROM header, so when operating with the cache, build the attribute name as "`passwd_$tU`" for WWW auth and as "`passwd_$fU`" for PROXY auth.
+### Performance Estimation
 
-### Performance estimation
+Assuming a 30 minute registration period and one call every 20 minutes, without caching there are five authentication database queries per hour per user.
 
-Assuming a 30 minute registration period and placing a call each 20 minutes, without any caching, there will be 5 authentication queries to DB per hour per user.
+For 1000 users, that means `1000 * 3 * 24 = 72000` authentication queries per day.
 
-This means, for 1000 users, per day : 1000 * 3 * 24 = **72000 queries per day for auth**.
+With a two hour cache lifetime, each user needs one database query every two hours.
 
-If you set a 2 hours lifetime for cached data, you have one query per user at each 2 hours.
+For the same 1000 users, that means `1000 * 0.5 * 24 = 12000` authentication queries per day.
 
-So, for the same 1000 users, per day, you have : 1000 * 0.5 * 24 = **12000 queries per day for auth**
-
-So, this gives you a reduction to with 83% (to 17%) of the numbers of queries!
+This reduces authentication query load by about 83%.
