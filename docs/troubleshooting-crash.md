@@ -177,7 +177,7 @@ docker run --rm -it \
 
 Once inside `gdb`, run:
 
-```gdb
+```text
 set pagination off
 bt full
 quit
