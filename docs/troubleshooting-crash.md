@@ -129,7 +129,51 @@ Core files may contain SIP credentials, database credentials, private keys, and
 message contents. Store them in a restricted directory and do not publish them
 publicly.
 
-## 5. Extract the backtrace
+## 5. Running in Docker
+
+For logs, start with:
+
+```bash
+docker logs <container>
+```
+
+For core dumps, remember that containers use the host kernel core-dump settings.
+Enable core dumps for the container and mount a directory where the core can be
+kept:
+
+```bash
+docker run \
+  --ulimit core=-1 \
+  -v /tmp/opensips-cores:/cores \
+  <image> \
+  opensips -w /cores
+```
+
+With Docker Compose:
+
+```yaml
+services:
+  opensips:
+    ulimits:
+      core: -1
+    volumes:
+      - /tmp/opensips-cores:/cores
+```
+
+If `/proc/sys/kernel/core_pattern` starts with `|`, look for the core on the
+host using the configured helper, for example `coredumpctl`. Otherwise, look in
+the mounted core directory.
+
+Run `gdb` using the same image, binary, and modules that produced the core:
+
+```bash
+docker run --rm -it \
+  -v /tmp/opensips-cores:/cores \
+  <image> \
+  gdb /usr/sbin/opensips /cores/core.<PID>
+```
+
+## 6. Extract the backtrace
 
 Once inside `gdb`, run:
 
@@ -147,7 +191,7 @@ Keep the core file, the exact OpenSIPS binary, and the loaded module libraries
 (`.so` files). Developers may ask for them privately if the backtrace is not
 enough.
 
-## 6. Report the crash
+## 7. Report the crash
 
 Send the report to the
 [OpenSIPS GitHub issue tracker](https://github.com/OpenSIPS/opensips/issues) or
