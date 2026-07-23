@@ -176,6 +176,38 @@ if (has_totag() && is_method("INFO") && $hdr(X-Stop-Recording) == "yes")
 
 These functions are useful for pause-on-hold logic, user-driven privacy controls, or for terminating only a specific SIPREC instance while keeping the call alive.
 
+## Recording Events
+
+The SIPREC module raises two events that can be used to monitor when an SRS starts or stops recording a call:
+
+* [`E_SIPREC_START`](/modules/devel/siprec#event_E_SIPREC_START) - raised when the SIPREC call is established and recording starts.
+* [`E_SIPREC_STOP`](/modules/devel/siprec#event_E_SIPREC_STOP) - raised when the SIPREC call is terminated.
+
+Both events expose the same parameters:
+
+* `dlg_id` - dialog id of the call being recorded.
+* `dlg_callid` - Call-ID of the call being recorded.
+* `callid` - Call-ID of the SIPREC B2B call.
+* `session_id` - SIPREC UUID of the recording call.
+* `server` - SIPREC server handling the recording.
+* `instance` - SIPREC instance that triggered the event.
+
+These are regular OpenSIPS Event Interface events, so they can be consumed either by local script `event_route` blocks or by external applications. For external applications, load the desired event transport module and subscribe the proper endpoint to `E_SIPREC_START` and `E_SIPREC_STOP`, either from the script with `subscribe_event()` or at runtime through MI. The endpoint format depends on the transport module; see the [Events Interface manual](/manual/devel/interface-events/) for the supported subscription endpoints.
+
+For example, you can log the recording lifecycle directly from the OpenSIPS script using `event_route` blocks:
+
+```opensips
+event_route[E_SIPREC_START] {
+    xlog("SIPREC started: dlg_id=$params(dlg_id), dlg_callid=$params(dlg_callid), siprec_callid=$params(callid), session=$params(session_id), server=$params(server), instance=$params(instance)\n");
+}
+
+event_route[E_SIPREC_STOP] {
+    xlog("SIPREC stopped: dlg_id=$params(dlg_id), dlg_callid=$params(dlg_callid), siprec_callid=$params(callid), session=$params(session_id), server=$params(server), instance=$params(instance)\n");
+}
+```
+
+Defining the `event_route` automatically subscribes the script to the matching event, so no explicit subscription is needed for this local logging use case.
+
 ## Advanced Configuration
 
 ### Communicate with SRS over TCP
