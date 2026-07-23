@@ -25,7 +25,7 @@ Here we assume we load the SIP URIs from a DB, using the [sql_query()](/modules/
 
 ```opensips
 route {
-    if ( $(si{ip.matches,192.168.1.1/24})==1 && method=="INVITE") {
+    if ( $(si{ip.matches,192.168.1.1/24})==1 && $rm=="INVITE") {
     
         # the the SQL query to load the set of GW + PRIOrities (Q value)
         sql_query("select gw_uri,gw_prio from lcr_table where destination_did='$rU'",
@@ -74,7 +74,7 @@ Also there are several modules which queries and returns new multiple SIP branch
 
 ```opensips
 route {
-    if ( $(si{ip.matches,192.168.1.1/24})==1 && method=="INVITE") {
+    if ( $(si{ip.matches,192.168.1.1/24})==1 && $rm=="INVITE") {
     
         # do the registrations lookup, to find ALL user's registrations
         if ( lookup( "location", "to-branches-only") ) {
@@ -94,13 +94,11 @@ route {
 }
 ```
 
-
-
 Also, if we go back to the first example (with manual building of the CONTACT), the would be the corresponding script but using the message branches.
 
 ```opensips
 route {
-    if ( $(si{ip.matches,192.168.1.1/24})==1 && method=="INVITE") {
+    if ( $(si{ip.matches,192.168.1.1/24})==1 && $rm=="INVITE") {
     
         # the the SQL query to load the set of GW + PRIOrities (Q value)
         sql_query("select gw_uri,gw_prio from lcr_table where destination_did='$rU'",
