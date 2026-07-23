@@ -176,6 +176,56 @@ if (has_totag() && is_method("INFO") && $hdr(X-Stop-Recording) == "yes")
 
 These functions are useful for pause-on-hold logic, user-driven privacy controls, or for terminating only a specific SIPREC instance while keeping the call alive.
 
+### Control Recording from MI Events
+
+You can also control a SIPREC instance from an external application by raising a custom Event Interface event through MI, then handling that event in the OpenSIPS script. The event handler can load the dialog context based on a Dialog ID or SIP Call-ID passed as an event parameter, then call the SIPREC pause/resume functions inside that dialog context.
+
+For example, an external controller can raise a toggle event for a named SIPREC instance:
+
+```bash
+$ opensips-mi evi:raise -j '{"event":"E_SIPREC_TOGGLE","params":{"callid":"call-123@example.net","instance":"compliance"}}'
+```
+
+The script can catch the event, load the dialog context and use a dialog flag to remember the current pause state:
+
+```opensips
+event_route[E_SIPREC_TOGGLE] {
+    $var(dlg_id) = $params(callid);
+    $var(id_type) = "callid";
+
+    if ($params(dlg_id) != NULL) {
+        $var(dlg_id) = $params(dlg_id);
+        $var(id_type) = "did";
+    }
+
+    if ($var(dlg_id) == NULL) {
+        xlog("E_SIPREC_TOGGLE: missing callid or dlg_id parameter\n");
+        exit;
+    }
+
+    if (!load_dialog_ctx($var(dlg_id), $var(id_type), 1)) {
+        xlog("E_SIPREC_TOGGLE: cannot load dialog $var(dlg_id) as $var(id_type)\n");
+        exit;
+    }
+
+    if (is_dlg_flag_set("SIPREC_PAUSED")) {
+        if (siprec_resume_recording($params(instance))) {
+            reset_dlg_flag("SIPREC_PAUSED");
+            xlog("SIPREC resumed by MI event for dialog $var(dlg_id), instance=$params(instance)\n");
+        }
+    } else {
+        if (siprec_pause_recording($params(instance))) {
+            set_dlg_flag("SIPREC_PAUSED");
+            xlog("SIPREC paused by MI event for dialog $var(dlg_id), instance=$params(instance)\n");
+        }
+    }
+
+    unload_dialog_ctx();
+}
+```
+
+The example above passes an `instance` parameter and controls a named SIPREC instance. For the default instance, omit the MI `instance` parameter and call `siprec_pause_recording()` or `siprec_resume_recording()` without arguments.
+
 ## Recording Events
 
 The SIPREC module raises two events that can be used to monitor when an SRS starts or stops recording a call:
