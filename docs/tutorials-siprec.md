@@ -278,4 +278,4 @@ By default, failover is driven by a negative response from the SRS, or by an aut
 modparam("siprec", "skip_failover_codes", "[34][0-9][0-9]")
 ```
 
-For more advanced failover logic, you can capture the generated SRS URI in `local_route`, then enhance the related `failure_route` logic to retry, blacklist or report based on the exact SRS URI that was attempted. This is useful when the fallback decision depends on the selected URI, transport, SRS cluster, or SIPREC instance, rather than only on the comma-separated list passed to `siprec_start_recording()`.
+For more advanced failover logic, you can capture a generated placeholder SRS URI in `local_route`, let `dispatcher` select the real SRS from a provisioned pool, then use a `failure_route` to mark failed SRS destinations and retry the next one. A complete sample is available in the SIPREC module examples: [siprec-dispatcher.cfg](https://github.com/OpenSIPS/opensips/blob/master/modules/siprec/samples/siprec-dispatcher.cfg).
