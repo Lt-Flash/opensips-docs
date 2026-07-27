@@ -3,7 +3,7 @@ title: "Memory Caching"
 description: "Use OpenSIPS memory caching support to store runtime data and reduce repeated database lookups, with a password caching example for digest authentication."
 ---
 
-## OpenSIPS MemCache
+## MemCache
 
 The **Memory Caching** support in **OpenSIPS** provides a way to cache runtime data from the routing script. Cached data is globally available to the script and shared between all **OpenSIPS** processes that use the same cache backend.
 
@@ -11,7 +11,7 @@ The goal is to store custom values for later use, especially data that is expens
 
 ---
 
-## OpenSIPS MemCache Design
+## MemCache Design
 
 The memory caching support in **OpenSIPS** is exposed through the generic Key-Value API. The script uses the same functions regardless of the selected backend, while modules provide the actual storage implementation.
 

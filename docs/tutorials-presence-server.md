@@ -20,7 +20,7 @@ The presence information may be of multiple types, like status info (if online, 
 
 - - -
 
-## OpenSIPS modules
+## Modules
 
 ### The PRESENCE module
 

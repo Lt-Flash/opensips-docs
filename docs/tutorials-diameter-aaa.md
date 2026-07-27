@@ -195,7 +195,7 @@ The startup log should show `dict_sip.fdx`, `app_opensips.fdx`, and the
 `[AUTH] connected to MySQL` message if the hardcoded tutorial database
 connection succeeds.
 
-## OpenSIPS configuration
+## Configuration
 
 If you are building from source, verify that **aaa_diameter** compiles:
 

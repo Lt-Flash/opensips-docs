@@ -1,8 +1,8 @@
 ---
-title: "WebSocket Transport using OpenSIPS"
+title: "WebSocket Transport"
 subtitle: "WebSocket Transport"
 subtitleHref: "/modules/2-1/proto_ws"
-description: "This document describes how to use OpenSIPS as the core component of a SIP platform that connects both SIP clients (over UDP, TCP or TLS) as well as browser..."
+description: "Configure OpenSIPS WebSocket transport for a SIP platform that connects SIP clients over UDP, TCP or TLS as well as browser-based clients."
 ---
 
 ## Tutorial Overview

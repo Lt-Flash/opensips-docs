@@ -1,9 +1,9 @@
 ---
-title: "OpenSIPS FreeSWITCH Integration"
-description: "Build a current OpenSIPS 4.0 and FreeSWITCH integration using Debian packages, a default OpenSIPS-based routing script, and minimal FreeSWITCH changes."
+title: "FreeSWITCH Media Integration"
+description: "Build a current OpenSIPS 4.0 and FreeSWITCH integration using Debian packages, a default routing script and minimal FreeSWITCH changes."
 ---
 
-## Realtime **OpenSIPS - FreeSWITCH** Integration
+## Realtime FreeSWITCH Integration
 
 This tutorial shows how to set up OpenSIPS 4.0 and FreeSWITCH together using
 Debian packages, a database-backed OpenSIPS registrar and a minimal FreeSWITCH
@@ -135,7 +135,7 @@ Debian packages with the documented `fsdeb` flow:
 
 ---
 
-## OpenSIPS Configuration
+## Configuration
 
 The script below is based on the default OpenSIPS 4.0 residential script, with
 the following additions:
@@ -499,7 +499,7 @@ OpenSIPS 4.0 uses the canonical `module:command` MI command names, such as
 
 ---
 
-## Optional FreeSWITCH Directory from OpenSIPS Subscribers
+## Optional FreeSWITCH Directory from Subscribers
 
 The handoff above does not require FreeSWITCH directory users. Add this section
 when FreeSWITCH applications need a user object tied to each OpenSIPS

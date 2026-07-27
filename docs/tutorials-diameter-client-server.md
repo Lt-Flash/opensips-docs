@@ -1,6 +1,6 @@
 ---
 title: "Diameter Client/Server"
-subtitle: "How to build and process Diameter requests using OpenSIPS scripting"
+subtitle: "How to build and process Diameter requests using scripting"
 author: "by Liviu Chircu"
 description: "How to use the aaa_diameter module to send custom Diameter requests and process incoming Diameter requests from OpenSIPS script."
 ---
@@ -16,7 +16,7 @@ before building the OpenSIPS module from source:
 sudo apt -y install libfreediameter-dev
 ```
 
-## Installing the "aaa_diameter" OpenSIPS module
+## Installing the "aaa_diameter" module
 
 If you are building from source:
 

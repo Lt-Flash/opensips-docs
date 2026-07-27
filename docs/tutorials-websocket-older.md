@@ -1,6 +1,6 @@
 ---
-title: "Deploying WebSocket support with OpenSIPS and OverSIP"
-description: "The purpose of this tutorial is to show how to easily add WebRTC functionalities to any existing OpenSIPS deployment."
+title: "WebSocket Support with OverSIP"
+description: "How to add WebRTC functionality to an existing OpenSIPS deployment."
 ---
 
 ## Introduction
@@ -19,7 +19,7 @@ Secondly, the solution uses entirely open source components ( both for the serve
 
 ---
 
-## OpenSIPS Configuration
+## Configuration
 
 OpenSIPS will have to be configured with NAT support. If you do not have NAT support in your OpenSIPS script, or if you want to generate a brand new script, you should use the menuconfig tool and generate a new Residential type script, with NAT support enabled. For more information on generating scripts see [this manual page](/manual/devel/generating-configs)
 

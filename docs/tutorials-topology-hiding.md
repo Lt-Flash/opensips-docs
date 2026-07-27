@@ -1,5 +1,5 @@
 ---
-title: Topology Hiding with OpenSIPS
+title: Topology Hiding
 description: The purpose of this tutorial is to help you understand how the
   topology_hiding module works and also how it should be used.
 subtitle: Topology Hiding

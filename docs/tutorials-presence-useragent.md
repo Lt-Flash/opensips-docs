@@ -1,6 +1,6 @@
 ---
 title: Presence User Agent
-description: OpenSIPS can act as a SIP User Agent from presence point of view -
+description: SIP User Agent support from presence point of view -
   this means it can publish various types of presence information, like the
   status from Register Gateway to xmpp, presence Sending Publish a...
 ---

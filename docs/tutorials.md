@@ -2,127 +2,127 @@
 title: Tutorials
 description: OpenSIPS Advanced Tutorials
 ---
-## [Topology Hiding with OpenSIPS](/tutorials-topology-hiding)
+## [Topology Hiding](/tutorials-topology-hiding)
 
 Short introduction on configuring and using the topology_hiding module in OpenSIPS.
 
 - - -
 
-## [Accounting in OpenSIPS](/tutorials-advanced-accounting)
+## [Advanced Accounting](/tutorials-advanced-accounting)
 
-Unveils how SIP accounting works in OpenSIPS, from basic to complex scenarios with custom CDRs and multi-leg accounting for call forwarding. Everything is backed up by detailed explanations and working scripts examples.
+Unveils how SIP accounting works in OpenSIPS, from basic to complex scenarios with custom CDRs and multi-leg accounting for call forwarding. Everything is backed up by detailed explanations and working script examples.
 
 - - -
 
-## [Script_Helper usage](/tutorials-scripthelper)
+## [Script Helper](/tutorials-scripthelper)
 
 Module description and a complete usage example.
 
 - - -
 
-## [Call Recording using SIPREC](/tutorials-siprec)
+## [SIPREC Call Recording](/tutorials-siprec)
 
 This tutorial shows you how you can do call recording using the SIPREC standard.
 
 - - -
 
-## [Fraud detection with OpenSIPS](/tutorials-frauddetection)
+## [Fraud Detection](/tutorials-frauddetection)
 
 Description of the new module along with a complete usage example.
 
 - - -
 
-## [Message compression and compaction](/tutorials-compression)
+## [Message Compression](/tutorials-compression)
 
 Module description and a complete usage example.
 
 - - -
 
-## [Emergency calls using OpenSIPS](/tutorials-emergency)
+## [Emergency Calls](/tutorials-emergency)
 
 Architecture design and complete usage examples.
 
 - - -
 
-## [WebSocket and WebSocketSecure Integration with OpenSIPS](/tutorials-websocket)
+## [WebSocket Integration](/tutorials-websocket)
 
-How to add Websocket, and Websocket Secure (2.2+ only) capabilities to your existing OpenSIPS deployment.
+How to add WebSocket and WebSocket Secure (2.2+ only) capabilities to an existing OpenSIPS deployment.
 
 - - -
 
 ## [B2BUA](/tutorials-b2bua)
 
-Which is the architecture of the B2BUA implementation, how to define service scenario documents and how to configure OpenSIPS to offer B2BUA services.
+B2BUA architecture, service scenario documents and configuration for OpenSIPS B2BUA services.
 
 - - -
 
 ## [Presence Server](/tutorials-presence-server)
 
-Presence Server - design and configuration of Presence Server in **OpenSIPS**.
+Presence Server design and configuration in **OpenSIPS**.
 
 - - -
 
 ## [Presence User Agent](/tutorials-presence-useragent)
 
-Presence User Agent - support and configuration in **OpenSIPS**.
+Presence User Agent support and configuration in **OpenSIPS**.
 
 - - -
 
-## [Presence Resource List Server (RLS)](/tutorials-presence-rls)
+## [Presence RLS](/tutorials-presence-rls)
 
-Presence RLS - support and configuration in **OpenSIPS**.
+Presence RLS support and configuration in **OpenSIPS**.
 
 - - -
 
-## [Call Load Balancing](/tutorials-loadbalancing)
+## [Load Balancing](/tutorials-loadbalancing)
 
-How to use the load-balancing module from **OpenSIPS** to do traffic routing based on the real load of the destinations.
+How to use the load-balancing module from **OpenSIPS** to route traffic based on real destination load.
 
 - - -
 
 ## [Key-Value Interface](/tutorials-keyvalueinterface)
 
-How to use the Key-Value interface in **OpenSIPS** in order to store, persistently or not, key-value information.
+How to use the Key-Value interface in **OpenSIPS** to store persistent or transient key-value information.
 
 - - -
 
 ## [Event Interface](/tutorials-eventinterface)
 
-How to use **OpenSIPS** Event Interface in order to send events to external applications.
+How to use the **OpenSIPS** Event Interface to send events to external applications.
 
 - - -
 
-## [MemCache Usage](/tutorials-memorycaching)
+## [Memory Caching](/tutorials-memorycaching)
 
-How to use the memcache support in **OpenSIPS** in order to reduce the number of DB queries (authentication for example).
-
-- - -
-
-## [OpenSIPS - FreeSwitch Media Integration](/tutorials-opensipsfreeswitchintegration)
-
-This tutorial presents the concept and implementation of a realtime integration of OpenSIPS SIP server and FreeSWITCH media server. OpenSIPS is used a SIP server, while the purpose of FreeSWITCH is to provide a full set of media services - like voicemail, conference, announcements, etc.
+How to use memcache support in **OpenSIPS** to reduce database queries, such as authentication lookups.
 
 - - -
 
-## [Realtime OpenSIPS - Asterisk Integration](/tutorials-opensipsasteriskintegration)
+## [FreeSWITCH Media Integration](/tutorials-opensipsfreeswitchintegration)
 
-How to implement a realtime integration of OpenSIPS SIP server and Asterisk media server for Voicemail, conference and announcement services.
-
-- - -
-
-## [Concurrent calls limitation](/tutorials-concurrentcallslimitation)
-
-How to control in **OpenSIPS** how many concurrent calls a user is allow to do.
+Realtime integration between OpenSIPS and a FreeSWITCH media server for services such as voicemail, conferencing and announcements.
 
 - - -
 
-## [TLS setup](/tutorials-tls)
+## [Asterisk Realtime Integration](/tutorials-opensipsasteriskintegration)
 
-How to compile and configure the TLS support in **OpenSIPS** - script example included.
+Realtime integration between OpenSIPS and an Asterisk media server for voicemail, conferencing and announcement services.
 
 - - -
 
-## [A basic tutorial on RADIUS](/tutorials-radius)
+## [Concurrent Call Limits](/tutorials-concurrentcallslimitation)
+
+How to control in **OpenSIPS** how many concurrent calls a user is allowed to place.
+
+- - -
+
+## [TLS Setup](/tutorials-tls)
+
+How to compile and configure TLS support in **OpenSIPS**, with a script example included.
+
+- - -
+
+## [RADIUS Integration](/tutorials-radius)
 
 How to install, configure, integrate and use FreeRADIUS server and Radiusclient-ng with OpenSIPS modules for accounting and authorization.
 
@@ -130,54 +130,54 @@ How to install, configure, integrate and use FreeRADIUS server and Radiusclient-
 
 ## [SIP Redirect Server](/tutorials-redirect)
 
-How setup OpenSIPS as a SIP redirect using a external script - also restricting base on ip address:
+How to set up OpenSIPS as a SIP redirect server using an external script, with IP-based restrictions:
 Please note since I am new to OpenSIPS this may need be cleaned up a bit.
 
 - - -
 
-## [OpenSIPS and fail2ban](/tutorials-fail2ban)
+## [fail2ban Integration](/tutorials-fail2ban)
 
-This is a small tutorial so you can use fail2ban together with opensips to block via firewall the attackers that are using wrong authentication credentials.
+Use fail2ban with OpenSIPS to block attackers that repeatedly use wrong authentication credentials.
 
 - - -
 
-## [Voice Transcoding with OpenSIPS and Sangoma D-series cards](/tutorials-sangomavoicetranscoding)
+## [Sangoma Voice Transcoding](/tutorials-sangomavoicetranscoding)
 
 Performing audio transcoding using OpenSIPS and Sangoma hardware.
 
 - - -
 
-## [Scaling registrations with an OpenSIPS mid-registrar](/tutorials-midregistrar)
+## [Mid-Registrar](/tutorials-midregistrar)
 
 How to integrate an OpenSIPS mid-registrar with your VoIP platform, allowing it to keep growing.
 
 - - -
 
-## [How To Configure a "Federated" User Location Cluster](/tutorials-distributed-user-location-federation)
+## [Federated User Location](/tutorials-distributed-user-location-federation)
 
 Everything about federated user location clustering: setup, configuration, routing, NAT traversal and HA!
 
 - - -
 
-## [How To Configure "Full Sharing" User Location Clusters](/tutorials-distributed-user-location-full-sharing)
+## [Full-Sharing User Location](/tutorials-distributed-user-location-full-sharing)
 
 Detailed explanations and configuration examples on some essential "full sharing" user location setups.
 
 - - -
 
-## [Authentication and Accounting Using Diameter](/tutorials-diameter-aaa)
+## [Diameter Accounting](/tutorials-diameter-aaa)
 
 How to configure and deploy the aaa_diameter module and the "app_opensips" freeDiameter application.
 
 - - -
 
-## [RCS: Managing Capabilities](/tutorials-rcs-managing-capabilities)
+## [RCS Capabilities](/tutorials-rcs-managing-capabilities)
 
 String processing techniques for dealing with large lists of RCS capabilities.
 
 - - -
 
-## [Sending and Processing Diameter Requests](/tutorials-diameter-client-server)
+## [Diameter Client/Server](/tutorials-diameter-client-server)
 
 How to script Diameter Client and/or Server interactions for IMS Networks.
 

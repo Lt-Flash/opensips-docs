@@ -176,7 +176,7 @@ event_route [E_FRD_CRITICAL]
 The event parameter names are `param`, `value`, `threshold`, `user`,
 `called_number`, `rule_id` and `profile_id`.
 
-## Legacy OpenSIPS 2.1 Notes
+## Legacy 2.1 Notes
 
 OpenSIPS 2.1 used the same fraud rule table layout and the same
 `check_fraud()` concept, but the surrounding tooling and event-route syntax

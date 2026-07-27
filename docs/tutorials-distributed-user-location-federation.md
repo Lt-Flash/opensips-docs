@@ -2,7 +2,7 @@
 title: "How To Configure a Federated User Location Cluster"
 subtitle: "How To Configure a Federated User Location Cluster (for OpenSIPS 2.4)"
 author: "by Liviu Chircu"
-description: "The \"federation\" clustering strategy for the OpenSIPS user location is a complete, high-end solution, offering:"
+description: "The \"federation\" clustering strategy for OpenSIPS user location is a complete, high-end solution."
 ---
 
 ## Description

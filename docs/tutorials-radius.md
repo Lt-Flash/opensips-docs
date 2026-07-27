@@ -140,7 +140,7 @@ DEFAULT Auth-Type := Accept
 
 The entries are tested sequentially until a match is found. `DEFAULT` matches any user, so keep it after any specific users.
 
-## Using RADIUS From The OpenSIPS Script
+## Using RADIUS From The Script
 
 OpenSIPS uses RADIUS through its generic AAA interface:
 

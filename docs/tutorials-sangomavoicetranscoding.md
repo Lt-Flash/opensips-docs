@@ -1,5 +1,5 @@
 ---
-title: "Voice Transcoding in OpenSIPS using Sangoma D-series Cards"
+title: "Sangoma Voice Transcoding"
 author: "by Liviu Chircu"
 description: "This tutorial illustrates the required steps in order to perform audio transcoding with the D-series cards manufactured by Sangoma, using the sngtc_server da..."
 ---

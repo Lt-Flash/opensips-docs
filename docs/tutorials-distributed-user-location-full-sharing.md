@@ -1,7 +1,7 @@
 ---
 title: "How To Configure a \"Full Sharing\" User Location Cluster"
 author: "by Liviu Chircu"
-description: "The \"full sharing\" clustering strategy for the OpenSIPS 2.4+ user location service is a way of performing full-mesh data replication between the nodes of an..."
+description: "The \"full sharing\" clustering strategy for OpenSIPS user location performs full-mesh data replication between cluster nodes."
 ---
 
 ## Description

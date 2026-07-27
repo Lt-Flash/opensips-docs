@@ -1,6 +1,6 @@
 ---
 title: Presence RLS (Resource List Server)
-description: OpenSIPS has a Resource List Server implementation following the
+description: Resource List Server implementation following the
   specification in RFC 4662 and RFC 4826.
 ---
 OpenSIPS has a *Resource List Server (RLS)* implementation following the specification in RFC 4662 and RFC 4826. 

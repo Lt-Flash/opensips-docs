@@ -1,8 +1,8 @@
 ---
-title: "Call Recording using OpenSIPS and SIPREC"
+title: "SIPREC Call Recording"
 subtitle: "Call Recording"
 subtitleHref: "/modules/devel/siprec"
-description: "This document describes the steps to configure OpenSIPS devel to engage one or more SRS endpoints in an ongoing call."
+description: "Configure SIPREC to engage one or more SRS endpoints in an ongoing call."
 ---
 
 ## Tutorial Overview

@@ -8,7 +8,7 @@ addresses that repeatedly fail SIP authentication.  The configuration below
 keeps the OpenSIPS logging facility as-is and makes the Fail2Ban side adapt to
 the logging and firewall backend used by the operating system.
 
-## OpenSIPS Script
+## Script
 
 Keep your current `syslog_facility` value, such as the default `LOG_LOCAL0`.
 The important part is to log a stable marker when authentication fails because
@@ -56,7 +56,7 @@ Avoid editing `/etc/fail2ban/jail.conf` directly.  Distribution updates may
 replace it, so keep local configuration in `/etc/fail2ban/jail.d/*.local` and
 filters in `/etc/fail2ban/filter.d/`.
 
-## OpenSIPS Log Source
+## Log Source
 
 Fail2Ban can read either a regular log file or the systemd journal.  Pick the
 one that matches how OpenSIPS logs on your host.

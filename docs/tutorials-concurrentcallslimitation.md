@@ -1,7 +1,6 @@
 ---
 title: Concurrent calls limitation
-description: Implementing Concurrent Call limitation using OpenSIPS dialog
-  support with profiles.
+description: Implementing concurrent call limitation using OpenSIPS dialog profiles.
 ---
 OpenSIPS can implement concurrent calls limitation by using the *[call profiles](/modules/devel/dialog/#dialog_profiling)* support provided by the **[dialog](/modules/devel/dialog)** module.  The call profiles are a simple mechanism that allows to group certain calls and to count them. The grouping can be extended by using *labels* (values inside a group). This allows a better granularity when comes to counting calls. 
 

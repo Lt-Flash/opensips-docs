@@ -1,6 +1,6 @@
 ---
 title: "Event Interface"
-description: "The OpenSIPS Event Interface provides an easy way to notify external applications whenever certain events occur inside OpenSIPS. Basically it provides two in..."
+description: "The OpenSIPS Event Interface provides a common way to notify external applications whenever internal events occur."
 ---
 
 ## Event Interface

@@ -1,9 +1,9 @@
 ---
-title: "OpenSIPS Asterisk Integration"
-description: "Build an OpenSIPS 4.0 and Asterisk integration using OpenSIPS Debian packages, an Asterisk 22 LTS install, a default OpenSIPS-based routing script, and minimal Asterisk PJSIP changes."
+title: "Asterisk Realtime Integration"
+description: "Build an OpenSIPS 4.0 and Asterisk integration using OpenSIPS Debian packages, an Asterisk 22 LTS install, a default routing script and minimal Asterisk PJSIP changes."
 ---
 
-## Realtime **OpenSIPS - Asterisk** Integration
+## Realtime Asterisk Integration
 
 This tutorial shows how to set up OpenSIPS 4.0 and Asterisk together using
 OpenSIPS Debian packages, an Asterisk 22 LTS install, a database-backed
@@ -165,7 +165,7 @@ asterisk -rx 'core show version'
 
 ---
 
-## OpenSIPS Configuration
+## Configuration
 
 The script below is based on the default OpenSIPS 4.0 residential script, with
 the following additions:
@@ -500,7 +500,7 @@ OpenSIPS 4.0 uses the canonical `module:command` MI command names, such as
 
 ---
 
-## Optional Asterisk Realtime Views from OpenSIPS Subscribers
+## Optional Asterisk Realtime Views from Subscribers
 
 The handoff above does not require Asterisk user records. Add this section when
 Asterisk applications need user data that follows the OpenSIPS subscriber list,

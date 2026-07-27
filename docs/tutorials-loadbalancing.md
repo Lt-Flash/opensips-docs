@@ -1,7 +1,7 @@
 ---
-title: Load Balancing with OpenSIPS
+title: Load Balancing
 description: This tutorial is about how to implement a SIP load balancer for SIP
-  calls by using OpenSIPS (versions 1.9 and above)
+  calls.
 ---
 The "load-balancing" module comes to provide traffic routing based on load. Shortly, when **OpenSIPS** routes calls to a set of destinations, it is able to keep the load status (as number of ongoing calls) of each destination and to choose to route to the less loaded destination (at that moment).
 **OpenSIPS** is aware of the capacity of each destination - it is preconfigured with the maximum load accepted by the destinations. To be more precise, when routing, **OpenSIPS** will consider the less loaded destination not the destination with the smallest number of ongoing calls, but the destination with the largest available slot.

@@ -1,5 +1,5 @@
 ---
-title: "Emergency Calls using OpenSIPS"
+title: "Emergency Calls"
 subtitle: "Emergency"
 subtitleHref: "/modules/devel/emergency"
 description: "The emergency module provides NENA i2 emergency call treatment for OpenSIPS."
@@ -134,7 +134,7 @@ The signal flow exchanged in the third scenario is shown in the following pictur
 
 ![emergency figure7](/public/uploads/emergency-figure7.png)
 
-## OpenSIPS
+## Configuration Roles
 
 In this architecture OpenSIPS can act as the Call Server, as Redirect Server or as Routing Proxy depending on the role you want to assign it in each scenario.
 

@@ -298,7 +298,7 @@ For handshake debugging, filter on the OpenSIPS TLS socket:
 tcp.port == 5061
 ```
 
-## Legacy OpenSIPS 2.1 Example
+## Legacy 2.1 Example
 
 OpenSIPS 2.1 kept TLS certificate and domain parameters under `proto_tls`. It did not support database-backed TLS provisioning, so certificates and domains had to be defined directly in the script.
 

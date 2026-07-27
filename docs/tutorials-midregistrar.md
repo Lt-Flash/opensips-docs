@@ -1,7 +1,7 @@
 ---
-title: "Scaling registrations with an OpenSIPS mid-registrar"
+title: "Mid-Registrar"
 author: "by Liviu Chircu"
-description: "This tutorial will teach you how to configure an OpenSIPS mid-registrar in front of an existing SIP PBX or registrar. We will configure this new component to..."
+description: "Configure a mid-registrar in front of an existing SIP PBX or registrar."
 ---
 
 ## Tutorial Overview
