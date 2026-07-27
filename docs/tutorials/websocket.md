@@ -6,7 +6,7 @@ description: "Configure OpenSIPS WebSocket transport for a SIP platform that con
 ---
 
 > [!NOTE]
-> Other versions: [OpenSIPS 2.1 version](/tutorials-websocket-2-1), [older than OpenSIPS 2.1](/tutorials-websocket-older).
+> Other versions: [OpenSIPS 2.1 version](/tutorials/websocket-2-1), [older than OpenSIPS 2.1](/tutorials/websocket-older).
 
 ## Tutorial Overview
 

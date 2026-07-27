@@ -4,7 +4,7 @@ description: "OpenSIPS has many features but in the way it behaves when a media 
 ---
 
 > [!NOTE]
-> Other versions: [older than OpenSIPS 3.2](/tutorials-b2bua-older-3-2), [OpenSIPS 1.6 version](/tutorials-b2bua-1-6).
+> Other versions: [older than OpenSIPS 3.2](/tutorials/b2bua-older-3-2), [OpenSIPS 1.6 version](/tutorials/b2bua-1-6).
 
 ## Back-to-Back User Agent
 

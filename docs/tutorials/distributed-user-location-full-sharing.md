@@ -28,7 +28,7 @@ The *"full sharing"* clustering strategy for the OpenSIPS 2.4+ user location ser
 
   
 
-Building upon this setup, the [federated user location](/tutorials-distributed-user-location-federation) clustering strategy ensures similar features as above, except it will not replicate user location data across different points of presence, allowing you to scale each POP according to the size of its subscriber pool.
+Building upon this setup, the [federated user location](/tutorials/distributed-user-location-federation) clustering strategy ensures similar features as above, except it will not replicate user location data across different points of presence, allowing you to scale each POP according to the size of its subscriber pool.
 
 ## Active/passive "full sharing" setup
 

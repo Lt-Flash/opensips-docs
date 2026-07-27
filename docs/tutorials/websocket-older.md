@@ -12,7 +12,7 @@ Secondly, the solution uses entirely open source components ( both for the serve
 
 ## Platform Components
 
-* We will be using OpenSIPS as the core part of the platform, handling all the SIP traffic. For a basic tutorial of setting up OpenSIPS see the [getting started tutorial](/tutorials-gettingstarted)
+* We will be using OpenSIPS as the core part of the platform, handling all the SIP traffic.
 * [OverSIP](http://oversip.net) will be used as a WebSocket to SIP gateway - all the WebSocket traffic will reach OverSIP, which will decapsulate the SIP traffic and relay it to the OpenSIPS proxy. OverSIP packages are available for Debian based systems and detailed installation instructions are available for other operating systems as well - see OverSIP deployment tutorial [here](http://oversip.net/documentation/1.3.x/installation/)
 
 * For the SIP client for testing purposes, we will be using [sipML5](http://sipml5.org/) . It can be downloaded from [here](http://code.google.com/p/sipml5/source/checkout) and installation is very straight-forward : just copy the sources to your /var/www/ folder. The client's media stack relies on WebRTC and the client can be used to connect to any SIP or IMS network from your preferred browser to make and receive audio/video calls and instant messages. Furthermore, sipML5 should work on any web browser supporting WebRTC but we highly recommend using [Google Chrome](https://www.google.com/intl/en/chrome/browser/) or [Firefox Nightly](http://nightly.mozilla.org/) for testing.

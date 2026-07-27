@@ -19,7 +19,7 @@ The "federation" clustering strategy for the OpenSIPS user location is a complet
 
   
 
-Instead of full-mesh replicating user location data to the entire cluster (i.e. just like the ["full sharing"](/tutorials-distributed-user-location-full-sharing) clustering strategy does), the nodes will only publish some light, metadata "AoR availability" records into a shared NoSQL database, as in this picture:
+Instead of full-mesh replicating user location data to the entire cluster (i.e. just like the ["full sharing"](/tutorials/distributed-user-location-full-sharing) clustering strategy does), the nodes will only publish some light, metadata "AoR availability" records into a shared NoSQL database, as in this picture:
 
   
 

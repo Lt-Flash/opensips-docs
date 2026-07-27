@@ -539,7 +539,7 @@ modparam("tm", "pass_provisional_replies", 1)
 
 ### Example
 
-You can find [here](/tutorials-b2buaconfigexample) a configuration file example that loads the two scenarios presented in this tutorial and enables the **prepaid** service for a certain user. Also the mi_fifo module is loaded here and it will be possible to send MI commands to instantiate the **marketing** scenario.
+You can find [here](/tutorials/b2buaconfigexample) a configuration file example that loads the two scenarios presented in this tutorial and enables the **prepaid** service for a certain user. Also the mi_fifo module is loaded here and it will be possible to send MI commands to instantiate the **marketing** scenario.
 
 ### Script routes
 #### Special B2B route
