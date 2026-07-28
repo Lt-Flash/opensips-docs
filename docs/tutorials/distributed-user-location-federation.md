@@ -1,6 +1,6 @@
 ---
 title: "How To Configure a Federated User Location Cluster"
-subtitle: "How To Configure a Federated User Location Cluster (for OpenSIPS 2.4)"
+subtitle: "How To Configure a Federated User Location Cluster (for OpenSIPS 4.0)"
 author: "by Liviu Chircu"
 description: "The \"federation\" clustering strategy for OpenSIPS user location is a complete, high-end solution."
 ---
@@ -17,23 +17,18 @@ The "federation" clustering strategy for the OpenSIPS user location is a complet
 * optional restart persistency support
 * optional "hot backup" HA support
 
-  
 
 Instead of full-mesh replicating user location data to the entire cluster (i.e. just like the ["full sharing"](/tutorials/distributed-user-location-full-sharing) clustering strategy does), the nodes will only publish some light, metadata "AoR availability" records into a shared NoSQL database, as in this picture:
 
-  
 
 ![federation basic](/public/uploads/federation-basic.jpg)
 
-  
 
 This setup also supports a "hot backup" node for each member of the cluster, allowing for near-instant failover in case the active node crashes or goes offline. This is achieved using a Virtual IP, sitting in front of each pair of servers, as in this diagram:
 
-  
 
 ![federation ha](/public/uploads/federation-ha.jpg)
 
-  
 
 ### Configuration
 
@@ -45,12 +40,10 @@ For the smallest possible setup, you will need:
 
 Below are the relevant OpenSIPS config sections:
 
-  
 
 ```opensips
 
 loadmodule "usrloc.so"
-modparam("usrloc", "use_domain", 1)
 modparam("usrloc", "working_mode_preset", "federation-cachedb-cluster")
 modparam("usrloc", "location_cluster", 1)
 
@@ -70,13 +63,11 @@ loadmodule "cachedb_mongodb.so"
 modparam("usrloc", "cachedb_url", "mongodb://10.0.0.5:27017/opensipsDB.userlocation")
 
 loadmodule "clusterer.so"
-modparam("clusterer", "current_id", 3)
-modparam("clusterer", "seed_fallback_interval", 5)
+modparam("clusterer", "my_node_id", 3)
 modparam("clusterer", "db_url", "mysql://opensips:opensipsrw@localhost/opensips")
 
 ```
 
-  
 
 Example clusterer table with no HA (2 active nodes):
 
@@ -95,11 +86,9 @@ INSERT INTO clusterer(id, cluster_id, node_id, url, state, no_ping_retries, prio
 
 **clusterer table example (no HA)**
 
-  
 
 Notice how we set the "flags" column to "seed" for both nodes. This ensures that the user location can safely boot with an empty dataset and be happy with it. If we had left "flags" set to NULL for a node, when that node starts up, its user location module would have started looking for a healthy donor node, from which to request a full user location data transfer via cluster sync. Also, the "sip_addr" column is equal to the SIP listener where we would like to receive traffic for the AoRs we've advertised as our own inside the NoSQL database. This is a usrloc-specific use case for "sip_addr" - other cluster-enabled modules may use this column differently or ignore it altogether.
 
-  
 
 Example clusterer table provisioning with HA (2 active nodes + 2 passive nodes):
 
@@ -122,9 +111,8 @@ INSERT INTO clusterer(id, cluster_id, node_id, url, state, no_ping_retries, prio
 
 **clusterer table example (with HA)**
 
-  
 
-To achieve HA, notice how we group nodes in pairs using the "sip_addr" column.  It now contains the Virtual IP address sitting in front of each pair.  In federation mode, the user location will only replicate contact information to nodes with equal "sip_addr" values, in order to achieve the "hot backup" feature.  Next, the "flags" column is set to "seed" on the active node, and NULL on the backup.  This allows you to restart the backup node and automatically have it sync'ed up via cluster transfer.  The "flags" column is ignored when using a local SQL database for [restart persistency](/modules/2-4/usrloc#param_restart_persistency).
+To achieve HA, notice how we group nodes in pairs using the "sip_addr" column.  It now contains the Virtual IP address sitting in front of each pair.  In federation mode, the user location will only replicate contact information to nodes with equal "sip_addr" values, in order to achieve the "hot backup" feature.  Next, the "flags" column is set to "seed" on the active node, and NULL on the backup.  This allows you to restart the backup node and automatically have it sync'ed up via cluster transfer.  The "flags" column is ignored when using a local SQL database for [restart persistency](/modules/4-1/usrloc#param_restart_persistency).
 
 #### Registration flows
 
@@ -133,51 +121,45 @@ The registration flow has two steps:
 * UAs register to their configured registrar
 * if a new AoR is created, the registrar publishes the AoR's availability in the NoSQL cluster
 
-We need not change anything in the default script in order to achieve the above. The [working_mode_preset](/modules/2-4/usrloc#param_working_mode_preset) or [cluster_mode](/modules/2-4/usrloc#param_cluster_mode) module parameters take care of this.
+We need not change anything in the default script in order to achieve the above. The [working_mode_preset](/modules/4-1/usrloc#param_working_mode_preset) or [cluster_mode](/modules/4-1/usrloc#param_cluster_mode) module parameters take care of this.
 
-  
 
 ![federation registration](/public/uploads/federation-registration.jpg)
 
-  
 
 #### Call flows
 
 When looking up an AoR, we have two options:
 
-* local lookup, using [lookup("location")](/modules/2-4/registrar#func_lookup)
-* global lookup, using [lookup("location", "g")](/modules/2-4/registrar#func_lookup)
+* local lookup, using [lookup("location")](/modules/4-1/registrar#func_lookup)
+* global lookup, using [lookup("location", "global")](/modules/4-1/registrar#func_lookup)
 
-  
 
-The "g" (global) flag indicates that the lookup() will not only perform the local lookup operation, but also do a NoSQL DB lookup and prepare additional branches for each returned result. Thus, we will fork the INVITE to both the callee's local contacts and to any cluster member that has previously advertised the AoR. Below is an example of a call that gets forked to a device local to the current PoP (branch #1) and to a remote PoP (branch #2), where the callee has registered a 2nd device.
+The "global" flag indicates that the lookup() will not only perform the local lookup operation, but also do a NoSQL DB lookup and prepare additional branches for each returned result. Thus, we will fork the INVITE to both the callee's local contacts and to any cluster member that has previously advertised the AoR. Below is an example of a call that gets forked to a device local to the current PoP (branch #1) and to a remote PoP (branch #2), where the callee has registered a 2nd device.
 
-  
 
 ![federation forking](/public/uploads/federation-forking.jpg)
 
-  
 
-At OpenSIPS script level, we can easily distinguish calls coming in from fellow cluster nodes using [cluster_check_addr()](/modules/2-4/clusterer#func_cluster_check_addr):
+At OpenSIPS script level, we can easily distinguish calls coming in from fellow cluster nodes using [cluster_check_addr()](/modules/4-1/clusterer#func_cluster_check_addr):
 
-  
 
 ```opensips
 
 route {
     ...
 
-    $var(lookup_flags) = "m";
+    $var(lookup_flags) = "method-filtering";
 
-    if (cluster_check_addr("1", "$si")) {
+    if (cluster_check_addr(1, "$si")) {
         xlog("$rm from cluster, doing local lookup only\n");
     } else {
         xlog("$rm from outside, doing global lookup\n");
-        $var(lookup_flags) = $var(lookup_flags) + "g";
+        $var(lookup_flags) = $var(lookup_flags) + ",global";
     }
 
-    if (!lookup("location", "$var(lookup_flags)")) {
-        t_reply("404", "Not Found");
+    if (!lookup("location", $var(lookup_flags))) {
+        t_reply(404, "Not Found");
         exit;
     }
 
@@ -201,13 +183,13 @@ modparam("nathelper", "max_pings_lost", 5)
 
 ```
 
-We then enable these branch flags for some or all contacts before calling [save()](/modules/2-4/registrar#func_save):
+We then enable these branch flags for some or all contacts before calling [save()](/modules/4-1/registrar#func_save):
 
 ```opensips
 
     ...
-    setbflag(SIPPING_ENABLE);
-    setbflag(SIPPING_RTO);
+    setbflag("SIPPING_ENABLE");
+    setbflag("SIPPING_RTO");
 
     if (!save("location"))
         sl_reply_error();
@@ -215,7 +197,6 @@ We then enable these branch flags for some or all contacts before calling [save(
 
 ```
 
-  
 
 However, when we enable HA for federated clustering, **both** the active and the passive node will attempt to generate pings. Depending on your VIP implementation, your passive node may spew errors such as:
 
@@ -230,12 +211,12 @@ May 30 06:09:58 localhost /usr/sbin/opensips[18833]: ERROR:nathelper:nh_timer: s
 
 ```
 
-To silence these errors, you can hook the [nh_enable_ping](/modules/2-4/nathelper#mi_nh_enable_ping) MI command into your active->backup and backup->active transitions of the VIP:
+To silence these errors, you can hook the [nh_enable_ping](/modules/4-1/nathelper#mi_nh_enable_ping) MI command into your active->backup and backup->active transitions of the VIP:
 
 ```bash
 
-    opensipsctl fifo nh_enable_ping 1 # run this on the machine that takes over the VIP (new active)
-    opensipsctl fifo nh_enable_ping 0 # run this on the machine that gives up the VIP (new passive)
+    opensips-mi nh_enable_ping 1 # run this on the machine that takes over the VIP (new active)
+    opensips-mi nh_enable_ping 0 # run this on the machine that gives up the VIP (new passive)
 
 ```
 

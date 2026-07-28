@@ -55,27 +55,17 @@ All functions properly handle retransmissions. More details can be found in the 
   
 
 ```opensips
-
 ####### Global Parameters #########
 
-debug=6
-log_stderror=yes
-log_facility=LOG_LOCAL0
+log_level=3
+xlog_level=3
+stderror_enabled=yes
+syslog_enabled=no
+syslog_facility=LOG_LOCAL0
 
-fork=yes
-children=6
+udp_workers=4
 
-memdump=1
-
-auto_aliases=no
-
-listen=udp:eth1:5060
-
-disable_tcp=yes
-
-disable_tls=no
-
-exec_msg_threshold=200000
+socket=udp:127.0.0.1:5060
 
 ####### Modules ########
 
@@ -84,173 +74,172 @@ mpath = "modules/"
 loadmodule "exec.so"
 loadmodule "signaling.so"
 loadmodule "sl.so"
-loadmodule "tm.so"
-loadmodule "rr.so"
 loadmodule "maxfwd.so"
 loadmodule "sipmsgops.so"
-loadmodule "mi_fifo.so"
 loadmodule "db_mysql.so"
-loadmodule "uri.so"
-loadmodule "dialog.so"
-loadmodule "usrloc.so"
 loadmodule "registrar.so"
 loadmodule "sngtc.so"
 
-modparam("tm", "fr_timer", 5)
-modparam("tm", "fr_inv_timer", 30)
+loadmodule "tm.so"
+modparam("tm", "fr_timeout", 5)
+modparam("tm", "fr_inv_timeout", 30)
 modparam("tm", "restart_fr_on_each_reply", 0)
 modparam("tm", "disable_6xx_block", 1)
 modparam("tm", "onreply_avp_mode", 1)
 
+#### Record Route Module
+loadmodule "rr.so"
+/* do not append from tag to the RR (no need for this script) */
 modparam("rr", "append_fromtag", 0)
 
-modparam("mi_fifo", "fifo_name", "/tmp/opensips_fifo")
+#### FIFO Management Interface
+loadmodule "mi_fifo.so"
+modparam("mi_fifo", "fifo_name", "/var/tmp/opensips_fifo")
+modparam("mi_fifo", "fifo_mode", 0666)
 
-modparam("uri", "use_uri_table", 0)
-
+#### DIALOG module
+loadmodule "dialog.so"
 modparam("dialog", "db_mode", 0)
 modparam("dialog", "default_timeout", 3600)
 
-modparam("usrloc", "db_mode",   1)
-modparam("usrloc", "db_url",    "mysql://root:sangoma@localhost/opensips")
+#### USeR LOCation module
+loadmodule "usrloc.so"
+modparam("usrloc", "working_mode_preset", "single-instance-no-db")
+modparam("usrloc", "db_url",	"mysql://opensips:opensipsrw@localhost/opensips")
+
+loadmodule "proto_udp.so"
 
 ####### Routing Logic ########
 
 route {
 
-    if (!mf_process_maxfwd_header("10")) {
-        sl_send_reply("483","Too Many Hops");
-        exit;
-    }
+	if (!mf_process_maxfwd_header(10)) {
+		sl_send_reply(483, "Too Many Hops");
+		exit;
+	}
 
-    force_rport();
+	force_rport();
 
-    if (has_totag()) {
-        # sequential request withing a dialog should
-        # take the path determined by record-routing
+	if (has_totag()) {
+		# sequential request withing a dialog should
+		# take the path determined by record-routing
 
-        if (loose_route()) {
+		if (loose_route()) {
 
-            if (is_method("BYE")) {
-                setsflag(FAIL_TRANS_FLAG);
-            } else if (is_method("INVITE")) {
-                sngtc_offer();
-            } else if (is_method("ACK")) {
-                sngtc_caller_answer();
-            }
+			if (is_method("BYE")) {
+				setsflag(FAIL_TRANS_FLAG);
+			} else if (is_method("INVITE")) {
+				sngtc_offer();
+			} else if (is_method("ACK")) {
+				sngtc_caller_answer();
+			}
 
-            # route it out to whatever destination was set by loose_route()
-            # in $du (destination URI).
-            route(1);
-        } else {
+			# route it out to whatever destination was set by loose_route()
+			# in $du (destination URI).
+			route(relay);
+		} else {
 
-            if (is_method("ACK")) {
-                if (t_check_trans()) {
-                    # non loose-route, but stateful ACK; must be an ACK after 
-                    # a 487 or e.g. 404 from upstream server
-                    t_relay();
-                    exit;
-                } else {
-                    # ACK without matching transaction ->
-                    # ignore and discard
-                    exit;
-                }
-            }
-            sl_send_reply("404","Not here");
-        }
-        exit;
-    }
+			if (is_method("ACK")) {
+				if (t_check_trans()) {
+					# non loose-route, but stateful ACK; must be an ACK after
+					# a 487 or e.g. 404 from upstream server
+					t_relay();
+					exit;
+				} else {
+					# ACK without matching transaction ->
+					# ignore and discard
+					exit;
+				}
+			}
+			sl_send_reply(404, "Not here");
+		}
+		exit;
+	}
 
-    # CANCEL processing
-    if (is_method("CANCEL"))
-    {
-        if (t_check_trans())
-            t_relay();
-        exit;
-    }
+	# CANCEL processing
+	if (is_method("CANCEL")) {
+		if (t_check_trans())
+			t_relay();
+		exit;
+	}
 
-    t_check_trans();
+	# absorb retransmissions, but do not create transaction
+	t_check_trans();
 
-    # preloaded route checking
-    if (loose_route()) {
-        xlog("L_ERR",
-        "Attempt to route with preloaded Route's [$fu/$tu/$ru/$ci]");
-        if (!is_method("ACK"))
-            sl_send_reply("403","Preload Route denied");
-        exit;
-    }
+	# preloaded route checking
+	if (loose_route()) {
+		xlog("L_ERR",
+			"Attempt to route with preloaded Route's [$fu/$tu/$ru/$ci]");
+		if (!is_method("ACK"))
+			send_reply(403, "Preload Route denied");
+		exit;
+	}
 
-    # record routing
-    if (!is_method("REGISTER|MESSAGE"))
-        record_route();
+	# record routing
+	if (!is_method("REGISTER|MESSAGE"))
+		record_route();
 
-    # requests for my domain
-    if (is_method("PUBLISH|SUBSCRIBE"))
-    {
-        sl_send_reply("503", "Service Unavailable");
-        exit;
-    }
+	# requests for my domain
+	if (is_method("PUBLISH|SUBSCRIBE")) {
+		send_reply(503, "Service Unavailable");
+		exit;
+	}
 
-    if (is_method("REGISTER"))
-    {
-        if (!save("location"))
-            sl_reply_error();
+	if (is_method("REGISTER")) {
+		if (!save("location"))
+			sl_reply_error();
 
-        exit;
-    }
+		exit;
+	}
 
-    if ($rU == NULL) {
-        sl_send_reply("484","Address Incomplete");
-        exit;
-    }
+	if (!$rU) {
+		# request with no Username in RURI
+		send_reply(484, "Address Incomplete");
+		exit;
+	}
 
-    # do lookup with method filtering
-    if (!lookup("location","m")) {
+	# do lookup with method filtering
+	if (!lookup("location","method-filtering")) {
+		t_reply(404, "Not Found");
+		exit;
+	}
 
-        t_newtran();
-        t_reply("404", "Not Found");
-        exit;
-    }
+	if (is_method("INVITE"))
+		sngtc_offer();
 
-    if (is_method("INVITE"))
-        sngtc_offer();
-
-    route(1);
+	route(relay);
 }
 
-route[1] {
-    # for INVITEs enable some additional helper routes
-    if (is_method("INVITE")) {
-        t_on_reply("2");
-        t_on_failure("1");
-    }
+route[relay] {
+	# for INVITEs enable some additional helper routes
+	if (is_method("INVITE")) {
+		t_on_reply("handle_answer");
+		t_on_failure("missed_call");
+	}
 
-    if (!t_relay()) {
-        send_reply("500", "Internal Error");
-    }
+	if (!t_relay()) {
+		send_reply(500, "Internal Error");
+	}
 
-    exit;
+	exit;
 }
 
-onreply_route[2] {
-
-    if ($rs == 200)
-        sngtc_callee_answer("11.12.13.14", "11.12.13.14");
+onreply_route[handle_answer] {
+	if ($rs == 200)
+		sngtc_callee_answer("11.12.13.14", "11.12.13.14");
 }
 
-failure_route[1] {
+failure_route[missed_call] {
+	if (t_was_cancelled()) {
+		exit;
+	}
 
-    if (t_was_cancelled()) {
-        exit;
-    }
-
-    if (next_branches()) {
-        t_on_reply("2");
-        t_on_failure("1");
-        t_relay();
-    }
+	if (next_branches()) {
+		t_on_reply("handle_answer");
+		t_on_failure("missed_call");
+		t_relay();
+	}
 }
-
 ```
 
 The transcoding sessions on the Sangoma cards are closed in a transparent manner, based on dialog callbacks.
