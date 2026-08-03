@@ -1,0 +1,38 @@
+name: notify web
+
+# Republish web.opensips.org when the flat documentation changes.
+#
+# This repo only sends the trigger; the build runs on the web host via the
+# self-hosted runner attached to OpenSIPS/opensips-web.
+#
+# Needs a WEB_DISPATCH_TOKEN secret: a fine-grained PAT owned by OpenSIPS,
+# scoped to opensips-web alone, with Actions: Read and write. GITHUB_TOKEN
+# cannot be used — it is confined to this repository.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'public/uploads/**'
+
+permissions: {}
+
+# The publish is slow and only ever needs the newest state, so collapse a burst
+# of pushes into one trigger.
+concurrency:
+  group: notify-web
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the website publish
+        env:
+          GH_TOKEN: ${{ secrets.WEB_DISPATCH_TOKEN }}
+        run: |
+          jq -nc '{ref: "main", inputs: {scope: "docs"}}' \
+            | gh api --method POST \
+                repos/OpenSIPS/opensips-web/actions/workflows/publish.yml/dispatches \
+                --input -
