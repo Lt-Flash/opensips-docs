@@ -1,6 +1,6 @@
 name: notify web
 
-# Republish web.opensips.org when the flat documentation changes.
+# Republish docs.opensips.org when the flat documentation changes.
 #
 # This repo only sends the trigger; the build runs on the web host via the
 # self-hosted runner attached to OpenSIPS/opensips-web.
