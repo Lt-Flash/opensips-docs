@@ -40,4 +40,4 @@ jobs:
           repo: ${{ secrets.OPENSIPS_WEB_REPO }}
           workflow: publish.yml
           ref: main
-          inputs: { "component": "docs" }
+          inputs: '{"component": "docs"}'
