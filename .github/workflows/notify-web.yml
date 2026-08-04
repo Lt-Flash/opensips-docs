@@ -1,38 +1,43 @@
-name: notify web
-
-# Republish docs.opensips.org when the flat documentation changes.
-#
-# This repo only sends the trigger; the build runs on the web host via the
-# self-hosted runner attached to OpenSIPS/opensips-web.
-#
-# Needs a WEB_DISPATCH_TOKEN secret: a fine-grained PAT owned by OpenSIPS,
-# scoped to opensips-web alone, with Actions: Read and write. GITHUB_TOKEN
-# cannot be used — it is confined to this repository.
+name: Publish opensips.org Docs
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'docs/**'
       - 'public/uploads/**'
 
-permissions: {}
+  workflow_dispatch:
 
-# The publish is slow and only ever needs the newest state, so collapse a burst
-# of pushes into one trigger.
+permissions:
+  contents: read
+
 concurrency:
   group: notify-web
   cancel-in-progress: true
 
 jobs:
   dispatch:
+    name: Trigger website publication
     runs-on: ubuntu-latest
+
     steps:
-      - name: Trigger the website publish
-        env:
-          GH_TOKEN: ${{ secrets.WEB_DISPATCH_TOKEN }}
-        run: |
-          jq -nc '{ref: "main", inputs: {scope: "docs"}}' \
-            | gh api --method POST \
-                repos/OpenSIPS/opensips-web/actions/workflows/publish.yml/dispatches \
-                --input -
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.OPENSIPS_WEB_APP }}
+          private-key: ${{ secrets.OPENSIPS_WEB_KEY }}
+          owner: OpenSIPS
+          repositories: ${{ secrets.OPENSIPS_WEB_REPO }}
+          permission-actions: write
+
+      - name: Trigger private publish workflow
+        uses: step-security/workflow-dispatch@v1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          repo: ${{ secrets.OPENSIPS_WEB_REPO }}
+          workflow: publish.yml
+          ref: main
+          inputs: { "component": "docs" }
