@@ -6,7 +6,7 @@ description: This tutorial is about how to implement a SIP load balancer for SIP
 The "load-balancing" module comes to provide traffic routing based on load. Shortly, when **OpenSIPS** routes calls to a set of destinations, it is able to keep the load status (as number of ongoing calls) of each destination and to choose to route to the less loaded destination (at that moment).
 **OpenSIPS** is aware of the capacity of each destination - it is preconfigured with the maximum load accepted by the destinations. To be more precise, when routing, **OpenSIPS** will consider the less loaded destination not the destination with the smallest number of ongoing calls, but the destination with the largest available slot.
 
-Also, the **[load-balancing](/modules/devel/load_balancer)** (LB) module is able to receive feedback from the destinations (if they are capable of). This mechanism is used for notifying **OpenSIPS** when the maximum capacity of a destination changed (like a GW with more or less E1 cards).
+Also, the **[load-balancing](/manual/devel/modules/load_balancer)** (LB) module is able to receive feedback from the destinations (if they are capable of). This mechanism is used for notifying **OpenSIPS** when the maximum capacity of a destination changed (like a GW with more or less E1 cards).
 
 The "load-balancing" functionality comes to enhance the "dispatcher" one. The difference comes in having or not load information about the destinations where you are routing to:
 
@@ -66,7 +66,7 @@ The resource detection is done in the **OpenSIPS** routing script, based on what
 
 The first parameter of the function identifies the LB set to be used (see the *group_id* column in the above DB snapshot). Second parameter is list of the required resource for the call. A third optional parameter my be passed to instruct the LB engine on how to estimate the load - in absolute value (how many channels are used) or in relative value (how many percentages are used).
 
-The **[lb_start](/modules/devel/load_balancer/#func_lb_start)()** will automatically create the dialog state for the call (in order to monitor it) and will also allocate the requested resources for it (from the selected box).  
+The **[lb_start](/manual/devel/modules/load_balancer/#func_lb_start)()** will automatically create the dialog state for the call (in order to monitor it) and will also allocate the requested resources for it (from the selected box).  
 
 The function will set as destination URI (`$du`) the address of the selected destination/box.
 
@@ -79,7 +79,7 @@ The LB module provides an MI function that allows the admin to inspect the curre
 The logic used by the LB module to select the destination is:
 
 * gets the **destination set based on the group_id** (first parameter of the *lb_start()* function)
-* selects from the set only the **destinations that are able to provide the requested resources** (second parameter of the *[lb_start](/modules/devel/load_balancer/#func_lb_start)()* function)
+* selects from the set only the **destinations that are able to provide the requested resources** (second parameter of the *[lb_start](/manual/devel/modules/load_balancer/#func_lb_start)()* function)
 * for the selected destinations, it **evaluated the current load** for each requested resource
 * the winning destination is the one with **the biggest value for the minimum available load** per resources.
 
@@ -117,14 +117,14 @@ The selection algorithm tries to avoid the intensive usage of a resource per box
 
 The Load Balancer modules provides couple of functionalities to help in dealing with failures of the destinations. The actual detection of a failed destination (based on the SIP traffic) is done in the OpenSIPS routing script by looking at the codes of the replies you receive back from the destinations (see the example at the end of tutorial).
 
-Once a destination is detected at failed, in script, you can mark it as disabled via the[ **lb_disable**](/modules/devel/load_balancer/#func_lb_disable_dst)**()** function - once marked as disabled, the destination will not be used anymore in the LB process (it will not be considered a possible destination when routing calls).
+Once a destination is detected at failed, in script, you can mark it as disabled via the[ **lb_disable**](/manual/devel/modules/load_balancer/#func_lb_disable_dst)**()** function - once marked as disabled, the destination will not be used anymore in the LB process (it will not be considered a possible destination when routing calls).
 
 For a destination to be set back as enabled, there are two options:
 
-* use the MI command [lb_status](/modules/devel/load_balancer/#mi_status) to do it manually, from outside OpenSIPS
-* based on probing - the destination must have the SIP probing/pinging enabled - once the destination starts replying with 200 OK replies to the SIP pings (see the [probing_reply_codes](/modules/devel/load_balancer/#param_probing_reply_codes) option).
+* use the MI command [lb_status](/manual/devel/modules/load_balancer/#mi_status) to do it manually, from outside OpenSIPS
+* based on probing - the destination must have the SIP probing/pinging enabled - once the destination starts replying with 200 OK replies to the SIP pings (see the [probing_reply_codes](/manual/devel/modules/load_balancer/#param_probing_reply_codes) option).
 
-To enable pinging, you need first to set [probing_interval](/modules/devel/load_balancer/#param_probing_interval) to a non zero value - how often the pinging should be done. The pinging will be done by periodically sending a **OPTIONS** SIP request to the destination - see [probing_method](/modules/devel/load_balancer/#param_probing_method) option.
+To enable pinging, you need first to set [probing_interval](/manual/devel/modules/load_balancer/#param_probing_interval) to a non zero value - how often the pinging should be done. The pinging will be done by periodically sending a **OPTIONS** SIP request to the destination - see [probing_method](/manual/devel/modules/load_balancer/#param_probing_method) option.
 
 To control which and when a destination is pinged, there is the **probe_mode** column in the **load_balancer** table - see [table definition](/manual/devel/install-dbschema/#load-balancer). Possible options are:
 
@@ -138,14 +138,14 @@ The Load Balancer module provides several MI functions to allow you to do runtim
 
 Pushing changes at runtime:
 
-* **lb_reload** - force reloading the entire configuration data from DB - see [more..](/modules/devel/load_balancer/#mi_reload)
-* **lb_resize** - change the capacity of a resource for a destination - see [more..](/modules/devel/load_balancer/#mi_resize)
-* **lb_status** - change the status of a destination (enable/disable) - see [more..](/modules/devel/load_balancer/#mi_status)
+* **lb_reload** - force reloading the entire configuration data from DB - see [more..](/manual/devel/modules/load_balancer/#mi_reload)
+* **lb_resize** - change the capacity of a resource for a destination - see [more..](/manual/devel/modules/load_balancer/#mi_resize)
+* **lb_status** - change the status of a destination (enable/disable) - see [more..](/manual/devel/modules/load_balancer/#mi_status)
 
 For fetching realtime information :
 
-* **lb_list** - list the load on all destinations (per resource) - see [more..](/modules/devel/load_balancer/#mi_list)
-* **lb_status** - see the status of a destination (enable/disable) - see [more..](/modules/devel/load_balancer/#mi_status)
+* **lb_list** - list the load on all destinations (per resource) - see [more..](/manual/devel/modules/load_balancer/#mi_list)
+* **lb_status** - see the status of a destination (enable/disable) - see [more..](/manual/devel/modules/load_balancer/#mi_status)
 
 - - -
 

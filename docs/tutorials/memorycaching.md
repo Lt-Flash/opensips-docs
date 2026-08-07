@@ -22,7 +22,7 @@ The core API offers the basic cache operations:
 
 When storing a value, the script can also set a lifetime for the attribute. This allows OpenSIPS to automatically expire cached data and periodically refresh it from the authoritative source.
 
-Cache backends are provided by modules. For local shared-memory caching, use the [cachedb_local module](/modules/devel/cachedb_local). Other deployments can use external cache backends, such as Redis or Memcached, through their corresponding cachedb modules.
+Cache backends are provided by modules. For local shared-memory caching, use the [cachedb_local module](/manual/devel/modules/cachedb_local). Other deployments can use external cache backends, such as Redis or Memcached, through their corresponding cachedb modules.
 
 ---
 
@@ -106,9 +106,9 @@ route[AUTH_REGISTER] {
 The cache lifetime above is 1200 seconds, or 20 minutes. After that interval, the password is removed from cache and the next authentication refreshes it from the database.
 
 References:
-* [auth module](/modules/devel/auth)
-* [auth_db module](/modules/devel/auth_db)
-* [cachedb_local module](/modules/devel/cachedb_local)
+* [auth module](/manual/devel/modules/auth)
+* [auth_db module](/manual/devel/modules/auth_db)
+* [cachedb_local module](/manual/devel/modules/cachedb_local)
 
 ---
 

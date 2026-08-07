@@ -13,15 +13,15 @@ The OpenSIPS Event Interface provides a common way to notify external applicatio
 
 OpenSIPS can notify external applications or internal script logic using event modules and core route hooks:
 
-* [event_datagram](/modules/devel/event_datagram) - sends event notifications over UDP or UNIX datagram sockets.
-* [event_flatstore](/modules/devel/event_flatstore) - writes event notifications to flat files.
-* [event_kafka](/modules/devel/event_kafka) - sends event notifications to Apache Kafka.
-* [event_rabbitmq](/modules/devel/event_rabbitmq) - sends event notifications to a RabbitMQ server.
-* [event_routing](/modules/devel/event_routing) - uses Event Interface notifications for internal event-based routing.
-* [event_sqs](/modules/devel/event_sqs) - sends event notifications to Amazon SQS.
-* [event_stream](/modules/devel/event_stream) - exchanges event notifications over TCP streams.
-* [event_virtual](/modules/devel/event_virtual) - groups multiple event backends behind a virtual subscriber.
-* [event_xmlrpc](/modules/devel/event_xmlrpc) - issues XML-RPC commands to an XML-RPC server.
+* [event_datagram](/manual/devel/modules/event_datagram) - sends event notifications over UDP or UNIX datagram sockets.
+* [event_flatstore](/manual/devel/modules/event_flatstore) - writes event notifications to flat files.
+* [event_kafka](/manual/devel/modules/event_kafka) - sends event notifications to Apache Kafka.
+* [event_rabbitmq](/manual/devel/modules/event_rabbitmq) - sends event notifications to a RabbitMQ server.
+* [event_routing](/manual/devel/modules/event_routing) - uses Event Interface notifications for internal event-based routing.
+* [event_sqs](/manual/devel/modules/event_sqs) - sends event notifications to Amazon SQS.
+* [event_stream](/manual/devel/modules/event_stream) - exchanges event notifications over TCP streams.
+* [event_virtual](/manual/devel/modules/event_virtual) - groups multiple event backends behind a virtual subscriber.
+* [event_xmlrpc](/manual/devel/modules/event_xmlrpc) - issues XML-RPC commands to an XML-RPC server.
 * route - runs `event_route[...]` blocks directly in the core script engine.
 
 In order to receive an event notification, an external application subscribes to a specific event. This can be done either using a Management Interface (MI) command, or directly from the OpenSIPS script. The subscription specifies the event name and a destination where notifications have to be sent. The destination format depends on the event module used, so check the module documentation for the exact syntax.
@@ -87,9 +87,9 @@ timer_route[refresh_pike_subscription, 3600] {
 
 There are two types of events: static or predefined events exported by OpenSIPS core and modules, and dynamic events raised directly from the OpenSIPS script. A few examples of predefined events are:
 
-* [E_PIKE_BLOCKED](/modules/devel/pike#id250185) - raised when the **pike** module decides an IP should be blocked.
-* [E_RTPPROXY_STATUS](/modules/devel/rtpproxy#id293509) - raised when a RTPProxy connects or disconnects.
-* [E_DISPATCHER_STATUS](/modules/devel/dispatcher#id293894) - raised by the **dispatcher** module when a destination address becomes active or inactive.
+* [E_PIKE_BLOCKED](/manual/devel/modules/pike#id250185) - raised when the **pike** module decides an IP should be blocked.
+* [E_RTPPROXY_STATUS](/manual/devel/modules/rtpproxy#id293509) - raised when a RTPProxy connects or disconnects.
+* [E_DISPATCHER_STATUS](/manual/devel/modules/dispatcher#id293894) - raised by the **dispatcher** module when a destination address becomes active or inactive.
 * [E_CORE_THRESHOLD](/manual/devel/interface-coreevents) - raised when debugging bottleneck detection is enabled and the configured limit is exceeded.
 * [E_CORE_PKG_THRESHOLD](/manual/devel/interface-coreevents) - raised when private memory usage exceeds a configured limit.
 * [E_CORE_SHM_THRESHOLD](/manual/devel/interface-coreevents) - raised when shared memory usage exceeds a configured limit.
@@ -215,43 +215,43 @@ There are several event modules that can be used to notify an external applicati
 
 External applications can be notified when OpenSIPS internal events are triggered using either UDP or UNIX datagrams. This allows programmers to write a simple UDP or UNIX datagram server that receives the notification and processes it in the preferred programming language.
 
-In order to support this type of communication, load the [event_datagram](/modules/devel/event_datagram) module. Consult the module documentation page for more information about the subscription socket and encapsulation format.
+In order to support this type of communication, load the [event_datagram](/manual/devel/modules/event_datagram) module. Consult the module documentation page for more information about the subscription socket and encapsulation format.
 
 ### Flatstore Logs
 
-The [event_flatstore](/modules/devel/event_flatstore) module writes event notifications and their parameters to text files. It is useful when events have to be consumed later by log processors or other local tooling.
+The [event_flatstore](/manual/devel/modules/event_flatstore) module writes event notifications and their parameters to text files. It is useful when events have to be consumed later by log processors or other local tooling.
 
 ### Kafka Messages
 
-The [event_kafka](/modules/devel/event_kafka) module sends event notifications to Apache Kafka. It can be used when OpenSIPS events have to be integrated with a Kafka-based processing pipeline.
+The [event_kafka](/manual/devel/modules/event_kafka) module sends event notifications to Apache Kafka. It can be used when OpenSIPS events have to be integrated with a Kafka-based processing pipeline.
 
 ### RabbitMQ Messages
 
 OpenSIPS can communicate with a [RabbitMQ](http://www.rabbitmq.com/) server using AMQP messages. This type of communication leverages the queuing features provided by the server.
 
-The [event_rabbitmq](/modules/devel/event_rabbitmq) module provides this functionality. In this case, the RabbitMQ server is the event backend, so subscriptions are usually managed from the OpenSIPS script or by a separate control application. For more information, consult the module documentation page.
+The [event_rabbitmq](/manual/devel/modules/event_rabbitmq) module provides this functionality. In this case, the RabbitMQ server is the event backend, so subscriptions are usually managed from the OpenSIPS script or by a separate control application. For more information, consult the module documentation page.
 
 ### Event Routing
 
-The [event_routing](/modules/devel/event_routing) module provides event-based routing capabilities. It is useful when SIP processing needs to wait for, react to or trigger logic based on Event Interface notifications.
+The [event_routing](/manual/devel/modules/event_routing) module provides event-based routing capabilities. It is useful when SIP processing needs to wait for, react to or trigger logic based on Event Interface notifications.
 
 Do not confuse this module with core `event_route[...]` handlers. The old route capabilities are now part of OpenSIPS core and are described below.
 
 ### SQS Messages
 
-The [event_sqs](/modules/devel/event_sqs) module sends event notifications to Amazon SQS. It can be used when OpenSIPS events have to be consumed by AWS-hosted workers or queues.
+The [event_sqs](/manual/devel/modules/event_sqs) module sends event notifications to Amazon SQS. It can be used when OpenSIPS events have to be consumed by AWS-hosted workers or queues.
 
 ### Stream Messages
 
-The [event_stream](/modules/devel/event_stream) module exchanges event notifications over TCP streams. It is useful for applications that keep a persistent TCP connection to OpenSIPS.
+The [event_stream](/manual/devel/modules/event_stream) module exchanges event notifications over TCP streams. It is useful for applications that keep a persistent TCP connection to OpenSIPS.
 
 ### Virtual Subscribers
 
-The [event_virtual](/modules/devel/event_virtual) module groups multiple event backends behind a virtual subscriber. It can be used to fan out, load-balance or provide failover between real event subscribers.
+The [event_virtual](/manual/devel/modules/event_virtual) module groups multiple event backends behind a virtual subscriber. It can be used to fan out, load-balance or provide failover between real event subscribers.
 
 ### XML-RPC Commands
 
-OpenSIPS can also execute a remote XML-RPC command when an event is triggered. The module that handles the communication between the Event Interface and the XML-RPC server is [event_xmlrpc](/modules/devel/event_xmlrpc).
+OpenSIPS can also execute a remote XML-RPC command when an event is triggered. The module that handles the communication between the Event Interface and the XML-RPC server is [event_xmlrpc](/manual/devel/modules/event_xmlrpc).
 
 ### Core Event Routes
 

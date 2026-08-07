@@ -15,7 +15,7 @@ Current OpenSIPS cachedb backends are `cachedb_cassandra`, `cachedb_couchbase`, 
 
 ### cachedb_local
 
-The [cachedb_local module](/modules/devel/cachedb_local) stores data in OpenSIPS shared memory using local hash tables called collections. It is the fastest option and has no external service dependency, but data is normally lost on restart unless local cache clustering or restart persistency is configured.
+The [cachedb_local module](/manual/devel/modules/cachedb_local) stores data in OpenSIPS shared memory using local hash tables called collections. It is the fastest option and has no external service dependency, but data is normally lost on restart unless local cache clustering or restart persistency is configured.
 
 If no URL is configured, OpenSIPS provides a default `local` storage ID. Additional URLs can expose named groups such as `local:group2`.
 
@@ -31,7 +31,7 @@ cache_store("local:group2", "key", "value");
 
 ### cachedb_memcached
 
-The [cachedb_memcached module](/modules/devel/cachedb_memcached) stores data in Memcached servers. It keeps cache memory outside OpenSIPS and survives an OpenSIPS restart, but values are still volatile if the Memcached service is restarted or flushed.
+The [cachedb_memcached module](/manual/devel/modules/cachedb_memcached) stores data in Memcached servers. It keeps cache memory outside OpenSIPS and survives an OpenSIPS restart, but values are still volatile if the Memcached service is restarted or flushed.
 
 The URL prefix becomes the script storage ID, such as `memcached:group1`.
 
@@ -46,7 +46,7 @@ cache_store("memcached:group1", "key", "value");
 
 ### cachedb_redis
 
-The [cachedb_redis module](/modules/devel/cachedb_redis) stores data in Redis. It supports standalone Redis servers, Redis Cluster topology discovery, authentication, Unix sockets, TLS and Redis raw queries.
+The [cachedb_redis module](/manual/devel/modules/cachedb_redis) stores data in Redis. It supports standalone Redis servers, Redis Cluster topology discovery, authentication, Unix sockets, TLS and Redis raw queries.
 
 The URL prefix becomes the script storage ID, such as `redis:group1` or `redis:cluster1`.
 
@@ -61,7 +61,7 @@ cache_store("redis:group1", "key", "value");
 
 ### cachedb_cassandra
 
-The [cachedb_cassandra module](/modules/devel/cachedb_cassandra) stores data in Cassandra. It is useful when persistent, distributed key-value data is needed across OpenSIPS instances.
+The [cachedb_cassandra module](/manual/devel/modules/cachedb_cassandra) stores data in Cassandra. It is useful when persistent, distributed key-value data is needed across OpenSIPS instances.
 
 Cassandra requires the database part of the URL to identify the keyspace and table. If integer counter operations are used, the URL can also include a dedicated counter table.
 
@@ -76,7 +76,7 @@ cache_store("cassandra:cluster1", "key", "value");
 
 ### cachedb_couchbase
 
-The [cachedb_couchbase module](/modules/devel/cachedb_couchbase) stores data in Couchbase buckets through `libcouchbase`. It can point to a single server or multiple Couchbase nodes.
+The [cachedb_couchbase module](/manual/devel/modules/cachedb_couchbase) stores data in Couchbase buckets through `libcouchbase`. It can point to a single server or multiple Couchbase nodes.
 
 The URL prefix becomes the script storage ID, such as `couchbase:cluster1`.
 
@@ -91,7 +91,7 @@ cache_store("couchbase:cluster1", "key", "value");
 
 ### cachedb_mongodb
 
-The [cachedb_mongodb module](/modules/devel/cachedb_mongodb) stores data in MongoDB collections. Its URL syntax follows the MongoDB connection string format and it supports MongoDB raw queries.
+The [cachedb_mongodb module](/manual/devel/modules/cachedb_mongodb) stores data in MongoDB collections. Its URL syntax follows the MongoDB connection string format and it supports MongoDB raw queries.
 
 The default storage ID is `mongodb`. A URL with a group exposes a storage ID such as `mongodb:cluster`.
 
@@ -106,7 +106,7 @@ cache_store("mongodb:cluster", "key", "value");
 
 ### cachedb_sql
 
-The [cachedb_sql module](/modules/devel/cachedb_sql) stores key-value data in a regular SQL database through the OpenSIPS DB interface. It is useful when an SQL backend is already available and persistence is more important than cache speed.
+The [cachedb_sql module](/manual/devel/modules/cachedb_sql) stores key-value data in a regular SQL database through the OpenSIPS DB interface. It is useful when an SQL backend is already available and persistence is more important than cache speed.
 
 The URL format is `sql:connection-id-dburl`, and the script storage ID is the `sql:*` prefix before `://`.
 
@@ -122,7 +122,7 @@ cache_store("sql:main-mysql", "key", "value");
 
 ### cachedb_dynamodb
 
-The [cachedb_dynamodb module](/modules/devel/cachedb_dynamodb) stores data in Amazon DynamoDB, or in a local DynamoDB instance for testing. It supports the regular key-value operations and integer counter operations.
+The [cachedb_dynamodb module](/manual/devel/modules/cachedb_dynamodb) stores data in Amazon DynamoDB, or in a local DynamoDB instance for testing. It supports the regular key-value operations and integer counter operations.
 
 The default storage ID is `dynamodb`.
 
@@ -246,9 +246,9 @@ route[AUTH_REGISTER] {
 ```
 
 References:
-* [auth module](/modules/devel/auth)
-* [auth_db module](/modules/devel/auth_db)
-* [cachedb_local module](/modules/devel/cachedb_local)
+* [auth module](/manual/devel/modules/auth)
+* [auth_db module](/manual/devel/modules/auth_db)
+* [cachedb_local module](/manual/devel/modules/cachedb_local)
 
 #### Performance Improvement
 

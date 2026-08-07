@@ -9,7 +9,7 @@ OpenSIPS can be configured a SIP Redirect server. There are two simple ways to g
 * build the CONTACT header manually, via string operations, at script level
 * use the message branches, via the [$msg.branch](/manual/devel/script-corevar/#msg.branch) family of variables
 
- The replying part is simple, it can be done with the**[ t_reply()](< /modules/devel/tm/#func_t_reply>)** function provided by the **TM** module. Of course, you can also do it in a stateless way, using the **[sl_send_reply()](/modules/devel/sl/#func_sl_send_reply)** function from the **SL** module.
+ The replying part is simple, it can be done with the**[ t_reply()](< /manual/devel/modules/tm/#func_t_reply>)** function provided by the **TM** module. Of course, you can also do it in a stateless way, using the **[sl_send_reply()](/manual/devel/modules/sl/#func_sl_send_reply)** function from the **SL** module.
 
 ```opensips
 t_reply( 302, "Temporary redirected");
@@ -21,7 +21,7 @@ You can redirect to one or more SIP URIs (in the **CONTACT** header). The SIP UR
 
 In this snippet I am restricting the redirect service only for INVITE requests and by a IP range (just for the sake of the example) .
 
-Here we assume we load the SIP URIs from a DB, using the [sql_query()](/modules/devel/sqlops/#func_sql_query) function. In this example we query based on the received R-URI username, trying to find a list of SIP gateways (as SIP URI's) where the call should be redirected to (kind a simple LCR).
+Here we assume we load the SIP URIs from a DB, using the [sql_query()](/manual/devel/modules/sqlops/#func_sql_query) function. In this example we query based on the received R-URI username, trying to find a list of SIP gateways (as SIP URI's) where the call should be redirected to (kind a simple LCR).
 
 ```opensips
 route {
@@ -70,7 +70,7 @@ The internal core function responsible for building the SIP replies (both statef
 
 So, you could simply push the new URIs into message branches and they will be automatically pushed further in the 30x reply CONTACT.
 
-Also there are several modules which queries and returns new multiple SIP branches (SIP URIs) via this message branches (see the **[lookup("location")](/modules/devel/registrar/#func_lookup)** for SIP registration lookup, or the **[alias_db_lookup()](modules/devel/alias_db/#func_alias_db_lookup)** )
+Also there are several modules which queries and returns new multiple SIP branches (SIP URIs) via this message branches (see the **[lookup("location")](/manual/devel/modules/registrar/#func_lookup)** for SIP registration lookup, or the **[alias_db_lookup()](modules/devel/alias_db/#func_alias_db_lookup)** )
 
 ```opensips
 route {

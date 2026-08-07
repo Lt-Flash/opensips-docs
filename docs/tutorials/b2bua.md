@@ -13,10 +13,10 @@ description: "OpenSIPS has many features but in the way it behaves when a media 
 OpenSIPS has many features but in the way it behaves when a media session is established, it is not more than a proxy, meaning that it only takes the messages from one side and passes them on the other side. However, this has proven not to be enough to provide certain services required for the server to be aware of the state of the sessions, monitor and control them. A Back-to-Back User Agent is exactly this, an entity in the SIP network which has the ability to control or start media sessions. The name comes from the behavior, since in fact what is required is for the B2BUA to stand in the middle and establish two dialogs with both endpoints that will eventually exchange media.
 
 The B2BUA in OpenSIPS is an implementation of the behavior of a B2BUA as defined in RFC 3261 that offers the possibility to build certain services on top of it. It consists of two modules:
-* [b2b_entities](/modules/devel/b2b_entities) - the bottom half, implementing the basic functions of a UAC and UAS, by dealing with the actual network message exchange;
-* [b2b_logic](/modules/devel/b2b_logic) - the upper half, providing to the script and exterior the necessary functions for implementing the logic of the B2BUA services.
+* [b2b_entities](/manual/devel/modules/b2b_entities) - the bottom half, implementing the basic functions of a UAC and UAS, by dealing with the actual network message exchange;
+* [b2b_logic](/manual/devel/modules/b2b_logic) - the upper half, providing to the script and exterior the necessary functions for implementing the logic of the B2BUA services.
 
-The two parts composing the B2BUA in OpenSIPS are bound to each other in a control-notify relationship. The [b2b_logic](/modules/devel/b2b_logic) module controls [b2b_entities](/modules/devel/b2b_entities) by sending commands and telling it what messages to send, while [b2b_entities](/modules/devel/b2b_entities) notifies [b2b_logic](/modules/devel/b2b_logic) when a request or a reply is received for a dialog that the B2B is handling.
+The two parts composing the B2BUA in OpenSIPS are bound to each other in a control-notify relationship. The [b2b_logic](/manual/devel/modules/b2b_logic) module controls [b2b_entities](/manual/devel/modules/b2b_entities) by sending commands and telling it what messages to send, while [b2b_entities](/manual/devel/modules/b2b_entities) notifies [b2b_logic](/manual/devel/modules/b2b_logic) when a request or a reply is received for a dialog that the B2B is handling.
 
 #### B2B Entities
 B2B entities are internal OpenSIPS records corresponding to the dialogs in which the B2BUA is involved. More loosely, we use the term "entity" to refer to the SIP entity that is the peer user agent of OpenSIPS in these dialogs. Depending on how OpenSIPS acts for the first transaction (as a UAS or UAC), we have two types of entities: 
@@ -27,22 +27,22 @@ B2B entities are internal OpenSIPS records corresponding to the dialogs in which
 
 #### Initiating B2B sessions
 There are two ways to trigger a new B2B session corresponding to a desired B2BUA scenario:
-* from the script, at the receipt of an initial INVITE, using the [b2b_init_request](/modules/devel/b2b_logic#func_b2b_init_request) function;
-* with the [b2b_logic:trigger_scenario](/modules/devel/b2b_logic#mi_trigger_scenario) MI command, when OpenSIPS has to start the calls from the middle.
+* from the script, at the receipt of an initial INVITE, using the [b2b_init_request](/manual/devel/modules/b2b_logic#func_b2b_init_request) function;
+* with the [b2b_logic:trigger_scenario](/manual/devel/modules/b2b_logic#mi_trigger_scenario) MI command, when OpenSIPS has to start the calls from the middle.
 
-The initial details for the first entities that have to be connected are provided directly as parameters to the [b2b_logic:trigger_scenario](/modules/devel/b2b_logic#mi_trigger_scenario) MI command. In the case of the [b2b_init_request](/modules/devel/b2b_logic#func_b2b_init_request) function, the B2B entity records have to be created beforehand with the [b2b_server_new](/modules/devel/b2b_logic#func_b2b_server_new) and [b2b_client_new](/modules/devel/b2b_logic#func_b2b_client_new) script functions.
+The initial details for the first entities that have to be connected are provided directly as parameters to the [b2b_logic:trigger_scenario](/manual/devel/modules/b2b_logic#mi_trigger_scenario) MI command. In the case of the [b2b_init_request](/manual/devel/modules/b2b_logic#func_b2b_init_request) function, the B2B entity records have to be created beforehand with the [b2b_server_new](/manual/devel/modules/b2b_logic#func_b2b_server_new) and [b2b_client_new](/manual/devel/modules/b2b_logic#func_b2b_client_new) script functions.
 
 #### Management Interface commands
 
-Current OpenSIPS versions use namespaced MI commands for the B2B modules. The command used by this tutorial to start a call from the middle is [b2b_logic:trigger_scenario](/modules/devel/b2b_logic#mi_trigger_scenario). Other B2BUA MI commands are available for bridging, inspection and call termination:
+Current OpenSIPS versions use namespaced MI commands for the B2B modules. The command used by this tutorial to start a call from the middle is [b2b_logic:trigger_scenario](/manual/devel/modules/b2b_logic#mi_trigger_scenario). Other B2BUA MI commands are available for bridging, inspection and call termination:
 
 | Current MI command | Module | Purpose |
 | --- | --- | --- |
-| [b2b_logic:trigger_scenario](/modules/devel/b2b_logic#mi_trigger_scenario) | [b2b_logic](/modules/devel/b2b_logic) | Start a new B2B scenario from MI. |
-| [b2b_logic:bridge](/modules/devel/b2b_logic#mi_bridge) | [b2b_logic](/modules/devel/b2b_logic) | Bridge an existing B2B call leg to a new destination. |
-| [b2b_logic:list](/modules/devel/b2b_logic#mi_list) | [b2b_logic](/modules/devel/b2b_logic) | List B2B logic sessions. |
-| [b2b_logic:terminate_call](/modules/devel/b2b_logic#mi_terminate_call) | [b2b_logic](/modules/devel/b2b_logic) | Terminate an ongoing B2B session. |
-| [b2b_entities:list](/modules/devel/b2b_entities#mi_list) | [b2b_entities](/modules/devel/b2b_entities) | List B2B entities. |
+| [b2b_logic:trigger_scenario](/manual/devel/modules/b2b_logic#mi_trigger_scenario) | [b2b_logic](/manual/devel/modules/b2b_logic) | Start a new B2B scenario from MI. |
+| [b2b_logic:bridge](/manual/devel/modules/b2b_logic#mi_bridge) | [b2b_logic](/manual/devel/modules/b2b_logic) | Bridge an existing B2B call leg to a new destination. |
+| [b2b_logic:list](/manual/devel/modules/b2b_logic#mi_list) | [b2b_logic](/manual/devel/modules/b2b_logic) | List B2B logic sessions. |
+| [b2b_logic:terminate_call](/manual/devel/modules/b2b_logic#mi_terminate_call) | [b2b_logic](/manual/devel/modules/b2b_logic) | Terminate an ongoing B2B session. |
+| [b2b_entities:list](/manual/devel/modules/b2b_entities#mi_list) | [b2b_entities](/manual/devel/modules/b2b_entities) | List B2B entities. |
 
 #### Older MI command names
 
@@ -59,11 +59,11 @@ Older OpenSIPS versions used flat MI command names for the same B2BUA operations
 This mapping applies only to MI commands; script functions such as `b2b_bridge()` keep their script function names.
 
 #### Dedicated script routes
-After initializing a B2B session, the call legs will be handled by the [b2b_logic](/modules/devel/b2b_logic) module and the first step will be to put the two initial entities in contact. Requests and replies belonging to these dialogs will not enter the script through the standard OpenSIPS routes but instead will be handled in [b2b_logic](/modules/devel/b2b_logic) dedicated routes, defined through the [script_req_route](/modules/devel/b2b_logic#param_script_req_route) and [script_reply_route](/modules/devel/b2b_logic#param_script_reply_route) modparams or through the custom routes given as parameters to the [b2b_init_request](/modules/devel/b2b_logic#func_b2b_init_request) function. The further steps of the scenario can be implemented in these routes by calling specific [b2b_logic](/modules/devel/b2b_logic) script functions, such as [b2b_bridge](/modules/devel/b2b_logic#func_b2b_bridge), in order to perform various actions. Normal "proxy-like" OpenSIPS functions should not be executed in the b2b_logic routes.
+After initializing a B2B session, the call legs will be handled by the [b2b_logic](/manual/devel/modules/b2b_logic) module and the first step will be to put the two initial entities in contact. Requests and replies belonging to these dialogs will not enter the script through the standard OpenSIPS routes but instead will be handled in [b2b_logic](/manual/devel/modules/b2b_logic) dedicated routes, defined through the [script_req_route](/manual/devel/modules/b2b_logic#param_script_req_route) and [script_reply_route](/manual/devel/modules/b2b_logic#param_script_reply_route) modparams or through the custom routes given as parameters to the [b2b_init_request](/manual/devel/modules/b2b_logic#func_b2b_init_request) function. The further steps of the scenario can be implemented in these routes by calling specific [b2b_logic](/manual/devel/modules/b2b_logic) script functions, such as [b2b_bridge](/manual/devel/modules/b2b_logic#func_b2b_bridge), in order to perform various actions. Normal "proxy-like" OpenSIPS functions should not be executed in the b2b_logic routes.
 
-Some messages will be handled automatically by the module and will not enter the b2b_logic routes at all (BYE requests received while in the process of bridging two entities, ACKs/BYEs/replies for disconnected entities). Also, if no dedicated b2b_logic reply route is defined, replies will be handled internally by the module, with the same effects as calling the [b2b_handle_reply](/modules/devel/b2b_logic#func_b2b_handle_reply) function from such a route if it were defined.
+Some messages will be handled automatically by the module and will not enter the b2b_logic routes at all (BYE requests received while in the process of bridging two entities, ACKs/BYEs/replies for disconnected entities). Also, if no dedicated b2b_logic reply route is defined, replies will be handled internally by the module, with the same effects as calling the [b2b_handle_reply](/manual/devel/modules/b2b_logic#func_b2b_handle_reply) function from such a route if it were defined.
 
-The examples below use [b2b_pass_request](/modules/devel/b2b_logic#func_b2b_pass_request), [b2b_send_reply](/modules/devel/b2b_logic#func_b2b_send_reply), [b2b_delete_entity](/modules/devel/b2b_logic#func_b2b_delete_entity) and [b2b_end_dlg_leg](/modules/devel/b2b_logic#func_b2b_end_dlg_leg) for the B2B route actions.
+The examples below use [b2b_pass_request](/manual/devel/modules/b2b_logic#func_b2b_pass_request), [b2b_send_reply](/manual/devel/modules/b2b_logic#func_b2b_send_reply), [b2b_delete_entity](/manual/devel/modules/b2b_logic#func_b2b_delete_entity) and [b2b_end_dlg_leg](/manual/devel/modules/b2b_logic#func_b2b_end_dlg_leg) for the B2B route actions.
 
 ### Scenario Examples
 #### Topology Hiding

@@ -1,7 +1,7 @@
 ---
 title: "Using the Fraud Detection module"
 subtitle: "Fraud Detection"
-subtitleHref: "/modules/devel/fraud_detection"
+subtitleHref: "/manual/devel/modules/fraud_detection"
 description: "Fraudulent calls have been a part of VoIP since its very beginnings. Typically, there are two ways through which a malicious user can gain permission to plac..."
 ---
 
@@ -99,9 +99,9 @@ Data interpretation:
 
 ### How does it work?
 
-As stated in the [module documentation](/modules/devel/fraud_detection), the
+As stated in the [module documentation](/manual/devel/modules/fraud_detection), the
 module monitors five parameters that are updated every time
-[**check_fraud()**](/modules/devel/fraud_detection#func_check_fraud) is called.
+[**check_fraud()**](/manual/devel/modules/fraud_detection#func_check_fraud) is called.
 For each `(username, prefix)` tuple, the module keeps and monitors unique values
 for those five parameters.
 

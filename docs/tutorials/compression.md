@@ -1,7 +1,7 @@
 ---
 title: "Using the Compression module"
 subtitle: "Compression"
-subtitleHref: "/modules/devel/compression"
+subtitleHref: "/manual/devel/modules/compression"
 description: "This tutorial explains how to use the compression module to compact, compress and decompress SIP messages."
 ---
 
@@ -12,7 +12,7 @@ this tutorial you should understand which functions this module provides and how
 
 ## Current features
 
-As stated in the [documentation](/modules/devel/compression), the module currently features:
+As stated in the [documentation](/manual/devel/modules/compression), the module currently features:
 * **Message compaction**
   * headers not specified in the given whitelist will be removed, except for mandatory headers such as Via, To and From
   * some headers which have a compact form (not all of them) will be reduced to short form (eg. Via --> `v`; Content-Length --> `l`)

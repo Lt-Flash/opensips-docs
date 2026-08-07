@@ -1,7 +1,7 @@
 ---
 title: "Emergency Calls"
 subtitle: "Emergency"
-subtitleHref: "/modules/devel/emergency"
+subtitleHref: "/manual/devel/modules/emergency"
 description: "The emergency module provides NENA i2 emergency call treatment for OpenSIPS."
 ---
 

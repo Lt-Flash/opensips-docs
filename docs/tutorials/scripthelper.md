@@ -3,7 +3,7 @@ title: Script Helper usage
 description: The purpose of this new module is to help you start in an easy way
   with the OpenSIPS script. The learning curve gets milder as the beginner...
 subtitle: Script Helper
-subtitleHref: /modules/devel/script_helper
+subtitleHref: /manual/devel/modules/script_helper
 ---
 ## Tutorial Overview
 
@@ -11,7 +11,7 @@ The purpose of this module is to help you start in an easy way with the OpenSIPS
 
 ## Current features
 
-As stated in the [documentation](/modules/devel/script_helper), the module currently features:
+As stated in the [documentation](/manual/devel/modules/script_helper), the module currently features:
 
 * **transparent handling of SIP sequential requests**
 
@@ -38,11 +38,11 @@ SIP logic provided:
 
 This is the OpenSIPS script with the script_helper support.
 
-[OpenSIPS script with the script_helper support](../modules/devel/.samples/script_helper/samples/opensips-script-helper.cfg "include")
+[OpenSIPS script with the script_helper support](../manual/devel/modules/.samples/script_helper/samples/opensips-script-helper.cfg "include")
 
 You can check it against the regular OpenSIPS script without the script_helper support.
 
-[regular OpenSIPS script without the script_helper support](../modules/devel/.samples/script_helper/samples/opensips-regular.cfg "include")
+[regular OpenSIPS script without the script_helper support](../manual/devel/modules/.samples/script_helper/samples/opensips-regular.cfg "include")
 
 ### Scripts differences
 

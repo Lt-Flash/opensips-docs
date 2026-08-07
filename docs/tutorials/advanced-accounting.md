@@ -20,7 +20,7 @@ Everything in this tutorial is backed up with practical examples which you can r
 
 The accounting may have different scopes and it may be in-line with different SIP elements :
 
-* **SIP message level accounting**: the generated accounting record covers only the currently processed SIP request; this is also known as manual accounting, where the CDR is generated on the spot by using one of the script functions [acc_log_request()](/modules/devel/acc/#func_acc_log_request), [acc_db_request()](/modules/devel/acc/#func_acc_db_request), [acc_aaa_request()](/modules/devel/acc/#func_acc_aaa_request) or [acc_evi_request()](/modules/devel/acc/#func_acc_evi_request) depending on the backend used;
+* **SIP message level accounting**: the generated accounting record covers only the currently processed SIP request; this is also known as manual accounting, where the CDR is generated on the spot by using one of the script functions [acc_log_request()](/manual/devel/modules/acc/#func_acc_log_request), [acc_db_request()](/manual/devel/modules/acc/#func_acc_db_request), [acc_aaa_request()](/manual/devel/modules/acc/#func_acc_aaa_request) or [acc_evi_request()](/manual/devel/modules/acc/#func_acc_evi_request) depending on the backend used;
 * **SIP transaction level accounting**: the generated accounting record covers a SIP transaction (the duration and data from the SIP request and all its replies); such accounting is used when OpenSIPS acts as a stateful SIP proxy; this accounting is armed/set during the request processing, but the accounting record itself will be generated when the SIP transaction (including all its branches) will be completed;
 * **SIP dialog level accounting**: the generated accounting record covers a whole SIP call/dialog; such accounting record is also known as CDR (Call Detail Record). This record, in addition to the transaction-scope accounting records, may contain information from the dialog level (call duration, BYE reason, RTP stats); In terms of usage, the dialog accounting is armed/set while handling the initial **INVITE** request; the CDR itself will be generated when the SIP dialog ends(that is when all the messages belonging to a dialog have been processed, including the replies for BYE messages);
 
@@ -58,9 +58,9 @@ When doing accounting, one can choose between a variety of engines or even combi
 
 This mechanism allows you to extend the accounting record field by adding custom fields to it (with data collected anytime during the scope of the accounting).  
 
-The **[extra_fields](/modules/devel/acc/#param_extra_fields)** module parameter allows the definition of a list of new fields to be added to the format of the accounting record. During the script processing, those fields may be populated anywhere and anytime as you are still in the scope of that accounting action.
+The **[extra_fields](/manual/devel/modules/acc/#param_extra_fields)** module parameter allows the definition of a list of new fields to be added to the format of the accounting record. During the script processing, those fields may be populated anywhere and anytime as you are still in the scope of that accounting action.
 
-There is a special script variable defined for this mechanism called [`$acc_extra`](/modules/devel/acc/#pv_acc_extra) which can be populated with whatever you want; the [`$acc_extra`](/modules/devel/acc/#pv_acc_extra) variable is persistent across the whole accounting scope - for example, if you do transaction based accounting, you can collect data (to be pushed into the extra accounting fields) during the request handling, in reply route or during a call forking in failure route.  
+There is a special script variable defined for this mechanism called [`$acc_extra`](/manual/devel/modules/acc/#pv_acc_extra) which can be populated with whatever you want; the [`$acc_extra`](/manual/devel/modules/acc/#pv_acc_extra) variable is persistent across the whole accounting scope - for example, if you do transaction based accounting, you can collect data (to be pushed into the extra accounting fields) during the request handling, in reply route or during a call forking in failure route.  
 
 NOTE that you need to take care and adjust your backend (database or radius) to accommodate the extra added values!!
 
@@ -68,9 +68,9 @@ NOTE that you need to take care and adjust your backend (database or radius) to 
 
 There are SIP scenarios where there is a need to get multiple accounting records for a single SIP call. Typically this happens when implementing call redirect or call forward and the actual SIP call consists out of several call legs (logical calls between SIP entities).  
 
-The **[leg_fields](/modules/devel/acc/#param_leg_fields)** module parameter defines a list of new fields that will be different from leg to leg (all the other fields - the default and extra accounting ones - will be the same for all the legs). Each set of *leg_fields* values will translate into a separate leg for the call.
+The **[leg_fields](/manual/devel/modules/acc/#param_leg_fields)** module parameter defines a list of new fields that will be different from leg to leg (all the other fields - the default and extra accounting ones - will be the same for all the legs). Each set of *leg_fields* values will translate into a separate leg for the call.
 
-As said, this shall be useful when logically, there are multiple legs inside a SIP call - like A calls to B and B redirects the call to C, meaning that there are two legs for this call: A to B and B to C. It is the script writer's job to decide whether a new leg has to be created by using [acc_new_leg()](/modules/devel/acc/#func_acc_new_leg) script function. The variable used to hold the  per-leg fields is [`$acc_leg`](/modules/devel/acc/#pv_acc_leg) - anytime, in the context of that leg, you can set the values for the per-leg fields.  
+As said, this shall be useful when logically, there are multiple legs inside a SIP call - like A calls to B and B redirects the call to C, meaning that there are two legs for this call: A to B and B to C. It is the script writer's job to decide whether a new leg has to be created by using [acc_new_leg()](/manual/devel/modules/acc/#func_acc_new_leg) script function. The variable used to hold the  per-leg fields is [`$acc_leg`](/manual/devel/modules/acc/#pv_acc_leg) - anytime, in the context of that leg, you can set the values for the per-leg fields.  
 
 NOTE that you need to take care and adjust your backend (database or radius) to accommodate the extra added values!!
 
@@ -91,9 +91,9 @@ The syslog backend shall be used for accounting - this has the keyword **log**.
 
 Now, let's walk through the  [opensips.cfg](https://github.com/OpenSIPS/opensips/blob/master/modules/acc/samples/opensips.cfg) and explain step by step all the accounting related actions.
 
-In the routing section of the script the [do_accounting()](/modules/devel/acc#do_accounting) function is used for setting the accounting process (as events, scope and backend). In all case the **log** backend is used, which means that all the accounting records will be pushed as logs. This script is logging to syslog service, using log facility LOG_DAEMON (see [log_facility](/modules/devel/acc/#param_log_facility) ) with log level L_NOTICE (see [log_level](/modules/devel/acc/#param_log_level)).
+In the routing section of the script the [do_accounting()](/manual/devel/modules/acc#do_accounting) function is used for setting the accounting process (as events, scope and backend). In all case the **log** backend is used, which means that all the accounting records will be pushed as logs. This script is logging to syslog service, using log facility LOG_DAEMON (see [log_facility](/manual/devel/modules/acc/#param_log_facility) ) with log level L_NOTICE (see [log_level](/manual/devel/modules/acc/#param_log_level)).
 
-When processing the SIP requests in the *request route*, when handling the sequential request, the [do_accounting()](/modules/devel/acc#do_accounting) function is used (see line 127) to trigger accounting records  on *success* and *failed transactions*(reply code >= 300) events for all the **BYE** transactions:
+When processing the SIP requests in the *request route*, when handling the sequential request, the [do_accounting()](/manual/devel/modules/acc#do_accounting) function is used (see line 127) to trigger accounting records  on *success* and *failed transactions*(reply code >= 300) events for all the **BYE** transactions:
 
 ```opensips
 	if (has_totag()) {
@@ -128,7 +128,7 @@ ACC: transaction answered: timestamp=1474540760;method=BYE;\
   call_id=ezUcDyVPC9jgwtk35eamdhmIo31RSScI;code=400;reason=Reason
 ```
 
-If the **failed** option is not used,  the [do_accounting()](/modules/devel/acc#do_accounting) will not trigger the *failed transactions* event and the above record will not be generated if BYE requests times out or is rejected (since the transaction completes with a 4xx reply code).
+If the **failed** option is not used,  the [do_accounting()](/manual/devel/modules/acc#do_accounting) will not trigger the *failed transactions* event and the above record will not be generated if BYE requests times out or is rejected (since the transaction completes with a 4xx reply code).
 
 Also in the *request route*, when handling the initial requests, for *INVITE* requests we do (see line 176): 
 
@@ -149,9 +149,9 @@ ACC: transaction answered: timestamp=1474540997;method=INVITE;\
   call_id=vonxx1.d4qh9nfPmFBpu46u7Vvq5c8re;code=200;reason=OK
 ```
 
-The last [do_accounting()](/modules/devel/acc#do_accounting) usage in the script (line 213) is for triggering the *missed call events* for the calls (INVITE requests) sent to our registered users.
+The last [do_accounting()](/manual/devel/modules/acc#do_accounting) usage in the script (line 213) is for triggering the *missed call events* for the calls (INVITE requests) sent to our registered users.
 
-NOTE that the execution flow will hit a  [do_accounting](/modules/devel/acc#do_accounting)() twice for calls to local users. First time when the dialog is created, to engage regular accounting (for successful calls), and second time here just to add the  the *missed call events* for calls to local users. So the functions may be called multiple times in oder to add different flags.
+NOTE that the execution flow will hit a  [do_accounting](/manual/devel/modules/acc#do_accounting)() twice for calls to local users. First time when the dialog is created, to engage regular accounting (for successful calls), and second time here just to add the  the *missed call events* for calls to local users. So the functions may be called multiple times in oder to add different flags.
 
 Another NOTE here - we do the *missed call events* only for calls to local  users - this is a logical decision, we are interested in reporting missed calls only for our own subscribers, not for outbound calls (to other SIP domains).
 
@@ -186,9 +186,9 @@ loadmodule "dialog.so"
 modparam("dialog", "db_mode", 0)
 ```
 
-Now, in terms of scripting we remove the *[do_accounting](/modules/devel/acc#do_accounting)()* for the BYE transactions (as we do accounting at dialog level, not transaction level any more) - see the sequential request block, line 129 where the accounting call was stripped out.
+Now, in terms of scripting we remove the *[do_accounting](/manual/devel/modules/acc#do_accounting)()* for the BYE transactions (as we do accounting at dialog level, not transaction level any more) - see the sequential request block, line 129 where the accounting call was stripped out.
 
-To get directly CDR as accounting records, when doing [do_accounting()](/modules/devel/acc#do_accounting) (line 175) for initial INVITEs (which create SIP calls/dialogs), we need to switch it from transaction scope to dialog scope, by using the **cdr** keyword to the flags:
+To get directly CDR as accounting records, when doing [do_accounting()](/manual/devel/modules/acc#do_accounting) (line 175) for initial INVITEs (which create SIP calls/dialogs), we need to switch it from transaction scope to dialog scope, by using the **cdr** keyword to the flags:
 
 ```opensips
 	# account only INVITEs
@@ -225,7 +225,7 @@ In the failure route the following lines were added:
 	t_relay();
 ```
 
-If [do_accounting()](/modules/devel/acc#do_accounting) would not have been called again, in case of failure, only the first missed call would have been accounted. The flag resets each time a missed call is accounted. The [next_branches()](/manual/devel/script-corefunctions/#next_branches) function call will get the next destination for us. If we still have contacts to call to we arm the failure route again in order to be able to send the call to the next destination. 
+If [do_accounting()](/manual/devel/modules/acc#do_accounting) would not have been called again, in case of failure, only the first missed call would have been accounted. The flag resets each time a missed call is accounted. The [next_branches()](/manual/devel/script-corefunctions/#next_branches) function call will get the next destination for us. If we still have contacts to call to we arm the failure route again in order to be able to send the call to the next destination. 
 
 A *missed call* event will be generated for each destination that did not accept the call:
 
@@ -254,7 +254,7 @@ There are cases when you may need to extend your accounting capabilities and to 
 
 This is the [full OpenSIPS config file](https://github.com/OpenSIPS/opensips/blob/master/modules/acc/samples/opensips-extracfg) used for this example.
 
-Starting from the previous script, we try to add extra accounting information about the IP addresses where the call was originated from and terminated to. First of all we need to define the additional data that will be added to our accounted information in the **modparam** section using the [extra_fields](/modules/devel/acc/#param_extra_fields) parameter
+Starting from the previous script, we try to add extra accounting information about the IP addresses where the call was originated from and terminated to. First of all we need to define the additional data that will be added to our accounted information in the **modparam** section using the [extra_fields](/manual/devel/modules/acc/#param_extra_fields) parameter
 
 ```opensips
    modparam("acc", "extra_fields", "log: src_ip; dst_ip")
@@ -266,9 +266,9 @@ The following definition would also be valid
    modparam("acc", "extra_fields", "log: src_ip->src_ip; src_ip->dst_ip")
 ```
 
-The first part of the declaration is the backend for which the extra fields are defined, in this case the **log** backend. The definitions are in form of **script-tag -> backend-tag**. The **script-tag** is the tag to be used in OpenSIPS script to reference the [`$acc_extra`](/modules/devel/acc/#pv_acc_extra) variable, which will hold all our extra values. The scope of the variable depends on the accounting type used. If the **cdr** flag is used when calling do_accounting(), the variable will be visible for the whole duration of the dialog, else it will be visible as long as the transaction will be  visible. The **backend-tag** is where the values will be stored in the accounting backend ( for **log** it is a display label, for **db** it is a column name or for **aaa** it is an RADIUS/DIAMETER AVP name).
+The first part of the declaration is the backend for which the extra fields are defined, in this case the **log** backend. The definitions are in form of **script-tag -> backend-tag**. The **script-tag** is the tag to be used in OpenSIPS script to reference the [`$acc_extra`](/manual/devel/modules/acc/#pv_acc_extra) variable, which will hold all our extra values. The scope of the variable depends on the accounting type used. If the **cdr** flag is used when calling do_accounting(), the variable will be visible for the whole duration of the dialog, else it will be visible as long as the transaction will be  visible. The **backend-tag** is where the values will be stored in the accounting backend ( for **log** it is a display label, for **db** it is a column name or for **aaa** it is an RADIUS/DIAMETER AVP name).
 
-In terms of scripting, all we need to do is to set the [`$acc_extra`](/modules/devel/acc/#pv_acc_extra) variable with the values we what. In the current scenario we set the IPs as follow:
+In terms of scripting, all we need to do is to set the [`$acc_extra`](/manual/devel/modules/acc/#pv_acc_extra) variable with the values we what. In the current scenario we set the IPs as follow:
 
 * for the originating IP of the call we consider the source IP of the INVITE (initial request), so in request route, when handling initial SIP requests, we do (see line 206):
 
@@ -303,13 +303,13 @@ In our example, we want to account the caller and callee usernames for each leg 
 
 This is the [full OpenSIPS config file](https://github.com/OpenSIPS/opensips/blob/master/modules/acc/samples/opensips-legs.cfg) used for this example.
 
-The modparam declaration for [leg_fields](/modules/devel/acc/#param_leg_fields) is very similar to the [extra_fields](/modules/devel/acc/#param_extra_fields)
+The modparam declaration for [leg_fields](/manual/devel/modules/acc/#param_leg_fields) is very similar to the [extra_fields](/manual/devel/modules/acc/#param_extra_fields)
 
 ```opensips
 modparam("acc", "leg_fields", "log: caller; callee")
 ```
 
-The same is the case for [`$acc_leg`](/modules/devel/acc/#pv_acc_leg) variable. The only difference is that this variable can be indexed using the leg number. No index means the current leg. You can also get the number of the last leg using [`$acc_current_leg`](/modules/devel/acc/#pv_acc_current_leg) variable. New additional legs can be created with [acc_new_leg()](/modules/devel/acc/#func_acc_new_leg) function.
+The same is the case for [`$acc_leg`](/manual/devel/modules/acc/#pv_acc_leg) variable. The only difference is that this variable can be indexed using the leg number. No index means the current leg. You can also get the number of the last leg using [`$acc_current_leg`](/manual/devel/modules/acc/#pv_acc_current_leg) variable. New additional legs can be created with [acc_new_leg()](/manual/devel/modules/acc/#func_acc_new_leg) function.
 
 In the script, everything that concerns the **lookup()** function was moved into a route, in order to use it multiple times. For the initial call, we'll get the URI of the caller from the **From** header. The URI of the callee is in the R-URI:
 
@@ -318,7 +318,7 @@ In the script, everything that concerns the **lookup()** function was moved into
       $acc_leg(callee) = $ru;
 ```
 
-In case our call leg to Bob (as described above) fails, script execution will resume from the *failure_route*, where we will do serial forking to the redirect URI (to Charlie). In failure route, the redirected URI is resolved in the same way we did with the first uri, using **lookup** function. Now the leg Bob to Charlie is about to start, so we'll create a new leg and populate the [`$acc_leg`](/modules/2-3/acc#id294672) variables accordingly for this new leg. The caller URI will be the callee URI of the previous leg, while the callee U will be the new redirect URI:
+In case our call leg to Bob (as described above) fails, script execution will resume from the *failure_route*, where we will do serial forking to the redirect URI (to Charlie). In failure route, the redirected URI is resolved in the same way we did with the first uri, using **lookup** function. Now the leg Bob to Charlie is about to start, so we'll create a new leg and populate the [`$acc_leg`](/manual/2-3/modules/acc#id294672) variables accordingly for this new leg. The caller URI will be the callee URI of the previous leg, while the callee U will be the new redirect URI:
 
 ```opensips
     if ( $avp(redirect_uri)!=NULL ) {

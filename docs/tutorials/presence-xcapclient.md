@@ -6,7 +6,7 @@ description: Presence_xml module assumes that in the database table 'xcap' there
 ---
 ## Developer's Guide
 
-The **[xcap_client](/modules/devel/xcap_client)** module represents an XCAP client interface for OpenSIPS with retrieving capabilities only. It is meant to be used by other OpenSIPS modules that use XCAP storage. Now this module is used by **[presence_xml](/modules/devel/presence_xml)** and **[rls](/modules/devel/rls)** modules. 
+The **[xcap_client](/manual/devel/modules/xcap_client)** module represents an XCAP client interface for OpenSIPS with retrieving capabilities only. It is meant to be used by other OpenSIPS modules that use XCAP storage. Now this module is used by **[presence_xml](/manual/devel/modules/presence_xml)** and **[rls](/manual/devel/modules/rls)** modules. 
 
 **Presence_xml and xcap_client interaction (when *integrated_xcap_client* parameter is not set)**  
 

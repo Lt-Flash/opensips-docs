@@ -89,7 +89,7 @@ modparam("nathelper", "max_pings_lost", 5)
 
 ```
 
-We then enable these branch flags for some or all contacts before calling [save()](/modules/4-1/registrar#func_save):
+We then enable these branch flags for some or all contacts before calling [save()](/manual/4-1/modules/registrar#func_save):
 
 ```opensips
 
@@ -104,7 +104,7 @@ We then enable these branch flags for some or all contacts before calling [save(
 ```
 
 
-To prevent any "permission denied" error logs on the passive node that's trying to originate NAT pings, make sure to hook the [nh_enable_ping](/modules/4-1/nathelper#mi_nh_enable_ping) MI command into your active->passive and passive->active transitions of the VIP:
+To prevent any "permission denied" error logs on the passive node that's trying to originate NAT pings, make sure to hook the [nh_enable_ping](/manual/4-1/modules/nathelper#mi_nh_enable_ping) MI command into your active->passive and passive->active transitions of the VIP:
 
 ```bash
 
@@ -209,7 +209,7 @@ modparam("usrloc", "shared_pinging", 1)
 
 ```
 
-We then enable these branch flags for some or all contacts before calling [save()](/modules/4-1/registrar#func_save):
+We then enable these branch flags for some or all contacts before calling [save()](/manual/4-1/modules/registrar#func_save):
 
 ```opensips
 

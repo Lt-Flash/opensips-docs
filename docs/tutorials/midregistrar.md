@@ -92,7 +92,7 @@ We first load the *mid_registrar* module and set its parameters. Going through e
 
 
 
-For all registrations, we make sure to call *mid_registrar_save()*. As stated in its [documentation](/modules/4-1/mid_registrar), it will not process the contacts immediately, but rather do the necessary changes to the REGISTER request before it is relayed to the main registrar, while also preparing to transparently handle its replies. The above code stays the same regardless of the module's working mode or insertion mode. We are now done with REGISTER request handling!
+For all registrations, we make sure to call *mid_registrar_save()*. As stated in its [documentation](/manual/4-1/modules/mid_registrar), it will not process the contacts immediately, but rather do the necessary changes to the REGISTER request before it is relayed to the main registrar, while also preparing to transparently handle its replies. The above code stays the same regardless of the module's working mode or insertion mode. We are now done with REGISTER request handling!
 
 ##### INVITE handling
 

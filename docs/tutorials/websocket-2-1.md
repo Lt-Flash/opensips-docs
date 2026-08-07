@@ -1,7 +1,7 @@
 ---
 title: "WebSocket Transport"
 subtitle: "WebSocket Transport"
-subtitleHref: "/modules/2-1/proto_ws"
+subtitleHref: "/manual/2-1/modules/proto_ws"
 description: "Configure OpenSIPS WebSocket transport for a SIP platform that connects SIP clients over UDP, TCP or TLS as well as browser-based clients."
 ---
 
@@ -66,7 +66,7 @@ dmesg
 
 ### OpenSIPS
 
-In order to use WebSocket in OpenSIPS, one has to load the [proto_ws](/modules/2-1/proto_ws) into its configuration file and define a listener for the WebSocket protocol.
+In order to use WebSocket in OpenSIPS, one has to load the [proto_ws](/manual/2-1/modules/proto_ws) into its configuration file and define a listener for the WebSocket protocol.
 ```opensips
 
 listen=ws:127.0.0.1:8080
@@ -75,7 +75,7 @@ loadmodule "proto_ws.so"
 
 ```
 
-Next, the [rtpengine](/modules/2-1/rtpengine) module has to be loaded and configured to communicate with the `rtpengine` daemon.
+Next, the [rtpengine](/manual/2-1/modules/rtpengine) module has to be loaded and configured to communicate with the `rtpengine` daemon.
 ```opensips
 
 loadmodule "rtpengine.so"
@@ -83,7 +83,7 @@ modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.1:60000")
 
 ```
 
-Note that the [rtpengine_sock](/modules/2-1/rtpengine#rtpengine.p.rtpengine_sock) parameter should be the same as the `-n` parameter sent to the `rtpengine` daemon, and OpenSIPS should have IP connectivity to that socket.
+Note that the [rtpengine_sock](/manual/2-1/modules/rtpengine#rtpengine.p.rtpengine_sock) parameter should be the same as the `-n` parameter sent to the `rtpengine` daemon, and OpenSIPS should have IP connectivity to that socket.
 
 Next, the routing logic has to be changed in order to treat different the clients that use DTLS-SRTP, from the ones that use plain RTP and enable bridging if necessary. To do that, one can check if the request message was received over the WebSocket protocol. This can be achieved using the following code:
 
@@ -94,7 +94,7 @@ if (proto == WS)
 
 ```
 
-In case the request is a REGISTER, we want to store this information in the *location* table, so that we know then the user is called. To do that, we can set a branch flag before calling the [save()](/modules/2-1/registrar#id294034) function. This way, when the [lookup()](/modules/2-1/registrar#id294366) method returns, we will be able to determine whether the client uses WebSocket or not.
+In case the request is a REGISTER, we want to store this information in the *location* table, so that we know then the user is called. To do that, we can set a branch flag before calling the [save()](/manual/2-1/modules/registrar#id294034) function. This way, when the [lookup()](/manual/2-1/modules/registrar#id294366) method returns, we will be able to determine whether the client uses WebSocket or not.
 
 ```opensips
 
@@ -111,7 +111,7 @@ In case the request is a REGISTER, we want to store this information in the *loc
 
 ```
 
-When a call is placed, based on the two flags (`STR_WS` and `DST_WS`) we can determine what our caller and callee can "speak" (either RTP or DTLS-SRTP) and instruct the `rtpengine` daemon how to handle the call. We can do that by tuning the parameters passed to the  [rtpengine_offer()](/modules/2-1/rtpengine#rtpengine.f.rtpengine_offer) function.
+When a call is placed, based on the two flags (`STR_WS` and `DST_WS`) we can determine what our caller and callee can "speak" (either RTP or DTLS-SRTP) and instruct the `rtpengine` daemon how to handle the call. We can do that by tuning the parameters passed to the  [rtpengine_offer()](/manual/2-1/modules/rtpengine#rtpengine.f.rtpengine_offer) function.
 ```opensips
 
     if (isflagset(SRC_WS) && isbflagset(DST_WS))
@@ -127,7 +127,7 @@ When a call is placed, based on the two flags (`STR_WS` and `DST_WS`) we can det
 
 ```
 
-The [rtpengine_answer()](/modules/2-1/rtpengine#rtpengine.f.rtpengine_answer) function logic should look like this:
+The [rtpengine_answer()](/manual/2-1/modules/rtpengine#rtpengine.f.rtpengine_answer) function logic should look like this:
 
 ```opensips
 
@@ -144,7 +144,7 @@ The [rtpengine_answer()](/modules/2-1/rtpengine#rtpengine.f.rtpengine_answer) fu
 
 ```
 
-Now, all we have to do is to close the RTP/SRTP session when the call is ended. To do that, we use the [rtpengine_delete()](/modules/2-1/rtpengine#rtpengine.f.rtpengine_delete) function:
+Now, all we have to do is to close the RTP/SRTP session when the call is ended. To do that, we use the [rtpengine_delete()](/manual/2-1/modules/rtpengine#rtpengine.f.rtpengine_delete) function:
 
 ```opensips
 

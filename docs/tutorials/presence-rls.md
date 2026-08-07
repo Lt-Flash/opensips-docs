@@ -85,7 +85,7 @@ For this case, the OpenSIPS RLS server will send two **SUBSCRIBE** messages: to 
 
 ## Configuration
 
-The server is implemented in **rls** module. To understand the parameters required by this module, read the [modules readme here](/modules/devel/rls).
+The server is implemented in **rls** module. To understand the parameters required by this module, read the [modules readme here](/manual/devel/modules/rls).
 
 See a [configuration file example](https://github.com/OpenSIPS/opensips/tree/master/modules/rls/samples/opensips-rls.cfg).
 

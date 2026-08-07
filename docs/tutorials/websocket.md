@@ -1,7 +1,7 @@
 ---
 title: "WebSocket Transport"
 subtitle: "WebSocket Transport"
-subtitleHref: "/modules/devel/proto_ws"
+subtitleHref: "/manual/devel/modules/proto_ws"
 description: "Configure OpenSIPS WebSocket transport for a SIP platform that connects SIP clients over UDP, TCP or TLS as well as browser-based clients."
 ---
 
@@ -10,9 +10,9 @@ description: "Configure OpenSIPS WebSocket transport for a SIP platform that con
 
 ## Tutorial Overview
 
-[WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) is a protocol that provides full-duplex communication between web clients and servers over TCP connections. Using the WebSocket protocol, browsers can connect to web servers and exchange data, regardless the type or nature of the application protocol. [RFC 7118](https://datatracker.ietf.org/doc/html/rfc7118) leveraged this protocol in order to allow browsers to make VoIP calls using the SIP protocol. [WebSocketSecure](/modules/devel/proto_wss) (WSS) overlays TLS onto the WebSocket protocol, making the connection secure, a requirement for many browsers if you want to do WebRTC.
+[WebSocket](https://datatracker.ietf.org/doc/html/rfc6455) is a protocol that provides full-duplex communication between web clients and servers over TCP connections. Using the WebSocket protocol, browsers can connect to web servers and exchange data, regardless the type or nature of the application protocol. [RFC 7118](https://datatracker.ietf.org/doc/html/rfc7118) leveraged this protocol in order to allow browsers to make VoIP calls using the SIP protocol. [WebSocketSecure](/manual/devel/modules/proto_wss) (WSS) overlays TLS onto the WebSocket protocol, making the connection secure, a requirement for many browsers if you want to do WebRTC.
 
-This document describes how to use **OpenSIPS** as the core component of a SIP platform that connects both SIP clients (over UDP, TCP or TLS) as well as browser based clients using SIP over WebSockets and WebSocketsSecure. While OpenSIPS handles the SIP signalling part, media is relayed through [RTPengine](https://github.com/sipwise/rtpengine), with OpenSIPS using the [rtp_relay](/modules/devel/rtp_relay) module to keep the media handling tied to the call context.
+This document describes how to use **OpenSIPS** as the core component of a SIP platform that connects both SIP clients (over UDP, TCP or TLS) as well as browser based clients using SIP over WebSockets and WebSocketsSecure. While OpenSIPS handles the SIP signalling part, media is relayed through [RTPengine](https://github.com/sipwise/rtpengine), with OpenSIPS using the [rtp_relay](/manual/devel/modules/rtp_relay) module to keep the media handling tied to the call context.
 
 ## Setup
 
@@ -24,7 +24,7 @@ The RTPengine consists of two main components: a kernel module used to efficient
 
 You must generate certificates to use with TLS and WSS. For this example we are generating certificates using [Let's Encrypt](https://letsencrypt.org/).
 
-Certificate management is handled by the [TLS_MGM](/modules/devel/tls_mgm) module. Setting the appropriate `tls_mgm` module parameters is how we will manage our certificates for both WSS and TLS.
+Certificate management is handled by the [TLS_MGM](/manual/devel/modules/tls_mgm) module. Setting the appropriate `tls_mgm` module parameters is how we will manage our certificates for both WSS and TLS.
 
 #### Usage
 
@@ -78,7 +78,7 @@ dmesg
 
 ### OpenSIPS
 
-In order to use WebSocket and WebSocketSecure in OpenSIPS, one has to load the [proto_ws](/modules/devel/proto_ws) and [proto_wss](/modules/devel/proto_wss) modules into its configuration file and define a listener for the WebSocket and WebSocketSecure protocol. We also must load one TLS backend module, such as `tls_wolfssl` or `tls_openssl`, together with the [tls_mgm](/modules/devel/tls_mgm) module in order to manage our certificates.
+In order to use WebSocket and WebSocketSecure in OpenSIPS, one has to load the [proto_ws](/manual/devel/modules/proto_ws) and [proto_wss](/manual/devel/modules/proto_wss) modules into its configuration file and define a listener for the WebSocket and WebSocketSecure protocol. We also must load one TLS backend module, such as `tls_wolfssl` or `tls_openssl`, together with the [tls_mgm](/manual/devel/modules/tls_mgm) module in order to manage our certificates.
 
 ```opensips
 
@@ -108,7 +108,7 @@ modparam("tls_mgm", "require_cert", "[default]0")
 
 ```
 
-Next, load the [rtp_relay](/modules/devel/rtp_relay) module and the [rtpengine](/modules/devel/rtpengine) backend. The `rtp_relay` module keeps the media context for the call and automatically drives the offer, answer and delete operations through the selected backend.
+Next, load the [rtp_relay](/manual/devel/modules/rtp_relay) module and the [rtpengine](/manual/devel/modules/rtpengine) backend. The `rtp_relay` module keeps the media context for the call and automatically drives the offer, answer and delete operations through the selected backend.
 
 ```opensips
 
@@ -118,7 +118,7 @@ modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.1:60000")
 
 ```
 
-Note that the [rtpengine_sock](/modules/devel/rtpengine#param_rtpengine_sock) parameter should match the `listen-ng` setting from the `rtpengine` daemon configuration, and OpenSIPS should have IP connectivity to that socket.
+Note that the [rtpengine_sock](/manual/devel/modules/rtpengine#param_rtpengine_sock) parameter should match the `listen-ng` setting from the `rtpengine` daemon configuration, and OpenSIPS should have IP connectivity to that socket.
 
 Next, the routing logic has to be changed in order to treat clients that use DTLS-SRTP differently from clients that use plain RTP and enable bridging if necessary. To do that, one can check if the request message was received over the WebSocket protocol. This can be achieved using the following code:
 
@@ -129,7 +129,7 @@ if ($socket_in(proto) == "WS" || $socket_in(proto) == "WSS")
 
 ```
 
-In case the request is a REGISTER, we want to store this information in the *location* table, so that we know the transport type when the user is called. To do that, we can set a branch flag before calling the [save()](/modules/devel/registrar#func_save) function. This way, when the [lookup()](/modules/devel/registrar#func_lookup) method returns, we will be able to determine whether the client uses WebSocket or not.
+In case the request is a REGISTER, we want to store this information in the *location* table, so that we know the transport type when the user is called. To do that, we can set a branch flag before calling the [save()](/manual/devel/modules/registrar#func_save) function. This way, when the [lookup()](/manual/devel/modules/registrar#func_lookup) method returns, we will be able to determine whether the client uses WebSocket or not.
 
 ```opensips
 
@@ -146,7 +146,7 @@ In case the request is a REGISTER, we want to store this information in the *loc
 
 ```
 
-When a call is placed, based on the two flags (`SRC_WS` and `DST_WS`) we can determine what our caller and callee can "speak" (either RTP or DTLS-SRTP). The current script provisions the media type for each side through the [`$rtp_relay`](/modules/devel/rtp_relay#pv_rtp_relay) and [`$rtp_relay_peer`](/modules/devel/rtp_relay#pv_rtp_relay_peer) variables, then engages RTPengine through [rtp_relay_engage()](/modules/devel/rtp_relay#func_rtp_relay_engage).
+When a call is placed, based on the two flags (`SRC_WS` and `DST_WS`) we can determine what our caller and callee can "speak" (either RTP or DTLS-SRTP). The current script provisions the media type for each side through the [`$rtp_relay`](/manual/devel/modules/rtp_relay#pv_rtp_relay) and [`$rtp_relay_peer`](/manual/devel/modules/rtp_relay#pv_rtp_relay_peer) variables, then engages RTPengine through [rtp_relay_engage()](/manual/devel/modules/rtp_relay#func_rtp_relay_engage).
 
 ```opensips
 

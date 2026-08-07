@@ -1,7 +1,7 @@
 ---
 title: "SIPREC Call Recording"
 subtitle: "Call Recording"
-subtitleHref: "/modules/devel/siprec"
+subtitleHref: "/manual/devel/modules/siprec"
 description: "Configure SIPREC to engage one or more SRS endpoints in an ongoing call."
 ---
 
@@ -13,11 +13,11 @@ According to the [SIPREC architecture](https://tools.ietf.org/html/rfc7245), in 
 * SRC (Session Recording Client) - this is the SIP component in the call's path which triggers the call recording - this is where **OpenSIPS** gets involved.
 * SRS (Session Recording Server) - this is the SIP component that receives the SIPREC session and the forked media, then stores or processes the recording.
 
-[Oreka](http://oreka.sourceforge.net/) is one example of a SRS, but OpenSIPS can work with any SRS implementation that understands SIPREC. Other options include [Sippy SRS](https://github.com/sippy/Sippy_Recorder/blob/main/Sippy_SRS.py), [Drachtio SRS with FreeSWITCH](https://github.com/davehorton/drachtio-srs-freeswitch), or even another OpenSIPS instance using [b2b_sdp_demux](/modules/devel/b2b_sdp_demux) in front of FreeSWITCH.
+[Oreka](http://oreka.sourceforge.net/) is one example of a SRS, but OpenSIPS can work with any SRS implementation that understands SIPREC. Other options include [Sippy SRS](https://github.com/sippy/Sippy_Recorder/blob/main/Sippy_SRS.py), [Drachtio SRS with FreeSWITCH](https://github.com/davehorton/drachtio-srs-freeswitch), or even another OpenSIPS instance using [b2b_sdp_demux](/manual/devel/modules/b2b_sdp_demux) in front of FreeSWITCH.
 
 This document describes the steps to configure **OpenSIPS devel** to act as a SRC and engage one or more SRS endpoints in an ongoing call.
 
-The work for the [SIPREC](/modules/devel/siprec) module has been sponsored by the [OrecX Company](http://www.orecx.com/).
+The work for the [SIPREC](/manual/devel/modules/siprec) module has been sponsored by the [OrecX Company](http://www.orecx.com/).
 
 ## Architecture
 
@@ -25,7 +25,7 @@ The purpose of this article is to show how one can record a call between two cli
 
 * **OpenSIPS** - will act as a SRC, providing metadata about the call to the SRS.
 * **SRS** - will receive the SIPREC session and perform the actual recording or recording handoff.
-* **RTP relay** - will fork the RTP traffic to the SRS. In OpenSIPS devel, SIPREC can use either **RTPProxy** or **RTPEngine**, through the [rtp_relay](/modules/devel/rtp_relay) module.
+* **RTP relay** - will fork the RTP traffic to the SRS. In OpenSIPS devel, SIPREC can use either **RTPProxy** or **RTPEngine**, through the [rtp_relay](/manual/devel/modules/rtp_relay) module.
 
 The following diagram shows the setup and how each component interacts with the others. The diagram uses RTPProxy as the media relay example, but the same OpenSIPS SIPREC flow can be used with RTPEngine.
 
@@ -230,8 +230,8 @@ The example above passes an `instance` parameter and controls a named SIPREC ins
 
 The SIPREC module raises two events that can be used to monitor when an SRS starts or stops recording a call:
 
-* [`E_SIPREC_START`](/modules/devel/siprec#event_E_SIPREC_START) - raised when the SIPREC call is established and recording starts.
-* [`E_SIPREC_STOP`](/modules/devel/siprec#event_E_SIPREC_STOP) - raised when the SIPREC call is terminated.
+* [`E_SIPREC_START`](/manual/devel/modules/siprec#event_E_SIPREC_START) - raised when the SIPREC call is established and recording starts.
+* [`E_SIPREC_STOP`](/manual/devel/modules/siprec#event_E_SIPREC_STOP) - raised when the SIPREC call is terminated.
 
 Both events expose the same parameters:
 
@@ -318,7 +318,7 @@ Use `$siprec(...)` for SIPREC parameters known before `siprec_start_recording()`
 
 ### Tune SIPREC Metadata and Request Parameters
 
-Most SIPREC instance settings can be tuned using the [`$siprec`](/modules/devel/siprec#pv_siprec) variable. This includes:
+Most SIPREC instance settings can be tuned using the [`$siprec`](/manual/devel/modules/siprec#pv_siprec) variable. This includes:
 
 * `group` - call classification metadata.
 * `caller` and `callee` - custom XML participant metadata.
@@ -354,7 +354,7 @@ There might be cases when a SRS is down or cannot be reached, and you want to fa
 siprec_start_recording("sip:127.0.0.1:5090;transport=tcp, sip:127.0.0.1:5090");
 ```
 
-By default, failover is driven by a negative response from the SRS, or by an auto-generated 408 if the SRS does not respond. However, not all responses mean the service is unavailable. Some of them might simply indicate that the call should not be recorded. In this case, you may want to ignore some response codes from the failover algorithm. This is done using the [skip_failover_codes](/modules/devel/siprec#param_skip_failover_codes) parameter. The following example prevents failover for any 3xx and 4xx response codes, thus it only fails over on 5xx and 6xx classes:
+By default, failover is driven by a negative response from the SRS, or by an auto-generated 408 if the SRS does not respond. However, not all responses mean the service is unavailable. Some of them might simply indicate that the call should not be recorded. In this case, you may want to ignore some response codes from the failover algorithm. This is done using the [skip_failover_codes](/manual/devel/modules/siprec#param_skip_failover_codes) parameter. The following example prevents failover for any 3xx and 4xx response codes, thus it only fails over on 5xx and 6xx classes:
 
 ```opensips
 modparam("siprec", "skip_failover_codes", "[34][0-9][0-9]")

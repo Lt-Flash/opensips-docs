@@ -310,8 +310,8 @@ if (radius_send_auth("auth_in", "auth_out")) {
 
 * [FreeRADIUS](https://freeradius.org/)
 * [radcli](https://github.com/radcli/radcli)
-* [OpenSIPS aaa_radius module](/modules/4-1/aaa_radius)
-* [OpenSIPS acc module](/modules/4-1/acc)
-* [OpenSIPS auth_aaa module](/modules/4-1/auth_aaa)
+* [OpenSIPS aaa_radius module](/manual/4-1/modules/aaa_radius)
+* [OpenSIPS acc module](/manual/4-1/modules/acc)
+* [OpenSIPS auth_aaa module](/manual/4-1/modules/auth_aaa)
 * [RFC 2865 - RADIUS](https://www.rfc-editor.org/rfc/rfc2865)
 * [RFC 2866 - RADIUS Accounting](https://www.rfc-editor.org/rfc/rfc2866)

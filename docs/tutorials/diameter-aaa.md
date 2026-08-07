@@ -7,7 +7,7 @@ description: "How to configure OpenSIPS Diameter authentication and accounting w
 
 ## Setting up freeDiameter
 
-The current [*aaa_diameter*](/modules/devel/aaa_diameter) OpenSIPS module uses
+The current [*aaa_diameter*](/manual/devel/modules/aaa_diameter) OpenSIPS module uses
 the freeDiameter libraries and requires **libfdcore** and **libfdproto**
 version **1.2.1 or newer**.  The examples below use Debian/Ubuntu package
 names; adjust them for your distribution if needed.

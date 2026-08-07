@@ -3,7 +3,7 @@ title: Topology Hiding
 description: The purpose of this tutorial is to help you understand how the
   topology_hiding module works and also how it should be used.
 subtitle: Topology Hiding
-subtitleHref: /modules/devel/topology_hiding
+subtitleHref: /manual/devel/modules/topology_hiding
 ---
 ## Tutorial Overview
 
@@ -19,7 +19,7 @@ Optionally, the module can also hide the Call-ID on the outbound side, since oft
 
 Also, the topology_hiding module can help ease integration by propagating various parts of the Contact header from one side to the other. The Contact username can be propagated ( eg. useful when you are dipping against LRN servers, but don't want to disclose your full topology to the service provider ). Also, various Contact header parameters can be passed, in order to allow for end-to-end features that rely on such params.   
 
-See the [full module README](/modules/head/topology_hiding) for all the available parameters and functions.
+See the [full module README](/manual/devel/modules/topology_hiding) for all the available parameters and functions.
 
 ## How It Works
 

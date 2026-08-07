@@ -92,7 +92,7 @@ Mar 29 19:45:53 [80814]     +g.3gpp.icsi-ref: urn:urn-7:3gpp-service.ims.icsi.gs
 
 ### Removing, Re-ordering or Adding Capabilities
 
-There are no special helper functions for this purpose, so such operations will have to be done with a *[remove_hf()](/modules/4-1/sipmsgops#func_remove_hf)* function call, followed by an *[append_hf()](/modules/4-1/sipmsgops#func_append_hf)*.  For example, say we want to remove support for RCS File Transfer (our platform does not have it), while always advertising support for RCS Geolocation PUSH (since we can handle those types of payloads).
+There are no special helper functions for this purpose, so such operations will have to be done with a *[remove_hf()](/manual/4-1/modules/sipmsgops#func_remove_hf)* function call, followed by an *[append_hf()](/manual/4-1/modules/sipmsgops#func_append_hf)*.  For example, say we want to remove support for RCS File Transfer (our platform does not have it), while always advertising support for RCS Geolocation PUSH (since we can handle those types of payloads).
 
 First, we filter out any undesired RCS File Transfer capabilities while iterating them:
 

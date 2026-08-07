@@ -13,7 +13,7 @@ This tutorial illustrates the required steps in order to perform audio transcodi
   
 
 > [!WARNING]
-> As mentioned in the [module documentation](/modules/2-2/sngtc), transcoding may only be done if the UAC performs early SDP negotiation and the UAS supports late SDP negotiation.
+> As mentioned in the [module documentation](/manual/2-2/modules/sngtc), transcoding may only be done if the UAC performs early SDP negotiation and the UAS supports late SDP negotiation.
 
 ---
 
@@ -50,7 +50,7 @@ The **sngtc module** exports 3 functions. They are called upon receiving INVITE,
 * sngtc_callee_answer - called at 200 OK responses, intersects codec offers, creates transcoding sessions if necessary
 * sngtc_caller_answer - called at ACK requests, adds an SDP body to the ACK request
 
-All functions properly handle retransmissions. More details can be found in the [module documentation](/modules/devel/uri). A basic configuration file is shown below:
+All functions properly handle retransmissions. More details can be found in the [module documentation](/manual/devel/modules/uri). A basic configuration file is shown below:
 
   
 

@@ -39,10 +39,10 @@ OpenSIPS can build and send a custom Diameter request, the request and answer
 must be described in a dictionary file.
 
 Attach the `;extra-avps-file:<path-to-dictionary.opensips>` option to the
-[aaa_url](/modules/devel/aaa_diameter#param_aaa_url) modparam of
+[aaa_url](/manual/devel/modules/aaa_diameter#param_aaa_url) modparam of
 **aaa_diameter**.  The **dictionary.opensips** syntax supports custom Diameter
 Applications, Commands and grouped AVPs.  See
-[dm_send_request()](/modules/devel/aaa_diameter#func_dm_send_request) for the
+[dm_send_request()](/manual/devel/modules/aaa_diameter#func_dm_send_request) for the
 full module reference.
 
 For this tutorial, put the following definitions in
@@ -163,7 +163,7 @@ xlog("rc: $var(rc), Reply AVPs: $var(rpl_avps)\n");
 In this example, the Diameter Application ID is **42**, and the Command Code is
 **92001**.  The return code is the `Result-Code` AVP value when an answer was
 received.  The response AVPs are available under `$var(rpl_avps)`.  Use the
-OpenSIPS [JSON module](/modules/devel/json) to parse and access them:
+OpenSIPS [JSON module](/manual/devel/modules/json) to parse and access them:
 
 ```opensips
 $json(rpl) := $var(rpl_avps);
@@ -176,13 +176,13 @@ while ($json(rpl[$var(i)])) {
 ```
 
 For non-blocking requests, use the asynchronous
-[dm_send_request()](/modules/devel/aaa_diameter#afunc_dm_send_request) form.
+[dm_send_request()](/manual/devel/modules/aaa_diameter#afunc_dm_send_request) form.
 
 ## opensips.cfg: Processing Generic Diameter Requests
 
 Starting with OpenSIPS **3.5**, **aaa_diameter** can also act as a Diameter
 server and process incoming Diameter requests.  Load
-[event_route](/modules/devel/event_route) so OpenSIPS can consume the
+[event_route](/manual/devel/modules/event_route) so OpenSIPS can consume the
 **E_DM_REQUEST** events emitted for incoming Diameter requests:
 
 ```opensips
@@ -213,7 +213,7 @@ The event provides the following parameters:
 * **avps_json** (string) - a JSON array containing the AVPs of the request
 
 After processing the request, pack the answer AVPs as a JSON array and call
-[dm_send_answer()](/modules/devel/aaa_diameter#func_dm_send_answer):
+[dm_send_answer()](/manual/devel/modules/aaa_diameter#func_dm_send_answer):
 
 ```opensips
 event_route [E_DM_REQUEST]
