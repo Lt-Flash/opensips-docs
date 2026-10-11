@@ -60,8 +60,9 @@ used, so the size does not have to be guessed for the busiest hour:
 opensips -a HG_MALLOC -m 128:1024 -M 8:32
 ```
 
-HG_MALLOC pins its memory, so run OpenSIPS with `LimitMEMLOCK=infinity` (or
-`ulimit -l unlimited`). `opensips-cli -x mi core:hg_advise` reports what `-m` and `-M`
+HG_MALLOC pins its memory: run OpenSIPS with `LimitMEMLOCK=infinity` (or
+`ulimit -l unlimited`) - required for an elastic arena on hugetlb pages, and
+it keeps the arena from being swapped on the others. `opensips-cli -x mi core:hg_advise` reports what `-m` and `-M`
 should be from the peaks actually reached, and the `hgmem:hg_shm_grow_blocked`
 and `hgmem:hg_pkg_grow_blocked` statistics show when an arena cannot grow any
 further. See the HG_MALLOC documentation (`mem/README.hg_malloc.md` in the
