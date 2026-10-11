@@ -61,7 +61,7 @@ opensips -a HG_MALLOC -m 128:1024 -M 8:32
 ```
 
 HG_MALLOC pins its memory, so run OpenSIPS with `LimitMEMLOCK=infinity` (or
-`ulimit -l unlimited`). `opensips-mi core:hg_advise` reports what `-m` and `-M`
+`ulimit -l unlimited`). `opensips-cli -x mi core:hg_advise` reports what `-m` and `-M`
 should be from the peaks actually reached, and the `hgmem:hg_shm_grow_blocked`
 and `hgmem:hg_pkg_grow_blocked` statistics show when an arena cannot grow any
 further. See the HG_MALLOC documentation (`mem/README.hg_malloc.md` in the
